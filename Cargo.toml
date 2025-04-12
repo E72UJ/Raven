@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+bevy = "0.13.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
