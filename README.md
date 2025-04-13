@@ -7,7 +7,7 @@ Raven 是一款基于 Rust 语言开发的现代化视觉小说/文字冒险游�
 [![pERohUU.jpg](https://s21.ax1x.com/2025/04/12/pERohUU.jpg)](https://imgse.com/i/pERohUU)
 
 ## License
-
+This code is licensed under dual MIT / Apache-2.0 but with no attribution necessary. All contributions must agree to this licensing.
 ## 最后更新
 敬请期待 最后更新 2025年4月12日21:52:47
 Furau
