@@ -114,7 +114,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         parent.spawn(TextBundle::from_section(
             "",
             TextStyle {
-                font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
                 font_size: 28.0,
                 color: Color::WHITE,
             },
