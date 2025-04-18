@@ -15,6 +15,7 @@ struct Dialogue {
 struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
+    can_go_back: bool, // 添加标志位判断是否可以返回
 }
 
 // 立绘组件
@@ -52,6 +53,7 @@ fn setup_camera(mut commands: Commands) {
     commands.insert_resource(GameState {
         current_line: 0,
         dialogues: load_dialogues(),
+        can_go_back: false, // 初始时不能返回
     });
 }
 
@@ -139,12 +141,28 @@ fn handle_input(
     mouse: Res<ButtonInput<MouseButton>>,
     mut game_state: ResMut<GameState>,
 ) {
-    let any_pressed = keys.just_pressed(KeyCode::Space)
+    // 前进
+    let forward_pressed = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left);
 
-    if any_pressed {
-        game_state.current_line += 1;
+    // 返回
+    let back_pressed = keys.just_pressed(KeyCode::Backspace) 
+        || keys.just_pressed(KeyCode::ArrowLeft);
+
+    if forward_pressed {
+        if game_state.current_line < game_state.dialogues.len() {
+            game_state.current_line += 1;
+            game_state.can_go_back = true; // 前进后可以返回
+        }
+    }
+    
+    // 返回上一页
+    if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
+        game_state.current_line -= 1;
+        if game_state.current_line == 0 {
+            game_state.can_go_back = false; // 回到开始时不能再返回
+        }
     }
     
     if keys.just_pressed(KeyCode::Escape) {
