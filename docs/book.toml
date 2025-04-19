@@ -1,6 +1,7 @@
 [book]
+title = "Raven视觉小说引擎文档"
 authors = ["Furau"]
-language = "en"
-multilingual = false
+language = "zh"
 src = "src"
-title = "Raven"
+[output.html]
+additional-css = ["custom.css"]

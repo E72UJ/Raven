@@ -1,0 +1,6 @@
+@import url('https://cdn.bootcdn.net/ajax/libs/font-awesome/6.7.2/css/all.css');
+
+.github-icon {
+    font-size: 1.5em; /* 可以根据需要调整图标大小 */
+    color: #333; /* 图标颜色 */
+}
