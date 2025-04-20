@@ -31,11 +31,19 @@ struct PortraitAssets {
 }
 
 fn main() {
+    let app_window = Some(Window {
+        title: "Raven 引擎 \"V 0.1\"".into(),
+        ..default()
+      });
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: app_window,
+            ..default()
+          }))
         .insert_resource(ClearColor(Color::rgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
         .add_systems(Update, (handle_input, update_dialogue, update_portrait))
+
         .run();
 }
 
