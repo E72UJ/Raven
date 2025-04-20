@@ -2,7 +2,7 @@
 - [Raven引擎-文档](./overview/what-is-raven.md)
 - [核心特性](./overview/core-features.md)
 - [系统要求](./overview/system-requirements.md)
-
+- [术语对照表](./overview/vn_engine_glossary.md)
 # 入门指南
 
 - [安装与配置](./getting-started/installation.md)
