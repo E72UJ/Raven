@@ -18,6 +18,15 @@ struct GameState {
     can_go_back: bool, // 添加标志位判断是否可以返回
 }
 
+// 打字机效果组件
+#[derive(Component)]
+struct TypewriterEffect {
+    full_text: String,
+    current_length: usize,  // 字符数量而非字节索引
+    timer: Timer,
+    is_complete: bool,
+}
+
 // 立绘组件
 #[derive(Component)]
 struct Portrait;
@@ -42,8 +51,7 @@ fn main() {
           }))
         .insert_resource(ClearColor(Color::rgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait))
-
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait, typewriter_system))
         .run();
 }
 
@@ -119,12 +127,21 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         z_index: ZIndex::Global(2),
         ..default()
     }).with_children(|parent| {
-        parent.spawn(TextBundle::from_section(
-            "",
-            TextStyle {
-                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                font_size: 28.0,
-                color: Color::WHITE,
+        // 添加打字机效果组件
+        parent.spawn((
+            TextBundle::from_section(
+                "",
+                TextStyle {
+                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                    font_size: 28.0,
+                    color: Color::WHITE,
+                },
+            ),
+            TypewriterEffect {
+                full_text: "".to_string(),
+                current_length: 0,
+                timer: Timer::from_seconds(0.03, TimerMode::Repeating),
+                is_complete: false,
             },
         ));
     });
@@ -148,8 +165,20 @@ fn handle_input(
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
     mut game_state: ResMut<GameState>,
+    mut typewriter_query: Query<&mut TypewriterEffect>,
 ) {
-    // 前进
+    let mut typewriter = typewriter_query.single_mut();
+    
+    // 如果打字机效果尚未完成，快进到完整文本
+    if !typewriter.is_complete && (keys.just_pressed(KeyCode::Space) 
+        || keys.just_pressed(KeyCode::Enter)
+        || mouse.just_pressed(MouseButton::Left)) {
+        typewriter.current_length = typewriter.full_text.chars().count();
+        typewriter.is_complete = true;
+        return;
+    }
+    
+    // 前进 - 只有当打字机效果完成后才能前进到下一行
     let forward_pressed = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left);
@@ -158,10 +187,13 @@ fn handle_input(
     let back_pressed = keys.just_pressed(KeyCode::Backspace) 
         || keys.just_pressed(KeyCode::ArrowLeft);
 
-    if forward_pressed {
+    if forward_pressed && typewriter.is_complete {
         if game_state.current_line < game_state.dialogues.len() {
             game_state.current_line += 1;
             game_state.can_go_back = true; // 前进后可以返回
+            // 重置打字机状态
+            typewriter.current_length = 0;
+            typewriter.is_complete = false;
         }
     }
     
@@ -171,6 +203,9 @@ fn handle_input(
         if game_state.current_line == 0 {
             game_state.can_go_back = false; // 回到开始时不能再返回
         }
+        // 重置打字机状态
+        typewriter.current_length = 0;
+        typewriter.is_complete = false;
     }
     
     if keys.just_pressed(KeyCode::Escape) {
@@ -181,18 +216,58 @@ fn handle_input(
 // 更新对话文本
 fn update_dialogue(
     game_state: Res<GameState>,
-    mut text_query: Query<&mut Text>,
+    mut typewriter_query: Query<&mut TypewriterEffect>,
 ) {
-    let mut text = text_query.single_mut();
+    let mut typewriter = typewriter_query.single_mut();
     
     match game_state.dialogues.get(game_state.current_line) {
         Some(dialogue) => {
-            text.sections[0].value = format!("{}: {}", dialogue.character, dialogue.text);
+            let new_text = format!("{}: {}", dialogue.character, dialogue.text);
+            // 只有当全文变化时才重置打字机效果
+            if typewriter.full_text != new_text {
+                typewriter.full_text = new_text;
+                typewriter.current_length = 0;
+                typewriter.is_complete = false;
+            }
         }
         None => {
-            text.sections[0].value = "感谢体验！按ESC退出".to_string();
+            typewriter.full_text = "感谢体验！按ESC退出".to_string();
+            typewriter.current_length = 0;
+            typewriter.is_complete = false;
             if game_state.current_line >= game_state.dialogues.len() {
                 std::process::exit(0);
+            }
+        }
+    }
+}
+
+// 打字机系统
+fn typewriter_system(
+    time: Res<Time>,
+    mut query: Query<(&mut TypewriterEffect, &mut Text)>,
+) {
+    for (mut effect, mut text) in query.iter_mut() {
+        // 如果已经完成，无需继续
+        if effect.is_complete {
+            continue;
+        }
+        
+        // 更新计时器
+        effect.timer.tick(time.delta());
+        
+        // 当计时器完成一个周期时
+        if effect.timer.just_finished() {
+            // 如果还有字符要显示
+            if effect.current_length < effect.full_text.chars().count() {
+                // 取前N个字符
+                let current_text: String = effect.full_text.chars().take(effect.current_length + 1).collect();
+                text.sections[0].value = current_text;
+                
+                // 移动到下一个字符
+                effect.current_length += 1;
+            } else {
+                // 全部字符已显示
+                effect.is_complete = true;
             }
         }
     }
