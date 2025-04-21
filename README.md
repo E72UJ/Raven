@@ -14,6 +14,9 @@ This code is licensed under dual MIT / Apache-2.0 but with no attribution necess
 [http://49.232.132.44/bin/demo.zip]
 
 MD5验证**ee16821c6e4976fe7282e9c40eeae884**
+
+## contact
+邮件: Furau@qq.com
 ## 最后更新
 敬请期待 最后更新 2025年4月12日21:52:47
 Furau
