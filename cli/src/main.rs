@@ -1,8 +1,19 @@
 use clap::{Parser, Subcommand};
 use std::fs;
-use std::process::Command;
+use std::path::Path;
+
+// 嵌入所有资源文件
+const EMBEDDED_FONT_FIRA_MONO: &[u8] = include_bytes!("../assets/fonts/FiraMono-Medium.ttf");
+const EMBEDDED_FONT_GENSEN_MARU: &[u8] = include_bytes!("../assets/fonts/GenSenMaruGothicTW-Bold.ttf");
+const EMBEDDED_RAVEN_EXE: &[u8] = include_bytes!("../assets/Raven.exe");
+const EMBEDDED_PORTRAIT_ALICE: &[u8] = include_bytes!("../assets/portraits/alice.png");
+const EMBEDDED_PORTRAIT_BOB: &[u8] = include_bytes!("../assets/portraits/bob.png");
+const EMBEDDED_PORTRAIT_NARRATOR: &[u8] = include_bytes!("../assets/portraits/narrator.png");
+const EMBEDDED_MAIN_YAML: &[u8] = include_bytes!("../assets/configs/main.yaml");
+const EMBEDDED_DIALOGUES_YAML: &[u8] = include_bytes!("../assets/configs/dialogues.yaml");
 
 #[derive(Parser)]
+
 #[command(name = "visual_novel_cli")]
 #[command(about = "视觉小说项目的命令行工具")]
 #[command(about = r"  ____                                 
@@ -18,76 +29,74 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// 创建一个新的视觉小说项目
+    /// 创建新视觉小说项目
     Create {
         /// 项目名称
         name: String,
-    },
-    /// 编译视觉小说项目
-    Compile {
-        /// 项目名称
-        name: String,
-    },
-    // 移除了 Help 子命令，因为 clap 已经自动提供了帮助功能
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
-
     match cli.command {
         Commands::Create { name } => create_project(&name),
-        Commands::Compile { name } => compile_project(&name),
-        // 也需要移除这里的 Help 匹配分支
     }
 }
-
-// 移除 print_help 函数，因为不再需要它
 
 fn create_project(name: &str) {
     let project_dir = format!("./{}", name);
     
-    // 创建项目目录
-    if fs::create_dir_all(&project_dir).is_err() {
-        eprintln!("创建项目目录失败。");
-        return;
+    // 创建目录结构
+    let dirs = [
+        format!("{}/assets/fonts", project_dir),
+        format!("{}/assets/portraits", project_dir),
+        format!("{}/assets/backgrounds", project_dir),
+        format!("{}/assets/audio", project_dir),
+        format!("{}/assets/configs", project_dir),
+    ];
+
+    for dir in &dirs {
+        fs::create_dir_all(dir).unwrap_or_else(|_| panic!("创建目录 {} 失败", dir));
     }
 
-    // 创建基本的main.rs文件
-    let main_rs_content = r#"
-fn main() {
-    println!("你好，视觉小说！");
-}
-"#;
-
-    let main_rs_path = format!("{}/main.rs", project_dir);
-    if fs::write(main_rs_path, main_rs_content).is_err() {
-        eprintln!("创建main.rs文件失败。");
-        return;
-    }
-
-    println!("项目 '{}' 创建成功。", name);
-}
-
-fn compile_project(name: &str) {
-    let project_dir = format!("./{}", name);
+    // 写入嵌入式资源
+    write_embedded_file(EMBEDDED_RAVEN_EXE, &format!("{}/Raven.exe", project_dir));
+    write_embedded_file(EMBEDDED_MAIN_YAML, &format!("{}/assets/main.yaml", project_dir));
+    write_embedded_file(EMBEDDED_DIALOGUES_YAML, &format!("{}/assets/dialogues.yaml", project_dir));
     
-    // 检查项目目录是否存在
-    if !std::path::Path::new(&project_dir).exists() {
-        eprintln!("项目 '{}' 不存在。请先创建项目。", name);
-        return;
-    }
+    // 写入字体
+    write_embedded_file(EMBEDDED_FONT_FIRA_MONO, &format!("{}/assets/fonts/FiraMono-Medium.ttf", project_dir));
+    write_embedded_file(EMBEDDED_FONT_GENSEN_MARU, &format!("{}/assets/fonts/GenSenMaruGothicTW-Bold.ttf", project_dir));
+    
+    // 写入立绘
+    write_embedded_file(EMBEDDED_PORTRAIT_ALICE, &format!("{}/assets/portraits/alice.png", project_dir));
+    write_embedded_file(EMBEDDED_PORTRAIT_BOB, &format!("{}/assets/portraits/bob.png", project_dir));
+    write_embedded_file(EMBEDDED_PORTRAIT_NARRATOR, &format!("{}/assets/portraits/narrator.png", project_dir));
 
-    // 编译项目
-    let output = Command::new("cargo")
-        .arg("build")
-        .current_dir(&project_dir)
-        .output()
-        .expect("编译项目失败。");
+    println!("\n项目创建成功！目录结构：");
+    print_project_tree(&project_dir);
+}
 
-    if output.status.success() {
-        println!("项目 '{}' 编译成功。", name);
-    } else {
-        let error_message = String::from_utf8_lossy(&output.stderr);
-        eprintln!("编译项目 '{}' 失败: {}", name, error_message);
-    }
+fn write_embedded_file(content: &[u8], path: &str) {
+    fs::write(path, content).unwrap_or_else(|_| panic!("写入文件 {} 失败", path));
+}
+
+fn print_project_tree(project_dir: &str) {
+    println!("{}
+├── Raven.exe
+└── assets/
+    ├── portraits/
+    │   ├── alice.png     大小：{} KB
+    │   ├── bob.png       大小：{} KB
+    │   └── narrator.png  大小：{} KB
+    ├── fonts/
+    │   ├── FiraMono-Medium.ttf
+    │   └── GenSenMaruGothicTW-Bold.ttf
+    ├── main.yaml
+    └── dialogues.yaml",
+        project_dir,
+        EMBEDDED_PORTRAIT_ALICE.len() / 1024,
+        EMBEDDED_PORTRAIT_BOB.len() / 1024,
+        EMBEDDED_PORTRAIT_NARRATOR.len() / 1024
+    );
 }
