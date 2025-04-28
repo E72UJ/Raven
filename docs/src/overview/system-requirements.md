@@ -5,7 +5,7 @@
 
 显卡: GeForce GTX 1060
 
-磁盘: 5G SSD
+磁盘: 50G SSD
 
 声卡: 默认
 
