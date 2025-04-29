@@ -312,7 +312,7 @@ fn update_portrait(
 
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         *visibility = Visibility::Visible;
-        println!("当前对话使用的立绘: {}", dialogue.portrait);
+        // println!("当前对话使用的立绘: {}", dialogue.portrait);
 
         // 从角色映射中获取立绘
         if let Some(handle) = portraits.handles.get(&dialogue.portrait) {

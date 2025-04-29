@@ -7,6 +7,6 @@
 - character: "Bob"
   text: "你可以点击键盘的左键进行上一步操作"
   portrait: "protagonist"
-- character: "Bob"
+- character: "villain"
   text: "也可以按下ESC按键退出游戏"
-  portrait: "protagonist"
+  portrait: "villain"
