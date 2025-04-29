@@ -1,13 +1,13 @@
 # main.yaml
-title: "标题测试测试测试" 
+title: "您的视觉小说标题" 
 
 # 媒体资源路径变量定义
 assets:
   # 角色立绘
   characters:
-    protagonist: "/assets/characters/protagonist/"
-    heroine: "/assets/characters/heroine/"
-    villain: "/assets/characters/villain/"
+    protagonist: "characters/protagonist"
+    heroine: "characters/heroine"
+    villain: "characters/villain"
   
   # 背景图片
   backgrounds:
