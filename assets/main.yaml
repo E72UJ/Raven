@@ -1,9 +1,47 @@
-- character: "角色"
-  text: "Welcome to the game Furau"
-  portrait: "narrator"
-- character: "Alice"
-  text: "Hello, this is a test dialog."
-  portrait: "alice"
-- character: "Bob"
-  text: "Click to continue..."
-  portrait: "bob"
+# main.yaml
+title: "您的视觉小说标题" 
+
+# 媒体资源路径变量定义
+assets:
+  # 角色立绘
+  characters:
+    protagonist: "assets/characters/protagonist/"
+    heroine: "assets/characters/heroine/"
+    villain: "assets/characters/villain/"
+  
+  # 背景图片
+  backgrounds:
+    school: "assets/backgrounds/school.png"
+    cafe: "assets/backgrounds/cafe.png"
+    park: "assets/backgrounds/park.png"
+  
+  # 音频文件
+  audio:
+    bgm:
+      main_theme: "assets/audio/bgm/main_theme.mp3"
+      battle: "assets/audio/bgm/battle.mp3"
+    sfx:
+      doorbell: "assets/audio/sfx/doorbell.mp3"
+      explosion: "assets/audio/sfx/explosion.mp3"
+  
+  # 视频文件
+  videos:
+    opening: "assets/videos/opening.mp4"
+    ending: "assets/videos/ending.mp4"
+  
+  # Flash动画(SWF)
+  swf:
+    mini_game: "assets/swf/mini_game.swf"
+    special_effect: "assets/swf/special_effect.swf"
+
+# 全局游戏设置
+settings:
+  initial_scene: "intro"  # 初始场景ID
+  text_speed: 50          # 文本显示速度
+  auto_save: true         # 自动保存功能
+  resolution: [1280, 720] # 游戏分辨率
+  
+# 其他全局配置
+global_variables:
+  player_name: "主角"     # 玩家名称默认值
+  affection_points: 0     # 好感度初始值
