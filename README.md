@@ -13,6 +13,8 @@ This code is licensed under dual MIT / Apache-2.0 but with no attribution necess
 ## Release
 下面是我准备的一份编译后Demo，方便国内用户直接查看运行效果。
 [http://49.232.132.44/bin/demo.zip]
+所使用的立绘资产
+https://liah0227.itch.io/wisteria
 
 MD5验证**ee16821c6e4976fe7282e9c40eeae884**
 
