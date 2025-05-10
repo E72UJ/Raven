@@ -8,8 +8,7 @@ Raven 是一款基于 Rust 语言开发的现代化视觉小说/文字冒险游�
 （托管服务器性能较差，最新更新可以查看文档源码）
 ## Demo
 [![pE49r1s.png](https://s21.ax1x.com/2025/04/18/pE49r1s.png)](https://imgse.com/i/pE49r1s)
-## License
-This code is licensed under dual MIT / Apache-2.0 but with no attribution necessary. All contributions must agree to this licensing.
+
 ## Release
 下面是我准备的一份编译后Demo，方便国内用户直接查看运行效果。
 
@@ -24,6 +23,6 @@ MD5验证**ee16821c6e4976fe7282e9c40eeae884**
 
 ## contact
 邮件: Furau@qq.com
-## 最后更新
-敬请期待 最后更新 2025年4月12日21:52:47
-Furau
+
+## License
+This code is licensed under dual MIT / Apache-2.0 but with no attribution necessary. All contributions must agree to this licensing.
