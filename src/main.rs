@@ -232,7 +232,6 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             },
         ));
     });
-
     // 点击区域
     commands.spawn(NodeBundle {
         style: Style {

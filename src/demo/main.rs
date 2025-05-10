@@ -308,10 +308,19 @@ fn update_dialogue(
                     text.0 = format!("{}", dialogue.text);
                 }
             }
-            println!("{}", format!("{}: {}", dialogue.character, dialogue.text)); 
+            // println!("{}", format!("{}: {}", dialogue.character, dialogue.text)); 
         }
         None => {
             // println!("{:?}", dialogue);
+            for (name, mut text) in &mut query {
+                // 比较方式1：转换为字符串切片
+                if name.as_str() == "namebox" {
+                    text.0 = format!("{}", "NULL");
+                }
+                if name.as_str() == "textbox" {
+                    text.0 = format!("{}", "感谢体验，按下ESC退出");
+                }
+            }
         }
     }
     
