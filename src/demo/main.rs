@@ -338,7 +338,7 @@ fn handle_input(
     
     if click {
         game_state.current_line += 1; // 推进对话
-        debug_print("当前对话内容",&game_state.current_line);
+        // debug_print("当前对话内容",&game_state.current_line);
     }
     let back_pressed = keys.just_pressed(KeyCode::Backspace) 
         || keys.just_pressed(KeyCode::ArrowLeft);

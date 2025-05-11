@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::{fs, path};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::env;
 pub const FPS_OVERLAY_ZINDEX: i32 = i32::MAX - 32;
 
 // 主配置结构体
@@ -64,9 +65,9 @@ struct PortraitAssets {
 }
 
 fn main() {
+    println!("{:?}", get_executable_directory());
     // 加载主配置
     let main_config = load_main_config();
-    debug_print("var1",&main_config.title);
     let app_window = Some(Window {
         title: main_config.title.clone(),
         // 从配置文件读取分辨率
@@ -139,7 +140,7 @@ fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
     for (char_name, char_path) in &config.assets.characters {
         processed_yaml = processed_yaml.replace(&format!("$characters.{}", char_name), char_path);
     }
-    debug_print("var4",&processed_yaml);
+    // debug_print("var4",&processed_yaml);
     serde_yaml::from_str(&processed_yaml)
         .expect("YAML解析失败，请检查格式")
 }
@@ -425,4 +426,16 @@ fn update_portrait(
 // 专有调试函数
 fn debug_print<T: std::fmt::Debug>(label: &str, value: &T) {
     println!("{} = {:#?}", label, value);
+}
+// 专有工具函数，返回程序所读取的目录
+pub fn get_executable_directory() -> Result<String, Box<dyn std::error::Error>> {
+    // 获取当前可执行文件路径
+    let mut path = env::current_exe()?;
+    
+    // 移除可执行文件名，保留目录路径
+    path.pop();
+    
+    // 将路径转换为字符串（自动处理非法UTF-8字符）
+    Ok(path.to_string_lossy().into_owned())
+
 }
