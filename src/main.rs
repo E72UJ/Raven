@@ -226,7 +226,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             left: Val::Px(50.0),
             right: Val::Px(50.0),
             height: Val::Px(150.0),
-            padding: UiRect::all(Val::Px(26.0)),
+            padding: UiRect::all(Val::Px(10.0)),
             // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();)
             ..default()
         },
@@ -239,11 +239,11 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("namebox"),
         Text::new("戴安娜"),
         TextFont {
-            // This font is loaded and will be used instead of the default font.
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size:28.0,
             ..default()
         },
+        TextColor(Color::srgb(0.85, 0.85, 0.85)),
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
         // Set the justification of the Text
@@ -258,7 +258,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             right: Val::Px(50.0),
             height: Val::Px(50.0),
             width: Val::Px(220.0),
-            padding: UiRect::all(Val::Px(10.0)),
+            // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
         // 对话框背景颜色

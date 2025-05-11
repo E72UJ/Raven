@@ -1,5 +1,5 @@
 
-  - character: "艾琳"
+  - character: "角色1"
     text: "核心数据库遭到未知算法篡改...我正在尝试逆向追踪信号源"
     portrait: "protagonist"
 
@@ -14,7 +14,6 @@
   - character: "艾琳"
     text: "检测到多维空间折叠现象...等等，这段基因图谱不属于地球任何生物谱系！"
     portrait: "protagonist"
-    
   - character: "科尔"
     text: "星图残片显示银河悬臂存在七处相同的巨型戴森球构造，这不可能..."
     portrait: "protagonist"
