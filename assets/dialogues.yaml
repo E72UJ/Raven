@@ -2,27 +2,19 @@
   - character: "艾琳"
     text: "核心数据库遭到未知算法篡改...我正在尝试逆向追踪信号源"
     portrait: "protagonist"
-    emotion: "urgent"  # 可扩展表情参数
-    audio: "alert_01.wav"  # 可扩展语音文件
 
   - character: "科尔"
     text: "安全协议失效了！备用能源仅剩12%，优先保存哪部分记忆晶体？"
     portrait: "protagonist"
-    emotion: "panicked"
-    audio: "panic_03.wav"
 
   - character: "暗影"
     text: "你们听见星环的悲鸣了吗？那是被囚禁在量子泡沫中的古老意识体"
     portrait: "villain"
-    effect: "echo"  # 声音特效
-    background: "nebula_03.png"  # 背景变化
 
   - character: "艾琳"
     text: "检测到多维空间折叠现象...等等，这段基因图谱不属于地球任何生物谱系！"
     portrait: "protagonist"
-    animation: "glitch"  # 动画效果
-    trigger_event: 201  # 触发事件ID
-
+    
   - character: "科尔"
     text: "星图残片显示银河悬臂存在七处相同的巨型戴森球构造，这不可能..."
     portrait: "protagonist"
