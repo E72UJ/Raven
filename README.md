@@ -24,5 +24,7 @@ MD5验证**ee16821c6e4976fe7282e9c40eeae884**
 ## contact
 邮件: Furau@qq.com
 
+<!-- ## License
+This code is licensed under dual MIT / Apache-2.0 but with no attribution necessary. All contributions must agree to this licensing. -->
 ## License
-This code is licensed under dual MIT / Apache-2.0 but with no attribution necessary. All contributions must agree to this licensing.
+This project is licensed under the [MIT License](LICENSE).
