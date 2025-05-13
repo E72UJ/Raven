@@ -21,7 +21,7 @@ https://liah0227.itch.io/wisteria
 
 MD5验证**ee16821c6e4976fe7282e9c40eeae884**
 
-## contact
+## Contact
 邮件: Furau@qq.com
 
 <!-- ## License

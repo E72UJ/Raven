@@ -184,7 +184,7 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
     commands.insert_resource(portrait_assets);
 }
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
-    debug_print("var2",&asset_server);
+    // debug_print("var2",&asset_server);
     // 立绘容器
     commands.spawn((
         Node {
@@ -201,7 +201,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        // Transform::from_xyz(0.0, 0.0, 0.0)
+        Transform::from_xyz(1.0, 2.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {
             image: asset_server.load("characters/protagonist/default.png"),
@@ -212,29 +212,49 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     ));
     commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
-        Name::new("textbox"),
-        Text::new("文本框!"),
-        TextFont {
-            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-            font_size:28.0,
-            ..default()
-        },
-        TextShadow::default(),
-        TextLayout::new_with_justify(JustifyText::Left),
+        // Name::new("textbox"),
+        // Text::new("文本框!"),
+        // TextFont {
+        //     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+        //     font_size:28.0,
+        //     ..default()
+        // },
+        // TextShadow::default(),
+        // TextLayout::new_with_justify(JustifyText::Left),
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(50.0),
             left: Val::Px(50.0),
             right: Val::Px(50.0),
-            height: Val::Px(150.0),
-            padding: UiRect::all(Val::Px(10.0)),
-            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();)
+            height: Val::Px(170.0),
+            padding: UiRect::all(Val::Px(30.0)),
+            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
             ..default()
         },
         // 对话框背景颜色
         BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         // AnimatedText,
+    ))
+.with_children(|parent| {
+    // 在这里创建子节点
+    parent.spawn((
+        Name::new("textbox"),
+        Text::new("文本框!"),
+        // Name::new("child_element"),
+        // Text::new("子节点文本"),
+        TextFont {
+            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+            font_size: 28.0,
+            ..default()
+        },
+        Node {
+            position_type: PositionType::Relative,
+            margin: UiRect::all(Val::Px(1.0)),
+            ..default()
+        },
+        // 其他你需要的组件
     ));
+});
     commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
@@ -242,6 +262,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         TextFont {
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size:28.0,
+            line_height: bevy::text::LineHeight::Px(50.),
             ..default()
         },
         TextColor(Color::srgb(0.85, 0.85, 0.85)),
@@ -249,12 +270,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         TextShadow::default(),
         // Set the justification of the Text
         TextLayout::new_with_justify(JustifyText::Center),
-        // align_items: AlignItems::Center,
-        // Set the style of the Node itself.
-        // let background_color = 
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(210.0),
+            bottom: Val::Px(230.0),
             left: Val::Px(50.0),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
