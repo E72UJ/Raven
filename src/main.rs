@@ -65,7 +65,7 @@ struct PortraitAssets {
 }
 
 fn main() {
-    println!("{:?}", get_executable_directory());
+    // println!("{:?}", get_current_working_dir_absolute());
     // 加载主配置
     let main_config = load_main_config();
     let app_window = Some(Window {
@@ -100,14 +100,20 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 // 加载主配置文件
 fn load_main_config() -> MainConfig {
-    let yaml_str = fs::read_to_string("assets/main.yaml")
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let yaml_path = PathBuf::from(base_path).join("assets/main.yaml");
+    println!("完整的路径有: {:?}", yaml_path);
+    let yaml_str = fs::read_to_string(yaml_path)
         .expect("找不到配置文件 assets/main.yaml");
     serde_yaml::from_str(&yaml_str)
         .expect("YAML解析失败，请检查格式")
 }
 // 从YAML加载对话数据，应用变量替换
 fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
-    let yaml_str = fs::read_to_string("assets/dialogues.yaml")
+    let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let yaml_path = PathBuf::from(base_path).join("assets/dialogues.yaml");
+    println!("完整的路径有: {:?}", yaml_path);
+    let yaml_str = fs::read_to_string(yaml_path)
         .expect("找不到对话文件 assets/dialogues.yaml");
     
     // 对YAML字符串进行变量替换
@@ -446,14 +452,21 @@ fn debug_print<T: std::fmt::Debug>(label: &str, value: &T) {
     println!("{} = {:#?}", label, value);
 }
 // 专有工具函数，返回程序所读取的目录
-pub fn get_executable_directory() -> Result<String, Box<dyn std::error::Error>> {
-    // 获取当前可执行文件路径
-    let mut path = env::current_exe()?;
+// pub fn get_executable_directory() -> Result<String, Box<dyn std::error::Error>> {
+//     // 获取当前可执行文件路径
+//     let mut path = env::current_exe()?;
     
-    // 移除可执行文件名，保留目录路径
-    path.pop();
+//     // 移除可执行文件名，保留目录路径
+//     path.pop();
     
-    // 将路径转换为字符串（自动处理非法UTF-8字符）
-    Ok(path.to_string_lossy().into_owned())
+//     // 将路径转换为字符串（自动处理非法UTF-8字符）
+//     Ok(path.to_string_lossy().into_owned())
 
+// }
+fn get_current_working_dir_absolute() -> String {
+    env::current_dir() // 直接返回绝对路径
+        .expect("Failed to get current directory")
+        .to_str()
+        .expect("Path is not valid UTF-8")
+        .to_string()
 }
