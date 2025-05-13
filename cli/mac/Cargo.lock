@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "Raven-mac-cli"
+name = "Raven-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
