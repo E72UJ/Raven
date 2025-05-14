@@ -4,7 +4,7 @@
     portrait: "protagonist"
 
   - character: "黛安娜"
-    text: "安全协议失效了！备用能源仅剩12%，优先保存哪部分记忆晶体？"
+    text: "Raven是一个使用rust编写的视觉小说引擎，它拥有两个开发模式"
     portrait: "protagonist"
 
   - character: "黛安娜"
