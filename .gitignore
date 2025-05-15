@@ -2,9 +2,4 @@
 
 */.DS_Store
 
-cli/mac/target/debug/
-
-cli/mac/target/
-
-cli/win/target/
-.DS_Store
+cli/**/target
