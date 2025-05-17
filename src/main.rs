@@ -4,6 +4,11 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
+use bevy::{
+    color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
+    winit::WinitSettings,
+};
+
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 
 
@@ -160,6 +165,7 @@ fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
 // 初始化游戏的状态
 fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
     commands.spawn(Camera2d);
+
     commands.insert_resource(GameState {
         current_line: 0,
         dialogues: load_dialogues(&config),
@@ -213,6 +219,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
+    
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
