@@ -5,5 +5,16 @@ edition = "2024"
 
 [dependencies]
 bevy = "0.16" # 使用最新稳定版
+bevy_svg = "0.16.0-rc1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
+copyless = "0.1"
+
+lyon_geom = "1.0"
+lyon_tessellation = "1.0"
+lyon_path = "1.0"
+usvg = "0.45"
+svgtypes = "0.15"
+
+anyhow = "1.0"
+thiserror = "2.0"

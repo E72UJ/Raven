@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_svg::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
@@ -97,12 +98,13 @@ fn main() {
             ..default()
         }))
         .insert_resource(main_config) // 将配置作为资源插入
+        .add_plugins(bevy_svg::prelude::SvgPlugin)
         // 设置背景清除颜色
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,svgload))
         .run();
 }
 
@@ -476,3 +478,17 @@ fn get_current_working_dir_absolute() -> String {
         .expect("Path is not valid UTF-8")
         .to_string()
 }
+// fn svgload(
+//     mut commands: Commands,
+//     asset_server: Res<AssetServer>,
+// ) {
+//     let svg = asset_server.load("characters/svg/long.svg");
+//     commands.spawn((
+//         Svg2d(svg),
+//         Origin::Center, // Origin::TopLeft is the default
+//         Transform {
+//             scale: Vec3::new(1.0, 1.0, 1.0),
+//             ..Default::default()
+//         }
+//     ));
+// }
