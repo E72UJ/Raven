@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_svg::prelude::*;
+// use bevy_svg::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
@@ -9,6 +9,7 @@ use bevy::{
     color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
     winit::WinitSettings,
 };
+use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
 
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 
@@ -97,14 +98,18 @@ fn main() {
             primary_window: app_window,
             ..default()
         }))
+        // 插入插件
+        .add_plugins((
+            FlashPlugin,
+        ))
         .insert_resource(main_config) // 将配置作为资源插入
-        .add_plugins(bevy_svg::prelude::SvgPlugin)
+        // .add_plugins(bevy_svg::prelude::SvgPlugin)
         // 设置背景清除颜色
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation))
         .run();
 }
 
@@ -221,7 +226,14 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
-    
+    commands.spawn((
+        Name::new("svgload"),
+        FlashAnimation {
+            // name:"a1",
+            swf: asset_server.load("svg/66.swf"),
+        },
+        Transform::from_translation(Vec3::new(-200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
+    ));
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
@@ -492,3 +504,20 @@ fn get_current_working_dir_absolute() -> String {
 //         }
 //     ));
 // }
+// 动画控制
+fn flash_animation(
+    mut flashes: ResMut<Assets<FlashAnimationSwfData>>,
+    mut flash_swf_data_events: EventReader<AssetEvent<FlashAnimationSwfData>>,
+) -> Result {
+    for event in flash_swf_data_events.read() {
+        if let AssetEvent::LoadedWithDependencies { id } = event {
+            let flash = flashes.get_mut(*id).unwrap();
+            flash.player.set_on_completion(Box::new(|player| {
+                player.set_play_animation("default", false).unwrap();
+            }));
+
+            flash.player.set_play_animation("default", true)?;
+        }
+    }
+    Ok(())
+}

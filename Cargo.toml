@@ -2,19 +2,43 @@
 name = "Raven"
 version = "0.1.0"
 edition = "2024"
-
+authors = ["Furau"]
+license = "MIT OR Apache-2.0"
 [dependencies]
-bevy = "0.16" # 使用最新稳定版
-bevy_svg = "0.16.0-rc1"
-serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9"
-copyless = "0.1"
+# bevy = { version = "0.16", path = "../crates/bevy", default-features = false, features = [
+#     "bevy_asset",
+#     "bevy_sprite",
+#     "bevy_svg",
+#     "bevy_dev_tools"
+# ] }
+bevy_flash = { path = "crates/bevy_flash" }  # 路径指向本地crate目录
+bevy = { path = "crates/bevy", features = ["bevy_dev_tools"] }
+# bevy_svg = "0.16.0-rc1"
+
 
 lyon_geom = "1.0"
 lyon_tessellation = "1.0"
 lyon_path = "1.0"
 usvg = "0.45"
 svgtypes = "0.15"
+# 公共工具库
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+smallvec = { version = "1.14.0", features = ["union"] }
+copyless = "0.1.5"
+uuid = "1.10"
+enum-map = "2.7.3"
 
-anyhow = "1.0"
+# 错误处理
 thiserror = "2.0"
+anyhow = "1.0"
+
+# 专有flash依赖
+# swf_macro = { path = "./crates/swf_macro" }
+swf = "0.2"
+
+bitflags = "2.5"
+bytemuck = { version = "1.21.0", features = ["derive"] }
+
+[profile.dev]
+opt-level = 1
