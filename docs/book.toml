@@ -1,5 +1,5 @@
 [book]
-title = "Raven视觉小说引擎文档"
+title = "Raven引擎源码手册"
 authors = ["Furau"]
 language = "zh"
 src = "src"

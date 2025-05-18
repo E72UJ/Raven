@@ -5,7 +5,7 @@ title: "Raven Engine V0.1"
 assets:
   # 角色立绘
   characters:
-    # protagonist: "characters/protagonist"
+    protagonist: "characters/protagonist"
     heroine: "characters/heroine"
     villain: "characters/villain"
   

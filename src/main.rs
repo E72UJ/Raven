@@ -104,7 +104,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,svgload))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait))
         .run();
 }
 
