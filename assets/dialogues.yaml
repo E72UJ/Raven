@@ -22,9 +22,3 @@
         goto: 205
       - text: "启动紧急协议"
         goto: 206
-
-  - character: "暗影"
-    text: "当你们凝视深渊时，三十万光年外的硅基文明正透过你们的视网膜解码地球坐标"
-    portrait: "villain"
-    effect: "distortion"
-    persistent: true  # 常驻显示标志
