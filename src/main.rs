@@ -232,7 +232,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             // name:"a1",
             swf: asset_server.load("svg/66.swf"),
         },
-        Transform::from_translation(Vec3::new(-200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
+        Transform::from_translation(Vec3::new(-200.0, 100.0, 0.0)).with_scale(Vec3::splat(2.0)),
     ));
     commands.spawn((
         Name::new("spritebox"),
