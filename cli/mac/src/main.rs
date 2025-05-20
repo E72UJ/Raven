@@ -14,7 +14,8 @@ fn main() {
 
 #[derive(Parser)]
 #[command(name = "raven-mac-cli")]
-#[command(about = "视觉小说项目的命令行工具 mac 版本")]
+#[command(about = "视觉小说项目的命令行工具 mac 版本 
+Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引擎，专注于为开发者提供简洁高效的叙事工具链。")]
 #[command(version = "1.0")]
 // #[command(
 //     long_about = r"  ____                                 
