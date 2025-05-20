@@ -3,14 +3,14 @@ use std::fs;
 use std::path::Path;
 
 // 嵌入所有资源文件
-const EMBEDDED_FONT_FIRA_MONO: &[u8] = include_bytes!("../assets/fonts/FiraMono-Medium.ttf");
-const EMBEDDED_FONT_GENSEN_MARU: &[u8] = include_bytes!("../assets/fonts/GenSenMaruGothicTW-Bold.ttf");
-const EMBEDDED_RAVEN_EXE: &[u8] = include_bytes!("../assets/Raven.exe");
-const EMBEDDED_PORTRAIT_ALICE: &[u8] = include_bytes!("../assets/portraits/alice.png");
-const EMBEDDED_PORTRAIT_BOB: &[u8] = include_bytes!("../assets/portraits/bob.png");
-const EMBEDDED_PORTRAIT_NARRATOR: &[u8] = include_bytes!("../assets/portraits/narrator.png");
-const EMBEDDED_MAIN_YAML: &[u8] = include_bytes!("../assets/configs/main.yaml");
-const EMBEDDED_DIALOGUES_YAML: &[u8] = include_bytes!("../assets/configs/dialogues.yaml");
+const EMBEDDED_FONT_FIRA_MONO: &[u8] = include_bytes!("../../crates/assets/fonts/FiraMono-Medium.ttf");
+const EMBEDDED_FONT_GENSEN_MARU: &[u8] = include_bytes!("../../crates/assets/fonts/GenSenMaruGothicTW-Bold.ttf");
+const EMBEDDED_RAVEN_EXE: &[u8] = include_bytes!("../../crates/assets/Raven.exe");
+const EMBEDDED_PORTRAIT_ALICE: &[u8] = include_bytes!("../../crates/assets/portraits/alice.png");
+const EMBEDDED_PORTRAIT_BOB: &[u8] = include_bytes!("../../crates/assets/portraits/bob.png");
+const EMBEDDED_PORTRAIT_NARRATOR: &[u8] = include_bytes!("../../crates/assets/portraits/narrator.png");
+const EMBEDDED_MAIN_YAML: &[u8] = include_bytes!("../../crates/assets/main.yaml");
+const EMBEDDED_DIALOGUES_YAML: &[u8] = include_bytes!("../../crates/assets/dialogues.yaml");
 
 #[derive(Parser)]
 

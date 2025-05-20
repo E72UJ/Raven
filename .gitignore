@@ -5,3 +5,5 @@
 cli/**/target
 
 /crates
+
+cli/crates/
