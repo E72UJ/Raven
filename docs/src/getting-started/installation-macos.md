@@ -10,13 +10,14 @@ cargo run
 ```
 
 ## 安装插件库
-bevy
-bevy_flash
-flash_runtime
-swf_animation-main
-swf_macro
+- bevy
+- bevy_flash
+- flash_runtime
+- swf_animation-main
+- swf_macro
 
 ## 依赖配置列表
+**Raven/crates/bevy_flash/Cargo.toml**
 ```
 [package]
 name = "bevy_flash"
