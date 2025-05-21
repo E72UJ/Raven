@@ -127,14 +127,18 @@ fn load_main_config() -> MainConfig {
     let yaml_path = base_path.join("assets/main.yaml");
     println!("完整的路径有: {:?}", yaml_path);
     let yaml_str = fs::read_to_string(yaml_path).expect("找不到配置文件 assets/main.yaml");
+
     serde_yaml::from_str(&yaml_str).expect("YAML解析失败，请检查格式")
 }
 // 从YAML加载对话数据，应用变量替换
 fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
     let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let yaml_path = base_path.join("assets/dialogues.yaml");
-    println!("完整的路径有: {:?}", yaml_path);
-    let yaml_str = fs::read_to_string(yaml_path).expect("找不到对话文件 assets/dialogues.yaml");
+    let exe_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
+    println!("相对的对话路径有: {:?}", exe_dir.join("assets/dialogues.yaml"));
+    // let yaml_path = base_path.join("assets/dialogues.yaml");
+    let yaml_path2 = exe_dir.join("assets/dialogues.yaml");
+    // println!("完整的路径有: {:?}", yaml_path);
+    let yaml_str = fs::read_to_string(yaml_path2).expect("找不到对话文件 assets/dialogues.yaml");
 
     // 对YAML字符串进行变量替换
     let mut processed_yaml = yaml_str.clone();
