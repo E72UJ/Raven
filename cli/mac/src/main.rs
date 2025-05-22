@@ -35,6 +35,7 @@ const EMBEDDED_SWF_66: &[u8] = include_bytes!("../../crates/assets/swf/66.swf");
  编译设备:M4 Pro
  作者:Furau
  最后更新时间:2025年5月21日
+ 版本号:0.1
 "#)]
 struct Cli {
     #[command(subcommand)]
