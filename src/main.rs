@@ -82,7 +82,8 @@ struct Portrait;
 // 定义音频句柄资源
 #[derive(Resource)]
 struct ClickSound(Handle<AudioSource>);
-
+#[derive(Resource)]
+struct BackClickSound(Handle<AudioSource>);
 #[derive(Debug, Resource)] // 添加此行
 struct PortraitAssets {
     handles: HashMap<String, Handle<Image>>,
@@ -120,7 +121,7 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,play_background_audio))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
         .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,))
         .run();
 }
@@ -388,6 +389,7 @@ fn handle_input(
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
     click_sound: Res<ClickSound>, // 引入音频句柄
+    back_sound: Res<BackClickSound>,
     music_controller: Query<&AudioSink, With<MyMusic>>,
     // audio: Res<Audio>,
     mut commands: Commands,
@@ -403,7 +405,7 @@ fn handle_input(
         // 播放点击音效
         // play_background_audio("button.ogg")
         play_sound(&click_sound.0,commands);
-        println!("音效触发: {:?}", click_sound.0.id());
+        println!("下一个音效触发: {:?}", click_sound.0.id());
             // let sink = music_controller.single();
             // sink.toggle_playback();
         
@@ -421,6 +423,7 @@ fn handle_input(
     // 返回上一页
     if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
         game_state.current_line -= 1;
+        // play_sound(&back_sound.0);
         if game_state.current_line == 0 {
             game_state.can_go_back = false; // 回到开始时不能再返回
         }
@@ -553,15 +556,18 @@ fn flash_animation(
 }
 // 音效加载系统
 // 在初始化时加载音效
-// fn load_audio_resources(
-//     mut commands: Commands,
-//     asset_server: Res<AssetServer>,
-//     config: Res<MainConfig>,
-// ) {
-//     let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
-//     // let click_sound_handle = asset_server.load("button.ogg");
-//     commands.insert_resource(ClickSound(click_sound_handle));
-// }
+fn load_audio_resources(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+    let backclick_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+    // let click_sound_handle = asset_server.load("button.ogg");
+    // 将向下页面的音效启动
+    commands.insert_resource(ClickSound(click_sound_handle));
+    commands.insert_resource(BackClickSound(backclick_sound_handle));
+}
 // fn play_background_audio(
 //     asset_server: Res<AssetServer>, 
 //     mut commands: Commands
