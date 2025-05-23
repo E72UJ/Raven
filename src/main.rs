@@ -1,10 +1,13 @@
 use bevy::prelude::*;
+
 // use bevy_svg::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
+use bevy::audio::{ AudioPlugin, PlaybackSettings};
 use std::path::PathBuf;
+// 正确的导入方式
 use bevy::{
     color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
     winit::WinitSettings,
@@ -44,6 +47,7 @@ struct AssetPaths {
 struct AudioPaths {
     bgm: HashMap<String, String>,
     sfx: HashMap<String, String>,
+    click_sound: String, // 新增音效路径
 }
 // 游戏设置结构体
 #[derive(Debug, Deserialize)]
@@ -73,11 +77,19 @@ struct GameState {
 struct Portrait;
 
 // 立绘资源句柄
-#[derive(Debug, Resource)]
+// #[derive(Debug, Resource)]
+
+// 定义音频句柄资源
+#[derive(Resource)]
+struct ClickSound(Handle<AudioSource>);
+
+#[derive(Debug, Resource)] // 添加此行
 struct PortraitAssets {
     handles: HashMap<String, Handle<Image>>,
 }
-
+// 音频控制
+#[derive(Component)]
+struct MyMusic;
 fn main() {
     // println!("{:?}", get_current_working_dir_absolute());
     // 加载主配置
@@ -108,8 +120,8 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,play_background_audio))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,))
         .run();
 }
 
@@ -375,6 +387,8 @@ fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Tex
 fn handle_input(
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
+    click_sound: Res<ClickSound>, // 引入音频句柄
+    // audio: Res<Audio>,
     mut game_state: ResMut<GameState>,
 ) {
     let click = keys.just_pressed(KeyCode::Space)
@@ -384,6 +398,10 @@ fn handle_input(
     if click && game_state.current_line < game_state.dialogues.len() {
         game_state.current_line += 1;
         game_state.can_go_back = true; // 前进后可以返回
+        // 播放点击音效
+        // play_background_audio("button.ogg")
+        println!("音效句柄: {:?}", click_sound.0.id());
+        
     }
     let back_pressed =
         keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
@@ -525,3 +543,24 @@ fn flash_animation(
     }
     Ok(())
 }
+// 音效加载系统
+// 在初始化时加载音效
+fn load_audio_resources(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+    // let click_sound_handle = asset_server.load("button.ogg");
+    commands.insert_resource(ClickSound(click_sound_handle));
+}
+fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
+    commands.spawn((
+        AudioPlayer::new(asset_server.load("button.ogg")),
+        PlaybackSettings::ONCE,
+    ));
+}
+// 预加载系统
+// fn preload_sounds(asset_server: Res<AssetServer>) {
+//     asset_server.load::<AudioSource>("button.ogg");
+// }
