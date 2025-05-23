@@ -13,7 +13,7 @@ use bevy::{
     winit::WinitSettings,
 };
 use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
-
+use bevy::{audio::Volume, math::ops, prelude::*};
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 
 
@@ -388,7 +388,9 @@ fn handle_input(
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
     click_sound: Res<ClickSound>, // 引入音频句柄
+    music_controller: Query<&AudioSink, With<MyMusic>>,
     // audio: Res<Audio>,
+    mut commands: Commands,
     mut game_state: ResMut<GameState>,
 ) {
     let click = keys.just_pressed(KeyCode::Space)
@@ -400,7 +402,13 @@ fn handle_input(
         game_state.can_go_back = true; // 前进后可以返回
         // 播放点击音效
         // play_background_audio("button.ogg")
-        println!("音效句柄: {:?}", click_sound.0.id());
+        play_sound(&click_sound.0,commands);
+        println!("音效触发: {:?}", click_sound.0.id());
+            // let sink = music_controller.single();
+            // sink.toggle_playback();
+        
+
+        // 结束
         
     }
     let back_pressed =
@@ -545,18 +553,31 @@ fn flash_animation(
 }
 // 音效加载系统
 // 在初始化时加载音效
-fn load_audio_resources(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    config: Res<MainConfig>,
-) {
-    let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
-    // let click_sound_handle = asset_server.load("button.ogg");
-    commands.insert_resource(ClickSound(click_sound_handle));
-}
-fn play_background_audio(asset_server: Res<AssetServer>, mut commands: Commands) {
+// fn load_audio_resources(
+//     mut commands: Commands,
+//     asset_server: Res<AssetServer>,
+//     config: Res<MainConfig>,
+// ) {
+//     let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+//     // let click_sound_handle = asset_server.load("button.ogg");
+//     commands.insert_resource(ClickSound(click_sound_handle));
+// }
+// fn play_background_audio(
+//     asset_server: Res<AssetServer>, 
+//     mut commands: Commands
+// ) {
+//     commands.spawn((
+//         AudioPlayer::new(asset_server.load("button.ogg")),
+//         // PlaybackSettings::ONCE,
+//     ));
+// }
+// 播放音效的函数
+fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
+    // 这里可以根据需要创建一个新的 AudioPlayer 实例并播放音频
+    // 你可以在这里设置 PlaybackSettings，也可以选择一次性播放或循环播放
+    // 在这里创建音频播放器
     commands.spawn((
-        AudioPlayer::new(asset_server.load("button.ogg")),
+        AudioPlayer::new(audio_handle.clone()),
         PlaybackSettings::ONCE,
     ));
 }
