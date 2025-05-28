@@ -1,5 +1,5 @@
 # 什么是Raven引擎
-<a href="https://imgse.com/i/pERffsK"><img width="60%" src="https://s21.ax1x.com/2025/04/12/pERffsK.md.png" alt="pERffsK.png" border="0" /></a>
+<img src="https://imgs.freeimg.cn/s/68309e7895514.png" width="500" alt="logo">
 
 Raven 是一款基于 Rust 语言开发的现代化视觉小说/文字冒险游戏引擎，专注于为开发者提供简洁高效的叙事工具链。凭借 Rust 的内存安全性与高性能特性，Raven 能够流畅运行于多平台，同时通过声明式脚本语法和模块化设计，大幅降低视觉小说的开发门槛。
 
@@ -12,6 +12,8 @@ Raven 是一款基于 Rust 语言开发的现代化视觉小说/文字冒险游�
     <i class="fab fa-github"></i> https://github.com/e72uj/Raven
 </a>
 
+## 联络我们
+🐧群:818497392
 ## 稳定性警告
 
 ⚠️ **注意**：当前项目处于早期开发阶段，API 会有重大变更，不建议在生产环境中使用。
