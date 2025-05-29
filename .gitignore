@@ -7,3 +7,7 @@ cli/**/target
 /crates
 
 cli/crates/
+
+cli/crates.zip
+
+crates.zip

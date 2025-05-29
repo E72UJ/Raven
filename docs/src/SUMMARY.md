@@ -1,7 +1,7 @@
 # Raven引擎源码手册
 - [Raven引擎源码编译手册](./overview/what-is-raven.md)
 - [系统要求](./overview/system-requirements.md)
-- [术语对照表](./overview/vn_engine_glossary.md)
+- [开发环境配置](./overview/rust-installation.md)
 # 编译手册
 - [编译程序](./getting-started/installation.md)
   - [编译依赖包](./getting-started/compile-dependencies.md)
