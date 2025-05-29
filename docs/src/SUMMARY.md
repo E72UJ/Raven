@@ -13,4 +13,5 @@
   - [工作流程](./getting-started/workflow.md)
 - [目录结构](./getting-started/directory-structure.md)
 - [资产文件结构](./getting-started/assets.md)
-## 测试AST
+## 附录
+- [常用命令](./cmd/cmd.md)
