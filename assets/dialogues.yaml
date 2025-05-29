@@ -1,12 +1,13 @@
 
-  - character: "svg test"
-    id: 1
+  - character: "svg test2"
+    label: "one"
     text: "你好，欢迎使用Raven Engine V0.1"
     portrait: "protagonist"
 
   - character: "黛安娜"
     text: "Raven是一个使用rust编写的视觉小说引擎，它拥有两个开发模式"
     portrait: "protagonist"
+    jump: "one"
     
 
   - character: "黛安娜（立绘2）"
@@ -18,11 +19,12 @@
   - character: "黛安娜"
     text: "它的文本文件和配置都是基于yaml的配置文件"
     portrait: "protagonist"
+
   - character: "黛安娜"
     text: "它尽量的兼顾性能和轻量"
     portrait: "protagonist"
     choices:  # 分支对话选项
       - text: "继续解析数据"
-        goto: 205
+        jump: "one"
       - text: "启动紧急协议"
         goto: 206
