@@ -97,6 +97,12 @@ fn main() {
     let main_config = load_main_config();
     let app_window = Some(Window {
         title: main_config.title.clone(),
+        name: Some("raven.app".into()),
+        resizable: false,
+        enabled_buttons: bevy::window::EnabledButtons {
+            maximize: false,
+            ..Default::default()
+        },
         // 从配置文件读取分辨率
         resolution: (
             main_config.settings.resolution[0] as f32,
