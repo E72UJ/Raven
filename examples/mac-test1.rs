@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 // use bevy_svg::prelude::*;
 use serde::Deserialize;
+use serde_yaml::with;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -19,7 +20,7 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 
 // 按钮组颜色表格
 
-const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
+const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
@@ -122,7 +123,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system))
         .run();
 }
 
@@ -230,7 +231,23 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
 }
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
     // debug_print("var2",&asset_server);
-    // 立绘容器
+    // 点击区域容器
+    let mut click_area_entity = commands
+        .spawn((
+            Name::new("click_area"),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                bottom: Val::Px(50.0),
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+            GlobalZIndex(99),
+            Interaction::None,
+            Visibility::Visible,
+        ))
+        .id();
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
@@ -263,6 +280,30 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         },
         Visibility::Hidden,
     ));
+    // 按钮组导航
+    commands
+    .spawn((
+                    Node {
+                        position_type: PositionType::Absolute,
+                        width: Val::Percent(100.0),
+                        height: Val::Percent(10.0),
+                        bottom: Val::Px(-10.0),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::SpaceEvenly,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    GlobalZIndex(3),
+                ))
+                .with_children(|parent| {
+                    // 创建所有导航按钮
+                    let nav_items = vec!["主菜单", "保存", "读取", "设置", "历史", "跳过", "自动"];
+                    
+                    for item in nav_items {
+                        create_nav_button(parent, &asset_server, item);
+                    }
+                });
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -285,6 +326,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
+            
             // 对话框背景颜色
             BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
             // AnimatedText,
@@ -308,7 +350,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 },
                 // 其他你需要的组件
             ));
+
         });
+        
     commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
@@ -339,17 +383,17 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         GlobalZIndex(2),
         // AnimatedText,
     ));
-    // 点击区域
-    // 立绘容器
+    // 
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
+            bottom: Val::Px(50.0),
             position_type: PositionType::Absolute,
             ..default()
         },
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
-        GlobalZIndex(5),
+        GlobalZIndex(2),
         // Portrait,
     ));
 }
@@ -383,9 +427,12 @@ fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Tex
         }
     }
 }
-
 // 输入处理系统
 fn handle_input(
+    // 点击区域捕捉
+    mut interaction_query: Query<(&mut Interaction, &Node, &Name), With<Name>>,
+    
+
     keys: Res<ButtonInput<KeyCode>>,
     mouse: Res<ButtonInput<MouseButton>>,
     click_sound: Res<ClickSound>, // 引入音频句柄
@@ -395,6 +442,8 @@ fn handle_input(
     mut commands: Commands,
     mut game_state: ResMut<GameState>,
 ) {
+    // 输入事件判断
+    // debug_print("interaction_query", &interaction_query);
     let click = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left);
@@ -591,3 +640,67 @@ fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
 // fn preload_sounds(asset_server: Res<AssetServer>) {
 //     asset_server.load::<AudioSource>("button.ogg");
 // }
+fn create_nav_button(
+    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
+    asset_server: &Res<AssetServer>,
+    label: &str,
+) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                width: Val::Px(80.0),
+                height: Val::Px(40.0),
+                border: UiRect::all(Val::Px(1.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BorderColor(Color::BLACK),
+            BorderRadius::all(Val::Px(5.0)),
+            // BackgroundColor(NORMAL_BUTTON),
+            Name::new(label.to_string()),
+        ))
+        .with_child((
+            Text::new(label),
+            TextFont {
+                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+        ));
+}
+// 按钮系统
+fn button_system(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Children,
+            &Name,
+        ),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut text_query: Query<&mut Text>,
+) {
+    for (interaction, mut color, mut border_color, children, name) in &mut interaction_query {
+        let _text = text_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::Pressed => {
+                *color = PRESSED_BUTTON.into();
+                border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
+                println!("按下了: {}", name.as_str());
+            }
+            Interaction::Hovered => {
+                *color = HOVERED_BUTTON.into();
+                border_color.0 = Color::WHITE;
+            }
+            Interaction::None => {
+                *color = NORMAL_BUTTON.into();
+                border_color.0 = Color::BLACK;
+            }
+        }
+    }
+}

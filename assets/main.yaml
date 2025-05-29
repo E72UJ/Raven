@@ -40,7 +40,7 @@ settings:
   text_speed: 50          # 文本显示速度
   auto_save: true         # 自动保存功能
   resolution: [1200, 660] # 游戏分辨率
-  resolution: [1200, 660] # 游戏分辨率
+  : [1200, 660] # 游戏分辨率
   
 # 其他全局配置
 global_variables:
