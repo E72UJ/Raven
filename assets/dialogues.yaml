@@ -1,11 +1,14 @@
 
   - character: "svg test"
+    id: 1
     text: "你好，欢迎使用Raven Engine V0.1"
     portrait: "protagonist"
 
   - character: "黛安娜"
     text: "Raven是一个使用rust编写的视觉小说引擎，它拥有两个开发模式"
     portrait: "protagonist"
+    
+
   - character: "黛安娜（立绘2）"
     text: "既可以使用yaml来写配置和主文本也可以使用专有DSL来实现抽象逻辑"
     portrait: "villain"
