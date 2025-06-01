@@ -247,7 +247,12 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             Interaction::None,
             Visibility::Visible,
         ))
-        .id();
+        .with_children(|parent| {
+                        // create_nav_button2(parent, &asset_server, "分支1");
+                        create_nav_button2(parent, &asset_server, "分支1");
+                        create_nav_button3(parent, &asset_server, "分支2");
+                });
+        // .id();
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
@@ -303,6 +308,8 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                     for item in nav_items {
                         create_nav_button(parent, &asset_server, item);
                     }
+                        // create_nav_button2(parent, &asset_server, "分支1");
+                        // create_nav_button2(parent, &asset_server, "分支2");
                 });
     commands
         .spawn((
@@ -650,6 +657,75 @@ fn create_nav_button(
             Button,
             Node {
                 width: Val::Px(80.0),
+                height: Val::Px(40.0),
+                border: UiRect::all(Val::Px(1.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BorderColor(Color::BLACK),
+            BorderRadius::all(Val::Px(5.0)),
+            // BackgroundColor(NORMAL_BUTTON),
+            Name::new(label.to_string()),
+        ))
+        .with_child((
+            Text::new(label),
+            TextFont {
+                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+        ));
+}
+
+fn create_nav_button2(
+    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
+    asset_server: &Res<AssetServer>,
+    label: &str,
+) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(360.0),
+                left: Val::Px(360.0),
+                width: Val::Px(450.0),
+                height: Val::Px(40.0),
+                border: UiRect::all(Val::Px(1.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            BorderColor(Color::BLACK),
+            BorderRadius::all(Val::Px(5.0)),
+            // BackgroundColor(NORMAL_BUTTON),
+            Name::new(label.to_string()),
+        ))
+        .with_child((
+            Text::new(label),
+            TextFont {
+                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+        ));
+}
+fn create_nav_button3(
+    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
+    asset_server: &Res<AssetServer>,
+    label: &str,
+) {
+    parent
+        .spawn((
+            Button,
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(420.0),
+                left: Val::Px(360.0),
+                width: Val::Px(450.0),
                 height: Val::Px(40.0),
                 border: UiRect::all(Val::Px(1.0)),
                 justify_content: JustifyContent::Center,
