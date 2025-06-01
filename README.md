@@ -1,6 +1,6 @@
 # Raven Engine
 
-<img src="https://s21.ax1x.com/2025/04/12/pERffsK.png" width="200" alt="logo">
+<img src="https://imgs.freeimg.cn/s/68309e7895514.png" width="200" alt="logo">
 
 ## Raven Engine：轻量 Rust 视觉小说引擎
 
