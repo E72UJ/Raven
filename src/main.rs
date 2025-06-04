@@ -253,8 +253,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/66.swf"),
+            swf: asset_server.load("swf/66.swf")
         },
+        // Transform::default().with_scale(Vec3::ZERO),
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
     ));
     commands.spawn((
