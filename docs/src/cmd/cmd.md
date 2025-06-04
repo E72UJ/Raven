@@ -15,3 +15,8 @@ irm https://sh.rustup.rs -UseBasicParsing | iex
 ```
 cargo build --release
 ```
+
+### 执行案例程序
+```
+cargo run --example goto
+```
