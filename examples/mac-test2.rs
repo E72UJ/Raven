@@ -363,11 +363,19 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
 
 // 更新对话文本
 fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Text)>) {
+    // if let Some(dialogue) = game_state.dialogues.get(1) {
+    //     println!("{}", dialogue);
+    // } else {
+    //     println!("No dialogue at index 1.");
+    // }
     match game_state.dialogues.get(game_state.current_line) {
+        
         Some(dialogue) => {
             for (name, mut text) in &mut query {
                 // 比较方式1：转换为字符串切片
+                
                 if name.as_str() == "namebox" {
+                    // println!("namebox 获取 {}",dialogue.character);
                     text.0 = dialogue.character.to_string();
                 }
                 if name.as_str() == "textbox" {
