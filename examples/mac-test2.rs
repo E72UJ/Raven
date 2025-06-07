@@ -138,7 +138,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump))
         .run();
 }
 
@@ -477,8 +477,17 @@ fn handle_input(
         || mouse.just_pressed(MouseButton::Left);
 
     if click && game_state.current_line < game_state.dialogues.len() {
-        game_state.current_line += 1;
-        game_state.can_go_back = true; // 前进后可以返回
+        let current_dialogue = &game_state.dialogues[game_state.current_line];
+        
+        // 检查是否有跳转指令
+        if let Some(jump_label) = &current_dialogue.jump {
+            game_state.jump_label = Some(jump_label.clone());
+        } else {
+            // 没有跳转指令则前进到下一行
+            game_state.current_line += 1;
+        }
+        
+        game_state.can_go_back = true;
         // 播放点击音效
         // play_background_audio("button.ogg")
         play_sound(&click_sound.0,commands);
@@ -665,6 +674,21 @@ fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
         PlaybackSettings::ONCE,
     ));
 }
+fn apply_jump(
+    label_map: Res<LabelMap>,
+    mut game_state: ResMut<GameState>,
+) {
+    if let Some(jump_label) = game_state.jump_label.take() {
+        if let Some(&target_line) = label_map.0.get(&jump_label) {
+            println!("执行跳转: {} → {}", game_state.current_line, target_line);
+            game_state.current_line = target_line;
+            game_state.can_go_back = true;
+        } else {
+            eprintln!("错误: 找不到标签 '{}' 的跳转目标", jump_label);
+        }
+    }
+}
+
 // 预加载系统
 // fn preload_sounds(asset_server: Res<AssetServer>) {
 //     asset_server.load::<AudioSource>("button.ogg");
