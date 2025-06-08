@@ -260,6 +260,22 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     // debug_print("var2",&asset_server);
     // 立绘容器
     commands.spawn((
+        Name::new("sidebox"),
+
+        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+        // Transform::from_xyz(2.0, 1.0, 0.0),
+        // Sprite::sized(Vec2::new(75., 75.)),
+        Transform::from_translation(Vec3::new(100.0, 50.0, 0.0)),
+        Sprite {
+            image: asset_server.load("characters/protagonist/02.png"),
+            custom_size: Some(Vec2 { x: 578.4, y: 476.8 }),
+            ..default()
+        },
+        // Visibility::Hidden,
+        GlobalZIndex(9999),
+        ZIndex(999),
+    ));
+    commands.spawn((
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
@@ -275,7 +291,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/66.swf")
+            swf: asset_server.load("swf/61.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
@@ -290,8 +306,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
             ..default()
         },
-        Visibility::Hidden,
+        // Visibility::Hidden,
     ));
+
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
