@@ -57,6 +57,11 @@ struct GameSettings {
     auto_save: bool,
     resolution: Vec<u32>,
 }
+// 标签映射资源
+// #[derive(Debug, Resource)]
+// struct LabelMap(HashMap<String, usize>);
+#[derive(Debug, Resource)]
+struct LabelMap(HashMap<String, usize>);  // 标签 -> 行索引的映射
 
 // 对话数据结构（支持YAML反序列化）
 #[derive(Debug, Deserialize)]
@@ -64,6 +69,10 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    #[serde(default)] // 如果没有label字段，则为None
+    label: Option<String>,
+    #[serde(default)] // 如果没有jump字段，则为None
+    jump: Option<String>,
 }
 // 游戏状态资源
 #[derive(Debug, Resource)]
@@ -71,6 +80,7 @@ struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
     can_go_back: bool, // 添加标志位判断是否可以返回
+    jump_label: Option<String>, // 新增的跳转标签字段
 }
 // 立绘组件
 #[derive(Component)]
@@ -128,7 +138,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump))
         .run();
 }
 
@@ -195,12 +205,24 @@ fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
 // 初始化游戏的状态
 fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
     commands.spawn(Camera2d);
-
+    let dialogues: Vec<Dialogue> = load_dialogues(&config);
+    // 创建映射代码
+    // 创建标签映射
+    let mut label_map = HashMap::new();
+    for (index, dialogue) in dialogues.iter().enumerate() {
+        if let Some(label) = dialogue.label.as_ref() {  // 使用 as_ref() 获取引用
+            label_map.insert(label.clone(), index);
+        }
+    }
     commands.insert_resource(GameState {
         current_line: 0,
         dialogues: load_dialogues(&config),
         can_go_back: false, // 初始时不能返回
+        jump_label: None
     });
+    // println!("label_map: {:?}", label_map[1].jump);
+    commands.insert_resource(LabelMap(label_map));
+        // 插入标签映射资源
 }
 // 加载立绘资源 - 使用标准库的Path和PathBuf修改后的版本
 fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
@@ -362,31 +384,70 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
 }
 
 // 更新对话文本
-fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Text)>) {
-    match game_state.dialogues.get(game_state.current_line) {
-        Some(dialogue) => {
-            for (name, mut text) in &mut query {
-                // 比较方式1：转换为字符串切片
-                if name.as_str() == "namebox" {
-                    text.0 = dialogue.character.to_string();
-                }
-                if name.as_str() == "textbox" {
-                    text.0 = dialogue.text.to_string();
-                }
+fn update_dialogue(
+    mut game_state: ResMut<GameState>,
+    label_map: Res<LabelMap>,
+    mut query: Query<(&Name, &mut Text)>,
+) {
+    println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+    
+    // 1. 获取当前对话行（如果存在）
+    let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        dialogue
+    } else {
+        // 处理结束游戏状态
+        for (name, mut text) in &mut query {
+            if name.as_str() == "namebox" {
+                text.0 = "NULL".to_string();
             }
-            // println!("{}", format!("{}: {}", dialogue.character, dialogue.text));
+            if name.as_str() == "textbox" {
+                text.0 = "感谢体验，按下ESC退出".to_string();
+            }
         }
-        None => {
-            // println!("{:?}", dialogue);
-            for (name, mut text) in &mut query {
-                // 比较方式1：转换为字符串切片
-                if name.as_str() == "namebox" {
-                    text.0 = "NULL".to_string();
-                }
-                if name.as_str() == "textbox" {
-                    text.0 = "感谢体验，按下ESC退出".to_string();
-                }
-            }
+        println!("对话结束，当前行超出范围");
+        return;
+    };
+    
+    // 2. 显示当前对话内容
+    for (name, mut text) in &mut query {
+        if name.as_str() == "namebox" {
+            text.0 = current_dialogue.character.to_string();
+        }
+        if name.as_str() == "textbox" {
+            text.0 = current_dialogue.text.to_string();
+        }
+    }
+    
+    // 3. 打印调试信息（在显示之后）
+    println!(
+        "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
+        game_state.current_line,
+        current_dialogue.character,
+        current_dialogue.label,
+        current_dialogue.jump
+    );
+    
+    // 4. 处理跳转逻辑（在显示当前内容之后）
+    if let Some(jump_label) = &current_dialogue.jump {
+        // std::thread::sleep(std::time::Duration::from_millis(500));
+        println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
+        
+        if let Some(&new_line) = label_map.0.get(jump_label) {
+            println!("执行跳转: {} → {}", game_state.current_line, new_line);
+            println!(
+                "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
+                game_state.current_line,
+                current_dialogue.character,
+                current_dialogue.label,
+                current_dialogue.jump
+            );
+            // game_state.current_line = new_line;
+            // game_state.can_go_back = true;
+            
+            // 递归处理跳转（确保跳转后的内容也能显示）
+            // update_dialogue(game_state, label_map, query);
+        } else {
+            println!("错误: 找不到标签 '{}' 的跳转目标", jump_label);
         }
     }
 }
@@ -401,14 +462,32 @@ fn handle_input(
     // audio: Res<Audio>,
     mut commands: Commands,
     mut game_state: ResMut<GameState>,
+    label_map: Res<LabelMap>, // 添加LabelMap资源访问
 ) {
+    for key in keys.get_just_pressed() {
+        match key {
+            KeyCode::Digit0 => game_state.current_line = 0,
+            KeyCode::Digit1 => game_state.current_line = 1,
+            KeyCode::Digit2 => game_state.current_line = 2,
+            _ => {}
+        }
+    };
     let click = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left);
 
     if click && game_state.current_line < game_state.dialogues.len() {
-        game_state.current_line += 1;
-        game_state.can_go_back = true; // 前进后可以返回
+        let current_dialogue = &game_state.dialogues[game_state.current_line];
+        
+        // 检查是否有跳转指令
+        if let Some(jump_label) = &current_dialogue.jump {
+            game_state.jump_label = Some(jump_label.clone());
+        } else {
+            // 没有跳转指令则前进到下一行
+            game_state.current_line += 1;
+        }
+        
+        game_state.can_go_back = true;
         // 播放点击音效
         // play_background_audio("button.ogg")
         play_sound(&click_sound.0,commands);
@@ -477,6 +556,7 @@ fn update_portrait(
         if name.as_str() == "spritebox" {
             // 检查当前是否有对话
             if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+                // println!("数据测试,{}",game_state.current_line);
                 // 从资源映射中获取立绘路径
                 match portraits.handles.get(&dialogue.portrait) {
                     Some(handle) => {
@@ -594,6 +674,21 @@ fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
         PlaybackSettings::ONCE,
     ));
 }
+fn apply_jump(
+    label_map: Res<LabelMap>,
+    mut game_state: ResMut<GameState>,
+) {
+    if let Some(jump_label) = game_state.jump_label.take() {
+        if let Some(&target_line) = label_map.0.get(&jump_label) {
+            println!("执行跳转: {} → {}", game_state.current_line, target_line);
+            game_state.current_line = target_line;
+            game_state.can_go_back = true;
+        } else {
+            eprintln!("错误: 找不到标签 '{}' 的跳转目标", jump_label);
+        }
+    }
+}
+
 // 预加载系统
 // fn preload_sounds(asset_server: Res<AssetServer>) {
 //     asset_server.load::<AudioSource>("button.ogg");
