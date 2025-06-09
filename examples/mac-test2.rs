@@ -261,20 +261,53 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     // 立绘容器
     commands.spawn((
         Name::new("sidebox"),
-
+        
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
         // Transform::from_xyz(2.0, 1.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
-        Transform::from_translation(Vec3::new(100.0, 50.0, 0.0)),
-        Sprite {
-            image: asset_server.load("characters/protagonist/02.png"),
-            custom_size: Some(Vec2 { x: 578.4, y: 476.8 }),
+        // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
+        // // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
+        // Sprite {
+        //     image: asset_server.load("characters/protagonist/02.png"),
+        //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
+        //     ..default()
+        // },
+        Node {
+            
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            left: Val::Px(-200.0),
+            top: Val::Px(80.0),
+            position_type: PositionType::Absolute,
+            // align_items: AlignItems::Center,
+            // justify_content: JustifyContent::Center,
             ..default()
         },
         // Visibility::Hidden,
-        GlobalZIndex(9999),
-        ZIndex(999),
-    ));
+        GlobalZIndex(10000),
+        ZIndex(1200),
+    )).with_children(|parent| {
+            // 在这里创建子节点
+            parent.spawn((
+                Name::new("textbox"),
+                ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
+                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+                
+                // Name::new("child_element"),
+                // Text::new("子节点文本"),
+                // TextFont {
+                //     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                //     font_size: 14.0,
+                //     ..default()
+                // },
+                Node {
+                    position_type: PositionType::Relative,
+                    margin: UiRect::all(Val::Px(1.0)),
+                    ..default()
+                },
+                // 其他你需要的组件
+            ));
+        });
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
@@ -327,7 +360,13 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 left: Val::Px(50.0),
                 right: Val::Px(50.0),
                 height: Val::Px(170.0),
-                padding: UiRect::all(Val::Px(30.0)),
+                // padding: UiRect::all(Val::Px(30.0)),
+                padding: UiRect {
+    left: Val::Px(260.0),
+    right: Val::Px(30.0),
+    top: Val::Px(30.0),
+    bottom: Val::Px(30.0),
+},
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
@@ -352,6 +391,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
+                
                 // 其他你需要的组件
             ));
         });
@@ -359,6 +399,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
         Text::new("戴安娜"),
+        // Visibility::Hidden,
         TextFont {
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size: 28.0,
@@ -373,7 +414,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
-            left: Val::Px(50.0),
+            left: Val::Px(260.0),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
             width: Val::Px(220.0),
