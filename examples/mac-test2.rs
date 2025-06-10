@@ -332,16 +332,27 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        Transform::from_xyz(1.0, 2.0, 0.0),
+        Transform::from_xyz(1.0, 1.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {
             image: asset_server.load("characters/protagonist/default.png"),
             custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
             ..default()
         },
-        // Visibility::Hidden,
+        Visibility::Hidden,
     ));
-
+    // commands.spawn((
+    //     Name::new("background"),
+    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+    //     Transform::from_xyz(1.0, 2.0, 0.0),
+    //     // Sprite::sized(Vec2::new(75., 75.)),
+    //     Sprite {
+    //         image: asset_server.load("background/one.png"),
+    //         // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
+    //         ..default()
+    //     },
+    //     // Visibility::Hidden,
+    // ));
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -447,7 +458,7 @@ fn update_dialogue(
     label_map: Res<LabelMap>,
     mut query: Query<(&Name, &mut Text)>,
 ) {
-    println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+    // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -477,21 +488,21 @@ fn update_dialogue(
     }
     
     // 3. 打印调试信息（在显示之后）
-    println!(
-        "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
-        game_state.current_line,
-        current_dialogue.character,
-        current_dialogue.label,
-        current_dialogue.jump
-    );
+    // println!(
+    //     "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
+    //     game_state.current_line,
+    //     current_dialogue.character,
+    //     current_dialogue.label,
+    //     current_dialogue.jump
+    // );
     
     // 4. 处理跳转逻辑（在显示当前内容之后）
     if let Some(jump_label) = &current_dialogue.jump {
         // std::thread::sleep(std::time::Duration::from_millis(500));
-        println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
+        // println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
         
         if let Some(&new_line) = label_map.0.get(jump_label) {
-            println!("执行跳转: {} → {}", game_state.current_line, new_line);
+            // println!("执行跳转: {} → {}", game_state.current_line, new_line);
             println!(
                 "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
                 game_state.current_line,
