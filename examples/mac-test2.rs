@@ -341,18 +341,18 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         },
         Visibility::Hidden,
     ));
-    // commands.spawn((
-    //     Name::new("background"),
-    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-    //     Transform::from_xyz(1.0, 2.0, 0.0),
-    //     // Sprite::sized(Vec2::new(75., 75.)),
-    //     Sprite {
-    //         image: asset_server.load("background/one.png"),
-    //         // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
-    //         ..default()
-    //     },
-    //     // Visibility::Hidden,
-    // ));
+    commands.spawn((
+        Name::new("background"),
+        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+        Transform::from_xyz(1.0, 2.0, 0.0),
+        // Sprite::sized(Vec2::new(75., 75.)),
+        Sprite {
+            image: asset_server.load("background/one.png"),
+            // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
+            ..default()
+        },
+        // Visibility::Hidden,
+    ));
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
