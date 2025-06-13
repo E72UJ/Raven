@@ -23,6 +23,10 @@ const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
+// 背景组件标识
+#[derive(Component)]
+struct Background;
+
 // 按钮组颜色表格结束
 // 主配置结构体
 #[derive(Debug, Deserialize, Resource)]
@@ -69,6 +73,7 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    background: Option<String>,  // 新添加的背景字段
     #[serde(default)] // 如果没有label字段，则为None
     label: Option<String>,
     #[serde(default)] // 如果没有jump字段，则为None
@@ -137,17 +142,19 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,load_backgrounds))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump,update_background))
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,) {
     commands.spawn(Camera2d);
 
     // commands.spawn(Sprite::from_image(
     //     asset_server.load("background/main.png"),
     // ));
+    
+    
 }
 
 // 加载主配置文件
@@ -341,18 +348,18 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         },
         Visibility::Hidden,
     ));
-    commands.spawn((
-        Name::new("background"),
-        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        Transform::from_xyz(1.0, 2.0, 0.0),
-        // Sprite::sized(Vec2::new(75., 75.)),
-        Sprite {
-            image: asset_server.load("background/one.png"),
-            // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
-            ..default()
-        },
-        // Visibility::Hidden,
-    ));
+    // commands.spawn((
+    //     Name::new("background"),
+    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+    //     Transform::from_xyz(1.0, 2.0, 0.0),
+    //     // Sprite::sized(Vec2::new(75., 75.)),
+    //     Sprite {
+    //         image: asset_server.load("background/one.png"),
+    //         // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
+    //         ..default()
+    //     },
+    //     // Visibility::Hidden,
+    // ));
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -762,3 +769,52 @@ fn apply_jump(
 // fn preload_sounds(asset_server: Res<AssetServer>) {
 //     asset_server.load::<AudioSource>("button.ogg");
 // }
+// 背景加载系统
+fn load_backgrounds(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    // 遍历配置文件中的所有背景
+    for (bg_name, bg_path) in &config.assets.backgrounds {
+        commands.spawn((
+            Name::new(format!("background_{}", bg_name)),
+            Background, // 添加背景组件标识
+            Sprite {
+                image: asset_server.load(bg_path),
+                ..default()
+            },
+            Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
+            Visibility::Hidden, // 默认隐藏，需要时显示
+        ));
+    }
+    
+    println!("=== 已加载背景 ===");
+    for bg_name in config.assets.backgrounds.keys() {
+        println!("背景: {}", bg_name);
+    }
+    println!("==================");
+}
+// 更新背景
+fn update_background(
+    game_state: Res<GameState>,
+    mut query: Query<(&Name, &mut Visibility), With<Background>>,
+) {
+    // 获取当前对话中的背景信息（如果有的话）
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        // 隐藏所有背景
+        for (_, mut visibility) in query.iter_mut() {
+            *visibility = Visibility::Hidden;
+        }
+        
+        // 只有当 dialogue.background 有值时才显示对应背景
+        if let Some(bg_name) = &dialogue.background {
+            for (name, mut visibility) in query.iter_mut() {
+                if name.as_str() == format!("background_{}", bg_name) {
+                    *visibility = Visibility::Visible;
+                }
+            }
+        }
+        // 如果 dialogue.background 是 None，则所有背景都保持隐藏状态
+    }
+}
