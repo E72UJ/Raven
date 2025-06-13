@@ -32,6 +32,15 @@ struct MainConfig {
     settings: GameSettings,
     #[serde(default)]
     global_variables: HashMap<String, String>,
+    #[serde(default)]
+    window: WindowConfig, 
+}
+
+// Windows 程序
+#[derive(Deserialize, Debug, Default)]
+struct WindowConfig {
+    #[serde(default)]
+    resize: bool,
 }
 // 资源路径结构体
 #[derive(Debug, Deserialize)]
@@ -105,12 +114,14 @@ fn main() {
     println!("{:?}", "mac 主程序启动！");
     // 加载主配置
     let main_config = load_main_config();
+    let resize_enabled = main_config.window.resize;
+    println!("{:?}",resize_enabled);
     let app_window = Some(Window {
         title: main_config.title.clone(),
         name: Some("raven.app".into()),
-        resizable: false,
+        resizable: resize_enabled,
         enabled_buttons: bevy::window::EnabledButtons {
-            maximize: false,
+            maximize: resize_enabled,
             ..Default::default()
         },
         // 从配置文件读取分辨率
@@ -389,7 +400,7 @@ fn update_dialogue(
     label_map: Res<LabelMap>,
     mut query: Query<(&Name, &mut Text)>,
 ) {
-    println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+    // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -404,7 +415,7 @@ fn update_dialogue(
                 text.0 = "感谢体验，按下ESC退出".to_string();
             }
         }
-        println!("对话结束，当前行超出范围");
+        // println!("对话结束，当前行超出范围");
         return;
     };
     
@@ -419,13 +430,13 @@ fn update_dialogue(
     }
     
     // 3. 打印调试信息（在显示之后）
-    println!(
-        "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
-        game_state.current_line,
-        current_dialogue.character,
-        current_dialogue.label,
-        current_dialogue.jump
-    );
+    // println!(
+    //     "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
+    //     game_state.current_line,
+    //     current_dialogue.character,
+    //     current_dialogue.label,
+    //     current_dialogue.jump
+    // );
     
     // 4. 处理跳转逻辑（在显示当前内容之后）
     if let Some(jump_label) = &current_dialogue.jump {
