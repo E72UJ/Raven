@@ -26,7 +26,7 @@ impl TypewriterText {
     }
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands,  asset_server: Res<AssetServer>,) {
     commands.spawn(Camera2d);
     
     // 创建打字机文本
@@ -34,10 +34,11 @@ fn setup(mut commands: Commands) {
         Text::new(""),
         TextFont {
             font_size: 40.0,
+            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             ..default()
         },
         TextColor(Color::WHITE),
-        TypewriterText::new("hello this is my home".to_string(), 25.0),
+        TypewriterText::new("你好 这是一个打字机".to_string(), 25.0),
     ));
 }
 
