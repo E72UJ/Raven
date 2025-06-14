@@ -785,6 +785,7 @@ fn load_backgrounds(
             Sprite {
                 image: asset_server.load(bg_path),
                 ..default()
+                
             },
             Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
             Visibility::Hidden, // 默认隐藏，需要时显示
