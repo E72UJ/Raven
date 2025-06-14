@@ -334,7 +334,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             swf: asset_server.load("swf/66.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
+        // Visibility::Hidden,
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
+
     ));
     commands.spawn((
         Name::new("spritebox"),
