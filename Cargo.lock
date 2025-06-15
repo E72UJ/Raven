@@ -16,6 +16,7 @@ dependencies = [
  "lyon_geom",
  "lyon_path",
  "lyon_tessellation",
+ "rand",
  "serde",
  "serde_yaml",
  "smallvec",

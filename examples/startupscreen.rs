@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-
 #[derive(Component)]
 struct FadeOut {
     timer: Timer,
