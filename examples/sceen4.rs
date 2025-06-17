@@ -45,10 +45,12 @@ struct SettingSlider;
 #[derive(Component)]
 struct PopupOverlay;
 
-const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
-
+// const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
+// const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+// const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+const NORMAL_BUTTON: Color = Color::srgba(0.4, 0.4, 0.4, 0.3);     // 透明灰色
+const HOVERED_BUTTON: Color = Color::srgba(0.6, 0.6, 0.6, 0.3);    // 较亮的透明灰色（悬停）
+const PRESSED_BUTTON: Color = Color::srgba(0.8, 0.8, 0.8, 0.3);    // 更亮的透明灰色（按下）
 fn button_system(
     mut interaction_query: Query<
         (
