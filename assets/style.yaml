@@ -1,0 +1,13 @@
+styles:
+  dialog_box:
+    background_color: [0.1, 0.1, 0.1, 0.8]
+    padding: [10.0, 30.0, 30.0, 30.0]  # left, right, top, bottom
+    border_radius: 10.0
+  textbox:
+    font_size: 28.0
+    text_color: [1.0, 1.0, 1.0, 1.0]
+    margin: 5.0
+  button:
+    background_color: [0.2, 0.5, 0.8, 1.0]
+    font_size: 20.0
+    padding: [15.0, 15.0, 10.0, 10.0]

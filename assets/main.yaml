@@ -47,4 +47,4 @@ global_variables:
   player_name: "主角"     # 玩家名称默认值
   affection_points: 0     # 好感度初始值
 window:
-  resize: true
+  resize: false
