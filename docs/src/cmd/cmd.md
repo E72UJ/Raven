@@ -21,8 +21,9 @@ cargo build --release
 cargo run --example goto
 ```
 ### 常用cargo 指令
-
+```
 | `cargo clean` | 清理项目的构建成果 |
 | `cargo update` | 更新项目的依赖项 |
 | `cargo add` | 添加新的依赖项 |
 | `cargo remove` | 移除项目的依赖项 |
+```
