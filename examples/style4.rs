@@ -221,7 +221,7 @@ fn setup_ui(
             parent.spawn((
                 Text::new("角色名"),
                 TextFont {
-                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
                     font_size: stylesheet.get_font_size("namebox"),
                     ..default()
                 },

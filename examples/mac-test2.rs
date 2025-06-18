@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use bevy::text::cosmic_text::ttf_parser::Style;
 // use bevy_svg::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -22,6 +23,9 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+
+// 位置常量
+const left_box:f32 = 50.0;
 
 // 背景组件标识
 #[derive(Component)]
@@ -273,19 +277,19 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // Transform::from_xyz(2.0, 1.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
-        // // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
+        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
         // Sprite {
         //     image: asset_server.load("characters/protagonist/02.png"),
         //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
         //     ..default()
         // },
         Node {
-            
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
-            left: Val::Px(-200.0),
+            left: Val::Px(0.0),
             top: Val::Px(80.0),
             position_type: PositionType::Absolute,
+            
             // align_items: AlignItems::Center,
             // justify_content: JustifyContent::Center,
             ..default()
@@ -298,6 +302,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             parent.spawn((
                 Name::new("textbox"),
                 ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
+                Visibility::Hidden, // 设置为可见
                 Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
                 
                 // Name::new("child_element"),
@@ -434,7 +439,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
-            left: Val::Px(260.0),
+            left: Val::Px(left_box),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
             width: Val::Px(220.0),
