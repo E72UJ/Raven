@@ -22,3 +22,7 @@ styles:
     size: [220.0, 50.0]  # [width, height]
     border_color: [0.6, 0.6, 0.6, 1.0]  # 边框颜色 (灰色)
     border_width: 4.0  # 边框宽度
+  spritebox:
+    position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
+    size: [400.0, 600.0] # [width, height]
+    background_color: [0.4, 0.4, 0.1, 1.0]
