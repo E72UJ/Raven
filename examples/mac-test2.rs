@@ -277,7 +277,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // Transform::from_xyz(2.0, 1.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
-        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
+        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
         // Sprite {
         //     image: asset_server.load("characters/protagonist/02.png"),
         //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
@@ -336,7 +336,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/66.swf")
+            swf: asset_server.load("swf/345_c7.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
         // Visibility::Hidden,
@@ -387,7 +387,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(260.0),
+    left: Val::Px(30.0),
     right: Val::Px(30.0),
     top: Val::Px(30.0),
     bottom: Val::Px(30.0),
