@@ -1,0 +1,79 @@
+#![enable(implicit_some)]
+(
+    world: {
+        entities: {
+            0: (
+                transform: (
+                    translation: (0.0, 0.0, 0.0),
+                    rotation: (0.0, 0.0, 0.0, 1.0),
+                    scale: (1.0, 1.0, 1.0),
+                ),
+                global_transform: (
+                    translation: (0.0, 0.0, 0.0),
+                    rotation: (0.0, 0.0, 0.0, 1.0),
+                    scale: (1.0, 1.0, 1.0),
+                ),
+                visibility: (),
+                sprite: (
+                    color: (1.0, 1.0, 1.0, 1.0),
+                    custom_size: Some((800.0, 600.0)),
+                    draw_grid: false,
+                    flip_x: false,
+                    flip_y: false,
+                    anchor: (0.5, 0.5),
+                    label: "background",
+                ),
+                transform_animation: (
+                    animations: {
+                        "scale_in": (
+                            duration: 0.5,
+                            from: (0.5, 0.5, 0.5),
+                            to: (1.0, 1.0, 1.0),
+                            ease: "QuadOut",
+                        ),
+                        "rotate_logo": (
+                            duration: 2.0,
+                            from: (0.0, 0.0, 0.0, 1.0),
+                            to: (0.0, 0.0, 6.28, 1.0),
+                            ease: "Linear",
+                        ),
+                    },
+                    playing: ["scale_in", "rotate_logo"],
+                ),
+            ),
+            1: (
+                transform: (
+                    translation: (0.0, 0.0, 0.0),
+                    rotation: (0.0, 0.0, 0.0, 1.0),
+                    scale: (0.5, 0.5, 0.5),
+                ),
+                global_transform: (
+                    translation: (0.0, 0.0, 0.0),
+                    rotation: (0.0, 0.0, 0.0, 1.0),
+                    scale: (0.5, 0.5, 0.5),
+                ),
+                visibility: (),
+                sprite: (
+                    color: (1.0, 1.0, 1.0, 1.0),
+                    custom_size: Some((200.0, 200.0)),
+                    draw_grid: false,
+                    flip_x: false,
+                    flip_y: false,
+                    anchor: (0.5, 0.5),
+                    label: "logo",
+                ),
+                transform_animation: (
+                    animations: {
+                        "scale_in": (
+                            duration: 0.5,
+                            from: (0.5, 0.5, 0.5),
+                            to: (1.0, 1.0, 1.0),
+                            ease: "QuadOut",
+                        ),
+                    },
+                    playing: ["scale_in"],
+                ),
+            ),
+        },
+    },
+)
