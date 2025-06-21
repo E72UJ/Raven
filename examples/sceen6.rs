@@ -225,7 +225,6 @@ fn setup_splash_screen(
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(100.0),
-            left: Val::Percent(50.0),
             ..default()
         },
         SplashScreenEntity,
