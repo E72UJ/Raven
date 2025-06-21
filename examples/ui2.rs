@@ -33,7 +33,7 @@ fn setup(
             // background_color: BackgroundColor(Color::rgb(0.8, 0.6, 0.4)),
             ..default()
         })
-        .insert(BackgroundColor(Color::srgb(0.8, 0.6, 0.4))) // 单独添加
+        // .insert(BackgroundColor(Color::srgb(0.8, 0.6, 0.4))) // 单独添加
         .insert(ImageNode::new(asset_server.load("textures/background.png")))
         .insert(BorderColor(Color::WHITE))
         .with_children(|parent| {

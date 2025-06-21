@@ -336,7 +336,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/66.swf")
+            swf: asset_server.load("swf/345_c7.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
         // Visibility::Hidden,
