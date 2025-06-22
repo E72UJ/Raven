@@ -78,6 +78,7 @@ struct Dialogue {
     text: String,
     portrait: String,
     background: Option<String>,  // 新添加的背景字段
+    swf: Option<String>, // 新增swf字段
     #[serde(default)] // 如果没有label字段，则为None
     label: Option<String>,
     #[serde(default)] // 如果没有jump字段，则为None
@@ -146,8 +147,8 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,load_backgrounds))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump,update_background))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,load_backgrounds,load_swf_assets))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump,update_background,update_swf))
         .run();
 }
 
@@ -339,7 +340,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             swf: asset_server.load("swf/345_c7.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
-        // Visibility::Hidden,
+        Visibility::Hidden,
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
 
     ));
@@ -804,6 +805,61 @@ fn load_backgrounds(
     }
     println!("==================");
 }
+// 更新swf数据
+// 新增swf资源预加载系统
+fn load_swf_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    println!("=== 加载SWF资源 ===");
+    println!("配置中的swf数量: {}", config.assets.swf.len());
+    
+    for (swf_name, swf_path) in &config.assets.swf {
+        println!("正在加载SWF: {} -> {}", swf_name, swf_path);
+        
+        let swf_handle = asset_server.load(swf_path);
+        println!("SWF句柄创建成功: {:?}", swf_handle);
+        
+        commands.spawn((
+            Name::new(format!("swf_{}", swf_name)),
+            FlashAnimation {
+                swf: swf_handle
+            },
+            Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
+            Visibility::Hidden,
+        ));
+        
+        println!("SWF实体已生成: swf_{}", swf_name);
+    }
+    println!("==================");
+}
+// 新增swf更新系统
+// 修改swf更新系统
+fn update_swf(
+    game_state: Res<GameState>,
+    mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
+) {
+    // 隐藏所有swf动画
+    for (_, mut visibility) in query.iter_mut() {
+        *visibility = Visibility::Hidden;
+    }
+    
+    // 根据当前对话中的swf字段显示对应动画
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if let Some(swf_name) = &dialogue.swf {
+            // println!("显示SWF动画: {}", swf_name);
+            for (name, mut visibility) in query.iter_mut() {
+                if name.as_str() == format!("swf_{}", swf_name) {
+                    *visibility = Visibility::Visible;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// 结束swf数据
 // 更新背景
 fn update_background(
     game_state: Res<GameState>,
