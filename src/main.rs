@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use bevy::text::cosmic_text::ttf_parser::Style;
 // use bevy_svg::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -23,6 +24,13 @@ const NORMAL_BUTTON: Color = Color::srgb(0.75, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
+// 位置常量
+const left_box:f32 = 50.0;
+
+// 背景组件标识
+#[derive(Component)]
+struct Background;
+
 // 按钮组颜色表格结束
 // 主配置结构体
 #[derive(Debug, Deserialize, Resource)]
@@ -32,15 +40,6 @@ struct MainConfig {
     settings: GameSettings,
     #[serde(default)]
     global_variables: HashMap<String, String>,
-    #[serde(default)]
-    window: WindowConfig, 
-}
-
-// Windows 程序
-#[derive(Deserialize, Debug, Default)]
-struct WindowConfig {
-    #[serde(default)]
-    resize: bool,
 }
 // 资源路径结构体
 #[derive(Debug, Deserialize)]
@@ -78,6 +77,8 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    background: Option<String>,  // 新添加的背景字段
+    swf: Option<String>, // 新增swf字段
     #[serde(default)] // 如果没有label字段，则为None
     label: Option<String>,
     #[serde(default)] // 如果没有jump字段，则为None
@@ -114,14 +115,12 @@ fn main() {
     println!("{:?}", "mac 主程序启动！");
     // 加载主配置
     let main_config = load_main_config();
-    let resize_enabled = main_config.window.resize;
-    println!("{:?}",resize_enabled);
     let app_window = Some(Window {
         title: main_config.title.clone(),
         name: Some("raven.app".into()),
-        resizable: resize_enabled,
+        resizable: false,
         enabled_buttons: bevy::window::EnabledButtons {
-            maximize: resize_enabled,
+            maximize: false,
             ..Default::default()
         },
         // 从配置文件读取分辨率
@@ -148,17 +147,19 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,load_backgrounds,load_swf_assets))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,apply_jump,update_background,update_swf))
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,) {
     commands.spawn(Camera2d);
 
     // commands.spawn(Sprite::from_image(
     //     asset_server.load("background/main.png"),
     // ));
+    
+    
 }
 
 // 加载主配置文件
@@ -271,6 +272,56 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     // debug_print("var2",&asset_server);
     // 立绘容器
     commands.spawn((
+        Name::new("sidebox"),
+        
+        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+        // Transform::from_xyz(2.0, 1.0, 0.0),
+        // Sprite::sized(Vec2::new(75., 75.)),
+        // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
+        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
+        // Sprite {
+        //     image: asset_server.load("characters/protagonist/02.png"),
+        //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
+        //     ..default()
+        // },
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            left: Val::Px(0.0),
+            top: Val::Px(80.0),
+            position_type: PositionType::Absolute,
+            
+            // align_items: AlignItems::Center,
+            // justify_content: JustifyContent::Center,
+            ..default()
+        },
+        // Visibility::Hidden,
+        GlobalZIndex(10000),
+        ZIndex(1200),
+    )).with_children(|parent| {
+            // 在这里创建子节点
+            parent.spawn((
+                Name::new("textbox"),
+                ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
+                Visibility::Hidden, // 设置为可见
+                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+                
+                // Name::new("child_element"),
+                // Text::new("子节点文本"),
+                // TextFont {
+                //     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                //     font_size: 14.0,
+                //     ..default()
+                // },
+                Node {
+                    position_type: PositionType::Relative,
+                    margin: UiRect::all(Val::Px(1.0)),
+                    ..default()
+                },
+                // 其他你需要的组件
+            ));
+        });
+    commands.spawn((
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
@@ -286,15 +337,18 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/66.swf")
+            swf: asset_server.load("swf/345_c7.swf")
         },
         // Transform::default().with_scale(Vec3::ZERO),
+        Visibility::Hidden,
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
+
     ));
+
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        Transform::from_xyz(1.0, 2.0, 0.0),
+        Transform::from_xyz(1.0, 1.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {
             image: asset_server.load("characters/protagonist/default.png"),
@@ -303,6 +357,18 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         },
         Visibility::Hidden,
     ));
+    // commands.spawn((
+    //     Name::new("background"),
+    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+    //     Transform::from_xyz(1.0, 2.0, 0.0),
+    //     // Sprite::sized(Vec2::new(75., 75.)),
+    //     Sprite {
+    //         image: asset_server.load("background/one.png"),
+    //         // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
+    //         ..default()
+    //     },
+    //     // Visibility::Hidden,
+    // ));
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -321,7 +387,13 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 left: Val::Px(50.0),
                 right: Val::Px(50.0),
                 height: Val::Px(170.0),
-                padding: UiRect::all(Val::Px(30.0)),
+                // padding: UiRect::all(Val::Px(30.0)),
+                padding: UiRect {
+    left: Val::Px(30.0),
+    right: Val::Px(30.0),
+    top: Val::Px(30.0),
+    bottom: Val::Px(30.0),
+},
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
@@ -346,6 +418,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
+                
                 // 其他你需要的组件
             ));
         });
@@ -353,6 +426,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
         Text::new("戴安娜"),
+        // Visibility::Hidden,
         TextFont {
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size: 28.0,
@@ -367,7 +441,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
-            left: Val::Px(50.0),
+            left: Val::Px(left_box),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
             width: Val::Px(220.0),
@@ -415,7 +489,7 @@ fn update_dialogue(
                 text.0 = "感谢体验，按下ESC退出".to_string();
             }
         }
-        // println!("对话结束，当前行超出范围");
+        println!("对话结束，当前行超出范围");
         return;
     };
     
@@ -441,10 +515,10 @@ fn update_dialogue(
     // 4. 处理跳转逻辑（在显示当前内容之后）
     if let Some(jump_label) = &current_dialogue.jump {
         // std::thread::sleep(std::time::Duration::from_millis(500));
-        println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
+        // println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
         
         if let Some(&new_line) = label_map.0.get(jump_label) {
-            println!("执行跳转: {} → {}", game_state.current_line, new_line);
+            // println!("执行跳转: {} → {}", game_state.current_line, new_line);
             println!(
                 "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
                 game_state.current_line,
@@ -704,3 +778,108 @@ fn apply_jump(
 // fn preload_sounds(asset_server: Res<AssetServer>) {
 //     asset_server.load::<AudioSource>("button.ogg");
 // }
+// 背景加载系统
+fn load_backgrounds(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    // 遍历配置文件中的所有背景
+    for (bg_name, bg_path) in &config.assets.backgrounds {
+        commands.spawn((
+            Name::new(format!("background_{}", bg_name)),
+            Background, // 添加背景组件标识
+            Sprite {
+                image: asset_server.load(bg_path),
+                ..default()
+                
+            },
+            Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
+            Visibility::Hidden, // 默认隐藏，需要时显示
+        ));
+    }
+    
+    println!("=== 已加载背景 ===");
+    for bg_name in config.assets.backgrounds.keys() {
+        println!("背景: {}", bg_name);
+    }
+    println!("==================");
+}
+// 更新swf数据
+// 新增swf资源预加载系统
+fn load_swf_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+) {
+    println!("=== 加载SWF资源 ===");
+    println!("配置中的swf数量: {}", config.assets.swf.len());
+    
+    for (swf_name, swf_path) in &config.assets.swf {
+        println!("正在加载SWF: {} -> {}", swf_name, swf_path);
+        
+        let swf_handle = asset_server.load(swf_path);
+        println!("SWF句柄创建成功: {:?}", swf_handle);
+        
+        commands.spawn((
+            Name::new(format!("swf_{}", swf_name)),
+            FlashAnimation {
+                swf: swf_handle
+            },
+            Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
+            Visibility::Hidden,
+        ));
+        
+        println!("SWF实体已生成: swf_{}", swf_name);
+    }
+    println!("==================");
+}
+// 新增swf更新系统
+// 修改swf更新系统
+fn update_swf(
+    game_state: Res<GameState>,
+    mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
+) {
+    // 隐藏所有swf动画
+    for (_, mut visibility) in query.iter_mut() {
+        *visibility = Visibility::Hidden;
+    }
+    
+    // 根据当前对话中的swf字段显示对应动画
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if let Some(swf_name) = &dialogue.swf {
+            // println!("显示SWF动画: {}", swf_name);
+            for (name, mut visibility) in query.iter_mut() {
+                if name.as_str() == format!("swf_{}", swf_name) {
+                    *visibility = Visibility::Visible;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// 结束swf数据
+// 更新背景
+fn update_background(
+    game_state: Res<GameState>,
+    mut query: Query<(&Name, &mut Visibility), With<Background>>,
+) {
+    // 获取当前对话中的背景信息（如果有的话）
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        // 隐藏所有背景
+        for (_, mut visibility) in query.iter_mut() {
+            *visibility = Visibility::Hidden;
+        }
+        
+        // 只有当 dialogue.background 有值时才显示对应背景
+        if let Some(bg_name) = &dialogue.background {
+            for (name, mut visibility) in query.iter_mut() {
+                if name.as_str() == format!("background_{}", bg_name) {
+                    *visibility = Visibility::Visible;
+                }
+            }
+        }
+        // 如果 dialogue.background 是 None，则所有背景都保持隐藏状态
+    }
+}
