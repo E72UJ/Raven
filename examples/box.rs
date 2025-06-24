@@ -8,6 +8,11 @@ use std::env;
 use std::fs;
 use bevy::audio::{ AudioPlugin, PlaybackSettings};
 use std::path::PathBuf;
+use bevy::{
+    prelude::*,
+    ui::FocusPolicy, // 添加这行
+    // ... 其他导入
+};
 // 正确的导入方式
 use bevy::{
     color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
@@ -128,7 +133,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,button_system))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system))
         .run();
 }
 
@@ -240,19 +245,21 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
-            Button, // 添加这行
+            // Button, // 添加这行
             Node {
                 width: Val::Px(800.0),     // 固定宽度800像素
                 height: Val::Px(600.0),    // 固定高度600像素
                 bottom: Val::Px(50.0),
                 left: Val::Px(0.0),  // 添加左边定位
                 position_type: PositionType::Absolute,
+ 
                 ..default()
             },
-            // BackgroundColor(Color::NONE), // 完全透明
-            GlobalZIndex(999999),
+            BackgroundColor(Color::NONE), // 完全透明
+            GlobalZIndex(9999),
             Interaction::default(), 
             // Button,
+            FocusPolicy::Pass, // 关键：让焦点穿透
             Visibility::Visible,
         ))
         .with_children(|parent| {
@@ -447,33 +454,32 @@ fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Tex
 }
 // 输入处理系统
 fn handle_input(
-    mut interaction_query: Query<(&Interaction, &Name), (Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<(&Interaction, &Name), (Changed<Interaction>, With<Node>)>,
     keys: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<GameState>,
     click_sound: Res<ClickSound>,
     mut commands: Commands,
 ) {
-    // 检查键盘输入
-    let keyboard_input = keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter);
-    
-    // 检查点击区域交互
-    let mut click_area_clicked = false;
-    for (interaction, name) in &interaction_query {
-        if *interaction == Interaction::Pressed && name.as_str() == "click_area" {
-            click_area_clicked = true;
-            println!("{}","hello");
-            break;
-        }
-    }
-
-    // 如果有输入，前进对话
-    if keyboard_input || click_area_clicked {
-        // 播放点击音效
+    // 检查键盘输入 - 优先处理键盘事件
+    if keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter) {
         play_sound(&click_sound.0, commands);
-        
-        // 前进到下一行对话
         if game_state.current_line < game_state.dialogues.len() {
             game_state.current_line += 1;
+            game_state.can_go_back = true; // 设置可以回退
+        }
+        return; // 处理了键盘事件就直接返回
+    }
+    
+    // 检查鼠标点击事件
+    for (interaction, name) in &interaction_query {
+        if *interaction == Interaction::Pressed && name.as_str() == "click_area" {
+            play_sound(&click_sound.0, commands);
+            if game_state.current_line < game_state.dialogues.len() {
+                game_state.current_line += 1;
+                game_state.can_go_back = true;
+            }
+            println!("点击了透明区域");
+            break;
         }
     }
     
@@ -780,6 +786,25 @@ fn button_system(
                     border_color.0 = Color::BLACK;
                 }
             }
+        }
+    }
+}
+
+fn keyboard_system(
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    mut game_state: ResMut<GameState>,
+    mut focus_query: Query<&mut FocusPolicy>, // 如果需要的话
+) {
+    // 强制处理键盘事件，不管焦点状态
+    if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
+        let back_pressed = true;
+        
+        if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
+            game_state.current_line -= 1;
+            if game_state.current_line == 0 {
+                game_state.can_go_back = false;
+            }
+            println!("回退到第 {} 行", game_state.current_line);
         }
     }
 }
