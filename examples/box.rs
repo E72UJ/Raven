@@ -75,6 +75,7 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    branch_visible: bool, // 新增字段
 }
 // 游戏状态资源
 #[derive(Debug, Resource)]
@@ -82,6 +83,7 @@ struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
     can_go_back: bool, // 添加标志位判断是否可以返回
+    in_branch_selection: bool, // 新增：是否在分支选择状态
 }
 // 立绘组件
 #[derive(Component)]
@@ -133,7 +135,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,button_system))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system,control_branch_visibility))
         .run();
 }
 
@@ -205,6 +207,8 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         current_line: 0,
         dialogues: load_dialogues(&config),
         can_go_back: false, // 初始时不能返回
+        in_branch_selection: false, // 初始化为false
+        
     });
 }
 // 加载立绘资源 - 使用标准库的Path和PathBuf修改后的版本
@@ -460,17 +464,28 @@ fn handle_input(
     click_sound: Res<ClickSound>,
     mut commands: Commands,
 ) {
-    // 检查键盘输入 - 优先处理键盘事件
+    // ESC键始终可用
+    if keys.just_pressed(KeyCode::Escape) {
+        std::process::exit(0);
+    }
+
+    // 如果在分支选择状态，只禁用前进操作（空格键、回车键、点击区域）
+    if game_state.in_branch_selection {
+        // 在分支选择状态下，不处理前进相关的输入
+        return;
+    }
+
+    // 检查键盘输入 - 只在非分支选择状态下处理前进操作
     if keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter) {
         play_sound(&click_sound.0, commands);
         if game_state.current_line < game_state.dialogues.len() {
             game_state.current_line += 1;
-            game_state.can_go_back = true; // 设置可以回退
+            game_state.can_go_back = true;
         }
-        return; // 处理了键盘事件就直接返回
+        return;
     }
     
-    // 检查鼠标点击事件
+    // 检查鼠标点击事件 - 只在非分支选择状态下处理
     for (interaction, name) in &interaction_query {
         if *interaction == Interaction::Pressed && name.as_str() == "click_area" {
             play_sound(&click_sound.0, commands);
@@ -481,11 +496,6 @@ fn handle_input(
             println!("点击了透明区域");
             break;
         }
-    }
-    
-    // ESC键退出
-    if keys.just_pressed(KeyCode::Escape) {
-        std::process::exit(0);
     }
 }
 // fn update_portrait(
@@ -793,18 +803,48 @@ fn button_system(
 fn keyboard_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<GameState>,
-    mut focus_query: Query<&mut FocusPolicy>, // 如果需要的话
+    back_click_sound: Res<BackClickSound>,
+    mut commands: Commands,
 ) {
-    // 强制处理键盘事件，不管焦点状态
+    // 向左箭头键（回退）在分支选择状态下仍然可用
     if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
-        let back_pressed = true;
-        
-        if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
+        if game_state.can_go_back && game_state.current_line > 0 {
             game_state.current_line -= 1;
+            play_sound(&back_click_sound.0, commands);
+            
             if game_state.current_line == 0 {
                 game_state.can_go_back = false;
             }
+            
+            // 如果回退导致离开了分支选择的位置，退出分支选择状态
+            // 这里你可以根据具体逻辑调整
+            if game_state.in_branch_selection && game_state.current_line < 5 { // 假设第5行是分支选择
+                game_state.in_branch_selection = false;
+            }
+            
             println!("回退到第 {} 行", game_state.current_line);
+        }
+    }
+}
+
+
+// 分支
+fn control_branch_visibility(
+    mut game_state: ResMut<GameState>,
+    mut button_query: Query<(&Name, &mut Visibility), With<Button>>,
+) {
+    // 这里是你的分支显示逻辑
+    // 例如：当到达特定对话行时显示分支
+    let should_show_branches = game_state.current_line == 1; // 示例：第5行显示分支
+    
+    for (name, mut visibility) in &mut button_query {
+        if name.as_str() == "分支1" || name.as_str() == "分支2" {
+            if should_show_branches {
+                *visibility = Visibility::Visible;
+                game_state.in_branch_selection = true; // 进入分支选择状态
+            } else {
+                *visibility = Visibility::Hidden;
+            }
         }
     }
 }
