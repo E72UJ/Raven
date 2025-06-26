@@ -29,6 +29,13 @@ const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
 const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
+
+#[derive(Component)]
+struct ChoiceButton1;
+
+#[derive(Component)]
+struct ChoiceButton2;
+
 #[derive(Component)]
 struct CurrentText;
 
@@ -36,6 +43,15 @@ struct CurrentText;
 struct DialogueBox;
 // 按钮组颜色表格结束
 // 主配置结构体
+
+#[derive(Resource)]
+struct DialogueChanged(pub bool);
+
+impl Default for DialogueChanged {
+    fn default() -> Self {
+        Self(false)
+    }
+}
 #[derive(Debug, Deserialize, Resource)]
 struct MainConfig {
     title: String,
@@ -69,13 +85,29 @@ struct GameSettings {
     resolution: Vec<u32>,
 }
 
+#[derive(Debug, Deserialize)]
+struct Choice {
+    text: String,
+    goto: String,
+}
+#[derive(Component)]
+struct ButtonContainer;
+// 添加这些组件定义
+#[derive(Component)]
+struct DynamicButton;
+
+#[derive(Component)]
+struct ClickHandler(String);
+
 // 对话数据结构（支持YAML反序列化）
 #[derive(Debug, Deserialize)]
 struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    #[serde(default)] // 如果YAML中没有这个字段，使用默认值false
     branch_visible: bool, // 新增字段
+    choices: Option<Vec<Choice>>, // 动态的分支选项
 }
 // 游戏状态资源
 #[derive(Debug, Resource)]
@@ -139,7 +171,8 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>,config: Res<MainConfig>,
+    game_state: Res<GameState>,) {
     commands.spawn(Camera2d);
 
     // commands.spawn(Sprite::from_image(
@@ -210,6 +243,7 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         in_branch_selection: false, // 初始化为false
         
     });
+    
 }
 // 加载立绘资源 - 使用标准库的Path和PathBuf修改后的版本
 fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
@@ -267,11 +301,13 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             Visibility::Visible,
         ))
         .with_children(|parent| {
-                        // create_nav_button2(parent, &asset_server, "分支1");
-                        create_nav_button2(parent, &asset_server, "分支1");
-                        create_nav_button3(parent, &asset_server, "分支2");
+
                 });
         // .id();
+// 分支创建============
+
+
+// 分支创建结束===============
     commands.spawn((
         Node {
             width: Val::Percent(100.0),
@@ -688,75 +724,6 @@ fn create_nav_button(
         ));
 }
 
-fn create_nav_button2(
-    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
-    asset_server: &Res<AssetServer>,
-    label: &str,
-) {
-    parent
-        .spawn((
-            Button,
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(360.0),
-                left: Val::Px(360.0),
-                width: Val::Px(450.0),
-                height: Val::Px(40.0),
-                border: UiRect::all(Val::Px(1.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BorderColor(Color::BLACK),
-            BorderRadius::all(Val::Px(5.0)),
-            // BackgroundColor(NORMAL_BUTTON),
-            Name::new(label.to_string()),
-        ))
-        .with_child((
-            Text::new(label),
-            TextFont {
-                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        ));
-}
-fn create_nav_button3(
-    parent: &mut RelatedSpawnerCommands<'_, ChildOf>,
-    asset_server: &Res<AssetServer>,
-    label: &str,
-) {
-    parent
-        .spawn((
-            Button,
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(420.0),
-                left: Val::Px(360.0),
-                width: Val::Px(450.0),
-                height: Val::Px(40.0),
-                border: UiRect::all(Val::Px(1.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BorderColor(Color::BLACK),
-            BorderRadius::all(Val::Px(5.0)),
-            // BackgroundColor(NORMAL_BUTTON),
-            Name::new(label.to_string()),
-        ))
-        .with_child((
-            Text::new(label),
-            TextFont {
-                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        ));
-}
-// 按钮系统
 fn button_system(
     mut interaction_query: Query<
         (
@@ -830,20 +797,60 @@ fn keyboard_system(
 
 // 分支
 fn control_branch_visibility(
-    mut game_state: ResMut<GameState>,
-    mut button_query: Query<(&Name, &mut Visibility), With<Button>>,
+    mut dynamic_button_query: Query<&mut Visibility, With<DynamicButton>>,
+    game_state: Res<GameState>,
 ) {
-    // 这里是你的分支显示逻辑
-    // 例如：当到达特定对话行时显示分支
-    let should_show_branches = game_state.current_line == 1; // 示例：第5行显示分支
-    
-    for (name, mut visibility) in &mut button_query {
-        if name.as_str() == "分支1" || name.as_str() == "分支2" {
-            if should_show_branches {
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if dialogue.choices.is_some() {
+            // 当前对话有选择项，显示所有动态按钮
+            for mut visibility in dynamic_button_query.iter_mut() {
                 *visibility = Visibility::Visible;
-                game_state.in_branch_selection = true; // 进入分支选择状态
-            } else {
+            }
+        } else {
+            // 当前对话没有选择项，隐藏所有动态按钮
+            for mut visibility in dynamic_button_query.iter_mut() {
                 *visibility = Visibility::Hidden;
+            }
+        }
+    }
+}
+fn create_dynamic_buttons(
+    mut commands: Commands,
+    game_state: Res<GameState>,
+    existing_buttons: Query<Entity, With<DynamicButton>>,
+    button_container: Query<Entity, With<ButtonContainer>>, // 你需要一个按钮容器
+) {
+    // 先清除现有的动态按钮
+    for entity in existing_buttons.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if let Some(choices) = &dialogue.choices {
+            if let Ok(container) = button_container.get_single() {
+                for choice in choices {
+                    commands.entity(container).with_children(|parent| {
+                        parent.spawn((
+                            Button,
+                            DynamicButton,
+                            ClickHandler(choice.goto.to_string()),
+                            Node {
+                                width: Val::Percent(80.0),
+                                height: Val::Px(50.0),
+                                margin: UiRect::all(Val::Px(5.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.2, 0.2, 0.8)),
+                        )).with_children(|button| {
+                            button.spawn((
+                                Text::new(choice.text.clone()),
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+                    });
+                }
             }
         }
     }
