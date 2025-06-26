@@ -167,7 +167,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,button_system))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system,control_branch_visibility))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system,create_dynamic_buttons,handle_choice_buttons))
         .run();
 }
 
@@ -305,7 +305,25 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 });
         // .id();
 // 分支创建============
-
+commands.spawn((
+        Name::new("choice_container"),
+        ButtonContainer,
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(250.0), // 在对话框上方
+            left: Val::Px(50.0),
+            right: Val::Px(50.0),
+            height: Val::Px(150.0),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            row_gap: Val::Px(10.0),
+            ..default()
+        },
+        // BackgroundColor(Color::srgba(1.0, 0.0, 0.0, 0.5)),
+        GlobalZIndex(1000),
+        Visibility::Visible, // 初始隐藏
+    ));
 
 // 分支创建结束===============
     commands.spawn((
@@ -513,7 +531,7 @@ fn handle_input(
 
     // 检查键盘输入 - 只在非分支选择状态下处理前进操作
     if keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter) {
-        play_sound(&click_sound.0, commands);
+        // play_sound(&click_sound.0, commands);
         if game_state.current_line < game_state.dialogues.len() {
             game_state.current_line += 1;
             game_state.can_go_back = true;
@@ -524,7 +542,7 @@ fn handle_input(
     // 检查鼠标点击事件 - 只在非分支选择状态下处理
     for (interaction, name) in &interaction_query {
         if *interaction == Interaction::Pressed && name.as_str() == "click_area" {
-            play_sound(&click_sound.0, commands);
+            // play_sound(&click_sound.0, commands);
             if game_state.current_line < game_state.dialogues.len() {
                 game_state.current_line += 1;
                 game_state.can_go_back = true;
@@ -724,6 +742,7 @@ fn create_nav_button(
         ));
 }
 
+
 fn button_system(
     mut interaction_query: Query<
         (
@@ -777,7 +796,7 @@ fn keyboard_system(
     if keyboard_input.just_pressed(KeyCode::ArrowLeft) {
         if game_state.can_go_back && game_state.current_line > 0 {
             game_state.current_line -= 1;
-            play_sound(&back_click_sound.0, commands);
+            // play_sound(&back_click_sound.0, commands);
             
             if game_state.current_line == 0 {
                 game_state.can_go_back = false;
@@ -816,17 +835,22 @@ fn control_branch_visibility(
 }
 fn create_dynamic_buttons(
     mut commands: Commands,
+    asset_server: Res<AssetServer>,
     game_state: Res<GameState>,
     existing_buttons: Query<Entity, With<DynamicButton>>,
-    button_container: Query<Entity, With<ButtonContainer>>, // 你需要一个按钮容器
+    button_container: Query<Entity, With<ButtonContainer>>,
 ) {
-    // 先清除现有的动态按钮
-    for entity in existing_buttons.iter() {
-        commands.entity(entity).despawn_recursive();
-    }
-
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        println!("当前对话行: {}, 角色: {}", game_state.current_line, dialogue.character);
+        
         if let Some(choices) = &dialogue.choices {
+            println!("发现 {} 个选择分支", choices.len());
+            
+            // 先清除现有按钮
+            for entity in existing_buttons.iter() {
+                commands.entity(entity).despawn_recursive();
+            }
+
             if let Ok(container) = button_container.get_single() {
                 for choice in choices {
                     commands.entity(container).with_children(|parent| {
@@ -834,23 +858,59 @@ fn create_dynamic_buttons(
                             Button,
                             DynamicButton,
                             ClickHandler(choice.goto.to_string()),
+                            Interaction::None,
                             Node {
-                                width: Val::Percent(80.0),
-                                height: Val::Px(50.0),
-                                margin: UiRect::all(Val::Px(5.0)),
+                                width: Val::Px(300.0),
+                                height: Val::Px(60.0),
+                                margin: UiRect::all(Val::Px(10.0)),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 ..default()
                             },
-                            BackgroundColor(Color::srgb(0.2, 0.2, 0.8)),
+                            // BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+                            BorderRadius::all(Val::Px(5.0)),
+                            Visibility::Visible,
                         )).with_children(|button| {
                             button.spawn((
                                 Text::new(choice.text.clone()),
+                                TextFont {
+                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                    font_size: 20.0,
+                                    ..default()
+                                },
                                 TextColor(Color::WHITE),
                             ));
                         });
                     });
                 }
+            }
+        } else {
+            // 当没有选择分支时，清除所有现有按钮
+            println!("当前对话没有选择分支，清除所有按钮");
+            for entity in existing_buttons.iter() {
+                commands.entity(entity).despawn_recursive();
+                println!("清除了按钮");
+            }
+        }
+    }
+}
+
+fn handle_choice_buttons(
+    mut interaction_query: Query<(&Interaction, &ClickHandler), (Changed<Interaction>, With<DynamicButton>)>,
+    mut game_state: ResMut<GameState>,
+    click_sound: Res<ClickSound>,
+    mut commands: Commands,
+) {
+    for (interaction, click_handler) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            // play_sound(&click_sound.0, commands);
+            
+            // 解析跳转目标
+            if let Ok(goto_line) = click_handler.0.parse::<usize>() {
+                game_state.current_line = goto_line;
+                game_state.can_go_back = true;
+                game_state.in_branch_selection = false;
+                println!("跳转到第 {} 行", goto_line);
             }
         }
     }
