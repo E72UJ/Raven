@@ -30,6 +30,13 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 
+
+#[derive(Resource, Default)]
+struct ChoiceState {
+    current_choices: Vec<Choice>,
+    buttons_created: bool,
+    last_dialogue_line: usize,
+}
 #[derive(Component)]
 struct ChoiceButton1;
 
@@ -166,8 +173,8 @@ fn main() {
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,button_system))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,button_system,keyboard_system,create_dynamic_buttons,handle_choice_buttons))
+        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system,create_dynamic_buttons,button_system,initialize_new_buttons,button_interaction_system,handle_choice_buttons))
         .run();
 }
 
@@ -311,8 +318,6 @@ commands.spawn((
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(250.0), // 在对话框上方
-            left: Val::Px(50.0),
-            right: Val::Px(50.0),
             height: Val::Px(150.0),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::Center,
@@ -320,7 +325,7 @@ commands.spawn((
             row_gap: Val::Px(10.0),
             ..default()
         },
-        // BackgroundColor(Color::srgba(1.0, 0.0, 0.0, 0.5)),
+        BackgroundColor(Color::srgba(1.0, 0.0, 0.0, 0.5)),
         GlobalZIndex(1000),
         Visibility::Visible, // 初始隐藏
     ));
@@ -751,10 +756,12 @@ fn button_system(
             &mut BorderColor,
             &Name,
         ),
-        (Changed<Interaction>, With<Button>),
+        (With<Button>),
     >,
 ) {
+      println!("button_system 被调用了，查询到 {} 个实体", interaction_query.iter().count());
     for (interaction, mut color, mut border_color, name) in &mut interaction_query {
+         println!("处理按钮: {}, 状态: {:?}", name.as_str(), interaction);
         if name.as_str() == "click_area" {
             // 点击区域始终保持完全透明
             *color = Color::NONE.into();
@@ -774,8 +781,10 @@ fn button_system(
                     println!("按下了: {}", name.as_str());
                 }
                 Interaction::Hovered => {
+                    println!("设置悬停样式: {:?} -> {:?}", color.0, HOVERED_BUTTON);
                     *color = HOVERED_BUTTON.into();
                     border_color.0 = Color::WHITE;
+                    println!("执行了一个数据");
                 }
                 Interaction::None => {
                     *color = NORMAL_BUTTON.into();
@@ -784,6 +793,8 @@ fn button_system(
             }
         }
     }
+    
+
 }
 
 fn keyboard_system(
@@ -850,24 +861,29 @@ fn create_dynamic_buttons(
             for entity in existing_buttons.iter() {
                 commands.entity(entity).despawn_recursive();
             }
-
+            
             if let Ok(container) = button_container.get_single() {
-                for choice in choices {
+                // 使用 enumerate() 来获取索引
+                for (index, choice) in choices.iter().enumerate() {
                     commands.entity(container).with_children(|parent| {
                         parent.spawn((
                             Button,
                             DynamicButton,
                             ClickHandler(choice.goto.to_string()),
                             Interaction::None,
+                            Name::new(format!("choice_{}", index)), // 现在 index 在正确的作用域内
                             Node {
-                                width: Val::Px(300.0),
-                                height: Val::Px(60.0),
-                                margin: UiRect::all(Val::Px(10.0)),
+                                bottom: Val::Px(260.0),
+                                left: Val::Px(360.0),
+                                width: Val::Px(450.0),
+                                height: Val::Px(40.0),
+                                border: UiRect::all(Val::Px(1.0)),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 ..default()
                             },
-                            // BackgroundColor(Color::srgb(0.0, 1.0, 0.0)),
+                            BackgroundColor(NORMAL_BUTTON), // 添加初始背景色
+                            BorderColor(Color::BLACK),
                             BorderRadius::all(Val::Px(5.0)),
                             Visibility::Visible,
                         )).with_children(|button| {
@@ -915,3 +931,53 @@ fn handle_choice_buttons(
         }
     }
 }
+// 添加新系统
+fn initialize_new_buttons(
+    mut button_query: Query<
+        (&mut BackgroundColor, &mut BorderColor, &Name),
+        (With<Button>, Added<Button>) // 关键：Added<Button>
+    >,
+) {
+    for (mut color, mut border_color, name) in &mut button_query {
+        if name.as_str() != "click_area" {
+            *color = NORMAL_BUTTON.into();
+            border_color.0 = Color::BLACK;
+        }
+    }
+}
+// 原有的交互系统保持不变
+fn button_interaction_system(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Name,
+        ),
+        (Changed<Interaction>, With<Button>),
+    >,
+) {
+    for (interaction, mut color, mut border_color, name) in &mut interaction_query {
+        if name.as_str() == "click_area" {
+            *color = Color::NONE.into();
+            border_color.0 = Color::NONE;
+        } else {
+            match *interaction {
+                Interaction::Pressed => {
+                    *color = PRESSED_BUTTON.into();
+                    border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
+                }
+                Interaction::Hovered => {
+                    *color = HOVERED_BUTTON.into();
+                    border_color.0 = Color::WHITE;
+                }
+                Interaction::None => {
+                    *color = NORMAL_BUTTON.into();
+                    border_color.0 = Color::BLACK;
+                }
+            }
+        }
+    }
+}
+
+// 创建分支按钮
