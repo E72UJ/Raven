@@ -25,7 +25,7 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 // 位置常量
-const left_box:f32 = 250.0;
+const left_box:f32 = 50.0;
 
 // 背景组件标识
 #[derive(Component)]
@@ -308,7 +308,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                     flip_y: false, // 垂直翻转
                     ..default()
                 },
-                Visibility::Visible, // 设置为可见
+                Visibility::Hidden, // 设置为可见
                 Transform::from_translation(Vec3::new(1200.0, 750.0, 0.0)).with_scale(Vec3::new(1.0, 1.0, 0.0)),
                 
                 // Name::new("child_element"),
@@ -397,7 +397,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(130.0),
+    left: Val::Px(30.0),
     right: Val::Px(30.0),
     top: Val::Px(30.0),
     bottom: Val::Px(30.0),
