@@ -25,7 +25,7 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 // 位置常量
-const left_box:f32 = 50.0;
+const left_box:f32 = 250.0;
 
 // 背景组件标识
 #[derive(Component)]
@@ -302,9 +302,14 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             // 在这里创建子节点
             parent.spawn((
                 Name::new("textbox"),
-                ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
-                Visibility::Hidden, // 设置为可见
-                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+                ImageNode {
+                    image: asset_server.load("background/42B7A693CCADB04C9370D5E36FA40C45.png"),
+                    flip_x: true,  // 水平翻转
+                    flip_y: false, // 垂直翻转
+                    ..default()
+                },
+                Visibility::Visible, // 设置为可见
+                Transform::from_translation(Vec3::new(1200.0, 750.0, 0.0)).with_scale(Vec3::new(1.0, 1.0, 0.0)),
                 
                 // Name::new("child_element"),
                 // Text::new("子节点文本"),
@@ -316,6 +321,8 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
+                    left: Val::Px(-50.0),
+                    top: Val::Px(-100.0),
                     ..default()
                 },
                 // 其他你需要的组件
@@ -369,6 +376,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
     //     },
     //     // Visibility::Hidden,
     // ));
+    // 对话框系统
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -389,7 +397,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(30.0),
+    left: Val::Px(130.0),
     right: Val::Px(30.0),
     top: Val::Px(30.0),
     bottom: Val::Px(30.0),
