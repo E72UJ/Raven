@@ -325,7 +325,7 @@ commands.spawn((
             row_gap: Val::Px(10.0),
             ..default()
         },
-        BackgroundColor(Color::srgba(1.0, 0.0, 0.0, 0.5)),
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
         GlobalZIndex(1000),
         Visibility::Visible, // 初始隐藏
     ));
