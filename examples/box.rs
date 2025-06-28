@@ -174,7 +174,7 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system,create_dynamic_buttons,button_system,initialize_new_buttons,button_interaction_system,handle_choice_buttons))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system,create_dynamic_buttons,button_interaction_system,handle_choice_buttons))
         .run();
 }
 
@@ -958,6 +958,10 @@ fn button_interaction_system(
     >,
 ) {
     for (interaction, mut color, mut border_color, name) in &mut interaction_query {
+        // 添加调试信息
+        if name.as_str().starts_with("choice_") {
+            println!("分支按钮 {} 的交互状态: {:?}", name.as_str(), interaction);
+        }
         if name.as_str() == "click_area" {
             *color = Color::NONE.into();
             border_color.0 = Color::NONE;
@@ -968,8 +972,15 @@ fn button_interaction_system(
                     border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
                 }
                 Interaction::Hovered => {
+                    println!("检测到悬停: {}", name.as_str());
+                    println!("设置前 BackgroundColor: {:?}", color.0);
+                    println!("HOVERED_BUTTON 常量值: {:?}", HOVERED_BUTTON);
+                    
                     *color = HOVERED_BUTTON.into();
                     border_color.0 = Color::WHITE;
+                    
+                    println!("设置后 BackgroundColor: {:?}", color.0);
+                    println!("设置后 BorderColor: {:?}", border_color.0);
                 }
                 Interaction::None => {
                     *color = NORMAL_BUTTON.into();
