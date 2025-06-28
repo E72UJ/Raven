@@ -397,11 +397,11 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(30.0),
-    right: Val::Px(30.0),
-    top: Val::Px(30.0),
-    bottom: Val::Px(30.0),
-},
+                    left: Val::Px(30.0),
+                    right: Val::Px(30.0),
+                    top: Val::Px(30.0),
+                    bottom: Val::Px(30.0),
+                },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },

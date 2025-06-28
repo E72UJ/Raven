@@ -37,6 +37,10 @@ struct ChoiceState {
     buttons_created: bool,
     last_dialogue_line: usize,
 }
+
+#[derive(Component)]
+struct ClickArea;
+
 #[derive(Component)]
 struct ChoiceButton1;
 
@@ -174,7 +178,8 @@ fn main() {
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system,create_dynamic_buttons,button_interaction_system,handle_choice_buttons))
+        // 更新系统
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system, create_dynamic_buttons.run_if(resource_changed::<GameState>),button_interaction_system,handle_choice_buttons))
         .run();
 }
 
@@ -291,9 +296,10 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
         .spawn((
             Name::new("click_area"),
             // Button, // 添加这行
+            ClickArea,
             Node {
-                width: Val::Px(800.0),     // 固定宽度800像素
-                height: Val::Px(600.0),    // 固定高度600像素
+                width: Val::Px(1200.0),     // 固定宽度800像素
+                height: Val::Px(660.0),    // 固定高度600像素
                 bottom: Val::Px(50.0),
                 left: Val::Px(0.0),  // 添加左边定位
                 position_type: PositionType::Absolute,
@@ -850,39 +856,55 @@ fn create_dynamic_buttons(
     game_state: Res<GameState>,
     existing_buttons: Query<Entity, With<DynamicButton>>,
     button_container: Query<Entity, With<ButtonContainer>>,
+     mut click_area_query: Query<&mut Visibility, With<ClickArea>>,
 ) {
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         println!("当前对话行: {}, 角色: {}", game_state.current_line, dialogue.character);
         
         if let Some(choices) = &dialogue.choices {
             println!("发现 {} 个选择分支", choices.len());
-            
+                        // 隐藏点击区域来禁用交互
+            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+                *visibility = Visibility::Hidden;
+            }
             // 先清除现有按钮
             for entity in existing_buttons.iter() {
                 commands.entity(entity).despawn_recursive();
             }
             
             if let Ok(container) = button_container.get_single() {
-                // 使用 enumerate() 来获取索引
                 for (index, choice) in choices.iter().enumerate() {
                     commands.entity(container).with_children(|parent| {
                         parent.spawn((
                             Button,
                             DynamicButton,
                             ClickHandler(choice.goto.to_string()),
-                            Interaction::None,
-                            Name::new(format!("choice_{}", index)), // 现在 index 在正确的作用域内
+                            Interaction::default(),
+                            Name::new(format!("choice_{}", index)),
+                            // 关键修复：确保交互组件和样式正确设置
                             Node {
-                                bottom: Val::Px(260.0),
-                                left: Val::Px(360.0),
-                                width: Val::Px(450.0),
+                                // 分支按钮样式
+                                position_type: PositionType::Relative,   // 绝对定位
+                                bottom: Val::Px(100.0),
+                                    // 绝对定位的位置
+                                top: Val::Px(-220.0),
+                                left: Val::Px(410.0),
+                                width: Val::Px(400.0),
                                 height: Val::Px(40.0),
-                                border: UiRect::all(Val::Px(1.0)),
+                                border: UiRect::all(Val::Px(2.0)), // 增加边框宽度便于看到效果
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
+                                // margin: UiRect::all(Val::Px(5.0)),
+                                padding: UiRect {
+                                    left: Val::Px(2.0),
+                                    right: Val::Px(2.0),
+                                    top: Val::Px(5.0),
+                                    bottom: Val::Px(5.0),
+                                },
                                 ..default()
                             },
-                            BackgroundColor(NORMAL_BUTTON), // 添加初始背景色
+                            // 使用你定义的常量设置初始状态
+                            BackgroundColor(NORMAL_BUTTON),
                             BorderColor(Color::BLACK),
                             BorderRadius::all(Val::Px(5.0)),
                             Visibility::Visible,
@@ -891,7 +913,7 @@ fn create_dynamic_buttons(
                                 Text::new(choice.text.clone()),
                                 TextFont {
                                     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                                    font_size: 20.0,
+                                    font_size: 17.0,
                                     ..default()
                                 },
                                 TextColor(Color::WHITE),
@@ -901,16 +923,16 @@ fn create_dynamic_buttons(
                 }
             }
         } else {
-            // 当没有选择分支时，清除所有现有按钮
             println!("当前对话没有选择分支，清除所有按钮");
+            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+                *visibility = Visibility::Visible;
+            }
             for entity in existing_buttons.iter() {
                 commands.entity(entity).despawn_recursive();
-                println!("清除了按钮");
             }
         }
     }
 }
-
 fn handle_choice_buttons(
     mut interaction_query: Query<(&Interaction, &ClickHandler), (Changed<Interaction>, With<DynamicButton>)>,
     mut game_state: ResMut<GameState>,
@@ -958,37 +980,30 @@ fn button_interaction_system(
     >,
 ) {
     for (interaction, mut color, mut border_color, name) in &mut interaction_query {
-        // 添加调试信息
-        if name.as_str().starts_with("choice_") {
-            println!("分支按钮 {} 的交互状态: {:?}", name.as_str(), interaction);
-        }
+        // 透明点击区域特殊处理
         if name.as_str() == "click_area" {
             *color = Color::NONE.into();
             border_color.0 = Color::NONE;
-        } else {
-            match *interaction {
-                Interaction::Pressed => {
-                    *color = PRESSED_BUTTON.into();
-                    border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
-                }
-                Interaction::Hovered => {
-                    println!("检测到悬停: {}", name.as_str());
-                    println!("设置前 BackgroundColor: {:?}", color.0);
-                    println!("HOVERED_BUTTON 常量值: {:?}", HOVERED_BUTTON);
-                    
-                    *color = HOVERED_BUTTON.into();
-                    border_color.0 = Color::WHITE;
-                    
-                    println!("设置后 BackgroundColor: {:?}", color.0);
-                    println!("设置后 BorderColor: {:?}", border_color.0);
-                }
-                Interaction::None => {
-                    *color = NORMAL_BUTTON.into();
-                    border_color.0 = Color::BLACK;
-                }
+            continue;
+        }
+
+        // 所有其他按钮（包括动态按钮）的统一处理
+        match *interaction {
+            Interaction::Pressed => {
+                *color = PRESSED_BUTTON.into();
+                border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
+                println!("按下了按钮: {}", name.as_str());
+            }
+            Interaction::Hovered => {
+                *color = HOVERED_BUTTON.into();
+                border_color.0 = Color::WHITE;
+                println!("悬停在按钮: {}", name.as_str());
+            }
+            Interaction::None => {
+                *color = NORMAL_BUTTON.into();
+                border_color.0 = Color::BLACK;
             }
         }
     }
 }
-
 // 创建分支按钮
