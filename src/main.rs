@@ -112,7 +112,7 @@ struct PortraitAssets {
 #[derive(Component)]
 struct MyMusic;
 fn main() {
-    println!("{:?}", "mac 主程序启动！");
+    println!("{:?}", "主程序启动！");
     // 加载主配置
     let main_config = load_main_config();
     let app_window = Some(Window {

@@ -179,7 +179,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
         // 更新系统
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system, create_dynamic_buttons.run_if(resource_changed::<GameState>),button_interaction_system,handle_choice_buttons))
+        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system, create_dynamic_buttons.run_if(should_create_buttons),button_interaction_system,handle_choice_buttons))
         .run();
 }
 
@@ -853,80 +853,98 @@ fn control_branch_visibility(
 fn create_dynamic_buttons(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    game_state: Res<GameState>,
+    mut game_state: ResMut<GameState>,
     existing_buttons: Query<Entity, With<DynamicButton>>,
     button_container: Query<Entity, With<ButtonContainer>>,
-     mut click_area_query: Query<&mut Visibility, With<ClickArea>>,
+    mut click_area_query: Query<&mut Visibility, With<ClickArea>>,
 ) {
-    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-        println!("当前对话行: {}, 角色: {}", game_state.current_line, dialogue.character);
-        
-        if let Some(choices) = &dialogue.choices {
-            println!("发现 {} 个选择分支", choices.len());
-                        // 隐藏点击区域来禁用交互
+    let current_line = game_state.current_line;
+    
+    // 先检查是否有对话和选择，但不借用
+    let has_dialogue = game_state.dialogues.get(current_line).is_some();
+    let has_choices = game_state.dialogues.get(current_line)
+        .and_then(|d| d.choices.as_ref())
+        .map(|choices| choices.len() > 0)
+        .unwrap_or(false);
+    
+    if has_dialogue {
+        if has_choices {
+            // 现在可以安全修改 game_state
+            game_state.in_branch_selection = true;
+            println!("{}",game_state.in_branch_selection);
+            
+            // 隐藏点击区域
             if let Ok(mut visibility) = click_area_query.get_single_mut() {
                 *visibility = Visibility::Hidden;
             }
-            // 先清除现有按钮
+            
+            // 清除现有按钮
             for entity in existing_buttons.iter() {
                 commands.entity(entity).despawn_recursive();
             }
             
-            if let Ok(container) = button_container.get_single() {
-                for (index, choice) in choices.iter().enumerate() {
-                    commands.entity(container).with_children(|parent| {
-                        parent.spawn((
-                            Button,
-                            DynamicButton,
-                            ClickHandler(choice.goto.to_string()),
-                            Interaction::default(),
-                            Name::new(format!("choice_{}", index)),
-                            // 关键修复：确保交互组件和样式正确设置
-                            Node {
-                                // 分支按钮样式
-                                position_type: PositionType::Relative,   // 绝对定位
-                                bottom: Val::Px(100.0),
-                                    // 绝对定位的位置
-                                top: Val::Px(-220.0),
-                                left: Val::Px(410.0),
-                                width: Val::Px(400.0),
-                                height: Val::Px(40.0),
-                                border: UiRect::all(Val::Px(2.0)), // 增加边框宽度便于看到效果
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                // margin: UiRect::all(Val::Px(5.0)),
-                                padding: UiRect {
-                                    left: Val::Px(2.0),
-                                    right: Val::Px(2.0),
-                                    top: Val::Px(5.0),
-                                    bottom: Val::Px(5.0),
-                                },
-                                ..default()
-                            },
-                            // 使用你定义的常量设置初始状态
-                            BackgroundColor(NORMAL_BUTTON),
-                            BorderColor(Color::BLACK),
-                            BorderRadius::all(Val::Px(5.0)),
-                            Visibility::Visible,
-                        )).with_children(|button| {
-                            button.spawn((
-                                Text::new(choice.text.clone()),
-                                TextFont {
-                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                                    font_size: 17.0,
-                                    ..default()
-                                },
-                                TextColor(Color::WHITE),
-                            ));
-                        });
-                    });
+            // 重新获取对话数据来创建按钮
+            if let Some(dialogue) = game_state.dialogues.get(current_line) {
+                if let Some(choices) = &dialogue.choices {
+                    println!("发现 {} 个选择分支", choices.len());
+                    
+                    if let Ok(container) = button_container.get_single() {
+                        for (index, choice) in choices.iter().enumerate() {
+                            // 创建按钮的代码...
+                            commands.entity(container).with_children(|parent| {
+                                parent.spawn((
+                                    Button,
+                                    DynamicButton,
+                                    ClickHandler(choice.goto.to_string()),
+                                    Interaction::default(),
+                                    Name::new(format!("choice_{}", index)),
+                                    // 你的按钮样式代码...
+                                    Node {
+                                        position_type: PositionType::Relative,
+                                        bottom: Val::Px(100.0),
+                                        top: Val::Px(-220.0),
+                                        left: Val::Px(410.0),
+                                        width: Val::Px(400.0),
+                                        height: Val::Px(40.0),
+                                        border: UiRect::all(Val::Px(2.0)),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        padding: UiRect {
+                                            left: Val::Px(2.0),
+                                            right: Val::Px(2.0),
+                                            top: Val::Px(5.0),
+                                            bottom: Val::Px(5.0),
+                                        },
+                                        ..default()
+                                    },
+                                    BackgroundColor(NORMAL_BUTTON),
+                                    BorderColor(Color::BLACK),
+                                    BorderRadius::all(Val::Px(5.0)),
+                                    Visibility::Visible,
+                                )).with_children(|button| {
+                                    button.spawn((
+                                        Text::new(choice.text.clone()),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 17.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                });
+                            });
+                        }
+                    }
                 }
             }
         } else {
-            println!("当前对话没有选择分支，清除所有按钮");
+            // 没有选择分支
+            game_state.in_branch_selection = false;
+            
             if let Ok(mut visibility) = click_area_query.get_single_mut() {
                 *visibility = Visibility::Visible;
             }
+            
             for entity in existing_buttons.iter() {
                 commands.entity(entity).despawn_recursive();
             }
@@ -1007,3 +1025,22 @@ fn button_interaction_system(
     }
 }
 // 创建分支按钮
+// 条件筛选函数
+fn should_create_buttons(
+    game_state: Res<GameState>,
+    existing_buttons: Query<(), With<DynamicButton>>,
+) -> bool {
+    let current_line = game_state.current_line;
+    
+    // 检查当前行是否有选择分支
+    let has_choices = game_state.dialogues.get(current_line)
+        .and_then(|d| d.choices.as_ref())
+        .map(|choices| !choices.is_empty())
+        .unwrap_or(false);
+    
+    // 检查是否已经有按钮存在
+    let buttons_exist = !existing_buttons.is_empty();
+    
+    // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
+    (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
+}
