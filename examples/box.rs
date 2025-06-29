@@ -179,7 +179,14 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
         // 更新系统
-        .add_systems(Update, (handle_input, update_dialogue, update_portrait,flash_animation,keyboard_system, create_dynamic_buttons.run_if(should_create_buttons),button_interaction_system,handle_choice_buttons))
+        .add_systems(Update, (handle_input, 
+            update_dialogue,
+             update_portrait,
+             flash_animation,
+             keyboard_system, 
+             create_dynamic_buttons.run_if(should_create_buttons),
+             button_interaction_system,
+             handle_choice_buttons))
         .run();
 }
 
