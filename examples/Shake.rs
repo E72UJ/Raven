@@ -27,8 +27,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             end_alpha: 1.0,
         },
         Shake {
-            timer: Timer::from_seconds(6.0, TimerMode::Once), // 3秒晃动效果
-            intensity: 50.0, // 晃动强度（像素）
+            timer: Timer::from_seconds(9999.0, TimerMode::Once), // 3秒晃动效果
+            intensity: 10.0, // 晃动强度（像素）
             original_position: Vec3::new(0.0, 0.0, 0.0),
         }
     ));

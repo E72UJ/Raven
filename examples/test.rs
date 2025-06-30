@@ -38,7 +38,7 @@ fn setup(mut commands: Commands,  asset_server: Res<AssetServer>,) {
             ..default()
         },
         TextColor(Color::WHITE),
-        TypewriterText::new("你好 这是一个打字机".to_string(), 25.0),
+        TypewriterText::new("你好 这是一个打字机哈哈哈啊啊哈啊啊啊哈啊哈哈啊啊啊 啊啊啊啊 啊啊啊 啊啊".to_string(), 1.0),
     ));
 }
 
