@@ -4,6 +4,7 @@ use bevy::{
     prelude::*,
     winit::WinitSettings,
 };
+use std::process;
 
 fn main() {
     App::new()
@@ -84,7 +85,7 @@ fn button_system(
                         "设置" => next_state.set(AppState::Settings),
                         "历史" => next_state.set(AppState::History),
                         "跳过" => next_state.set(AppState::SkipMode),
-                        "自动" => next_state.set(AppState::AutoMode),
+                        "退出游戏" => exit_game(),
                         _ => {}
                     }
                 }
@@ -886,7 +887,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+                    // BackgroundColor(Color::srgba(1.1, 1.1, 1.1, 0.8)),
                 ))
                 .with_children(|parent| {
                     let nav_items = vec!["主菜单", "保存", "读取", "设置", "历史", "跳过", "自动"];
@@ -928,4 +929,10 @@ fn create_nav_button(
             },
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
         ));
+}
+
+// 退出程序
+fn exit_game() {
+    println!("游戏退出");
+    process::exit(0);
 }
