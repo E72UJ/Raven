@@ -63,7 +63,7 @@ fn handle_popup_events(
         commands.spawn((
             Node {
                 position_type: PositionType::Absolute,
-                top: Val::Px(50.0),
+                top: Val::Px(70.0),
                 left: Val::Percent(50.0),
                 margin: UiRect::left(Val::Px(-150.0)),
                 width: Val::Px(300.0),
