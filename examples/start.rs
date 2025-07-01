@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::render_resource::*;
 use bevy::sprite::*;
-use bevy::window::WindowResolution;
-
+use bevy::window::WindowMode;  // 显式导入WindowMode
 #[derive(Asset, TypePath, AsBindGroup, Clone)]
 struct ParallaxSpotlightMaterial {
     #[uniform(0)]
@@ -43,30 +42,58 @@ struct BaseResolution {
     aspect_ratio: f32,
 }
 
+
+fn toggle_fullscreen(
+    input: Res<ButtonInput<KeyCode>>,
+    mut windows: Query<&mut Window>,
+) {
+    if input.just_pressed(KeyCode::F4) {
+        if let Ok(mut window) = windows.get_single_mut() {
+            window.mode = match window.mode {
+                WindowMode::Windowed => WindowMode::BorderlessFullscreen(MonitorSelection::Current),
+                _ => WindowMode::Windowed,
+            };
+        }
+    }
+}
 fn main() {
+    let app_window = Some(Window {
+        title: "I am a window!".into(),
+        // resizable: false, // 按你之前的要求禁用调整大小
+                    enabled_buttons: bevy::window::EnabledButtons {
+                        maximize: false,
+                        ..Default::default()
+                    },
+        ..default()
+    });
     App::new()
-        .insert_resource(ClearColor(Color::BLACK)) // 设置背景清除颜色为黑色
         .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                resolution: WindowResolution::new(1152.0, 648.0)
-                    .with_scale_factor_override(1.0),
-                title: "固定比例视差背景聚光灯效果".to_string(),
-                resizable: true,
-                ..default()
-            }),
+            primary_window: app_window,
             ..default()
         }))
+        .insert_resource(ClearColor(Color::BLACK)) // 设置背景清除颜色为黑色
+        // .add_plugins(DefaultPlugins.set(WindowPlugin {
+        //     primary_window: Some(Window {
+        //         resolution: WindowResolution::new(1152.0, 648.0)
+        //             .with_scale_factor_override(1.0),
+        //         title: "固定比例视差背景聚光灯效果".to_string(),
+        //         resizable: true,
+        //         ..default()
+        //     }),
+        //     ..default()
+        // }))
         .add_plugins(Material2dPlugin::<ParallaxSpotlightMaterial>::default())
         .insert_resource(BaseResolution {
-            width: 1152.0,
-            height: 648.0,
-            aspect_ratio: 1152.0 / 648.0,
+                width: 1152.0,  // 恢复为1152
+                    height: 648.0,
+                    aspect_ratio: 1152.0 / 648.0,  // 约1.78的宽高比(16:9)
         })
         .add_systems(Startup, setup)
         .add_systems(Update, (
             update_camera_scaling,
             update_spotlight,
             update_parallax,
+            toggle_fullscreen,
         ))
         .run();
 }

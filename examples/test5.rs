@@ -2,6 +2,7 @@ use bevy::ecs::system::command;
 use bevy::prelude::*;
 use bevy::render::render_resource::{AsBindGroup, ShaderRef};
 use bevy::sprite::{Material2d, Material2dPlugin};
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct BorderMaterial {
     #[uniform(0)]
@@ -41,7 +42,7 @@ fn setup(
 
     // 创建边框材质
     let border_material = materials.add(BorderMaterial {
-        border_width: 0.1,
+        border_width: 0.05,
         border_color: LinearRgba::RED,
         inner_color_multiplier: LinearRgba::WHITE,
         base_texture: asset_server.load("characters/protagonist/default.png"),
@@ -66,11 +67,12 @@ fn setup(
                 ..default()
             },
             BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+
         ))
         .with_children(|parent| {
             parent.spawn((
                 Name::new("textbox"),
-                Text::new("hello Raven engine"),
+                Text::new("hello hello hello"),
                 TextFont {
                     font_size: 24.0,
                     ..default()

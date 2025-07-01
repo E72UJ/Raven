@@ -31,6 +31,14 @@ const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 
 
+#[derive(Component)]
+struct TypewriterText {
+    full_text: String,
+    current_length: usize,
+    timer: Timer,
+}
+
+
 #[derive(Resource, Default)]
 struct ChoiceState {
     current_choices: Vec<Choice>,
@@ -159,6 +167,8 @@ fn main() {
             main_config.settings.resolution[1] as f32,
         )
             .into(),
+        // mode: WindowMode::Windowed,
+        resizable: false, // 禁用调整大小
         ..default()
     });
     App::new()
@@ -180,13 +190,16 @@ fn main() {
         .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources))
         // 更新系统
         .add_systems(Update, (handle_input, 
-            update_dialogue,
+            // update_dialogue,
              update_portrait,
              flash_animation,
              keyboard_system, 
              create_dynamic_buttons.run_if(should_create_buttons),
+             (update_dialogue, typewriter_system).chain(),
              button_interaction_system,
-             handle_choice_buttons))
+             handle_choice_buttons,),
+            )
+             
         .run();
 }
 
@@ -403,6 +416,7 @@ commands.spawn((
                         // create_nav_button2(parent, &asset_server, "分支1");
                         // create_nav_button2(parent, &asset_server, "分支2");
                 });
+                // 文本框实体
     commands
         .spawn((
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
@@ -435,12 +449,12 @@ commands.spawn((
             // 在这里创建子节点
             parent.spawn((
                 Name::new("textbox"),
-                Text::new("文本框!"),
+                Text::new(""),
                 // Name::new("child_element"),
                 // Text::new("子节点文本"),
                 TextFont {
                     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 28.0,
+                    font_size: 27.0,
                     ..default()
                 },
                 Node {
@@ -449,7 +463,12 @@ commands.spawn((
                     ..default()
                 },
                 // 其他你需要的组件
-                CurrentText
+                CurrentText,
+                TypewriterText {
+                    full_text: "".to_string(),
+                    current_length: 0,
+                    timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
+                },
             ));
 
         });
@@ -500,29 +519,78 @@ commands.spawn((
 }
 
 // 更新对话文本
-fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Text)>) {
+// fn update_dialogue(game_state: Res<GameState>, mut query: Query<(&Name, &mut Text)>) {
+//     match game_state.dialogues.get(game_state.current_line) {
+//         Some(dialogue) => {
+//             for (name, mut text) in &mut query {
+//                 // 比较方式1：转换为字符串切片
+//                 if name.as_str() == "namebox" {
+//                     text.0 = dialogue.character.to_string();
+//                 }
+//                 if name.as_str() == "textbox" {
+//                     text.0 = dialogue.text.to_string();
+//                 }
+//             }
+//             // println!("{}", format!("{}: {}", dialogue.character, dialogue.text));
+//         }
+//         None => {
+//             // println!("{:?}", dialogue);
+//             for (name, mut text) in &mut query {
+//                 // 比较方式1：转换为字符串切片
+//                 if name.as_str() == "namebox" {
+//                     text.0 = "NULL".to_string();
+//                 }
+//                 if name.as_str() == "textbox" {
+//                     text.0 = "感谢体验，按下ESC退出".to_string();
+//                 }
+//             }
+//         }
+//     }
+// }
+
+fn update_dialogue(
+    game_state: Res<GameState>, 
+    mut query: Query<(&Name, &mut Text, Option<&mut TypewriterText>)>
+) {
+        // 只在游戏状态变化时执行
+    if !game_state.is_changed() {
+        return;
+    }
     match game_state.dialogues.get(game_state.current_line) {
         Some(dialogue) => {
-            for (name, mut text) in &mut query {
-                // 比较方式1：转换为字符串切片
+            for (name, mut text, typewriter_opt) in &mut query {
                 if name.as_str() == "namebox" {
                     text.0 = dialogue.character.to_string();
                 }
                 if name.as_str() == "textbox" {
-                    text.0 = dialogue.text.to_string();
+                    // 如果有打字机组件，使用打字机效果
+                    if let Some(mut typewriter) = typewriter_opt {
+                        typewriter.full_text = dialogue.text.to_string();
+                        typewriter.current_length = 0;
+                        typewriter.timer.reset();
+                        text.0 = "".to_string();
+                    } else {
+                        // 没有打字机组件就直接显示
+                        text.0 = dialogue.text.to_string();
+                    }
                 }
             }
-            // println!("{}", format!("{}: {}", dialogue.character, dialogue.text));
         }
         None => {
-            // println!("{:?}", dialogue);
-            for (name, mut text) in &mut query {
-                // 比较方式1：转换为字符串切片
+            for (name, mut text, typewriter_opt) in &mut query {
                 if name.as_str() == "namebox" {
                     text.0 = "NULL".to_string();
                 }
                 if name.as_str() == "textbox" {
-                    text.0 = "感谢体验，按下ESC退出".to_string();
+                    let end_text = "感谢体验，按下ESC退出";
+                    if let Some(mut typewriter) = typewriter_opt {
+                        typewriter.full_text = end_text.to_string();
+                        typewriter.current_length = 0;
+                        typewriter.timer.reset();
+                        text.0 = "".to_string();
+                    } else {
+                        text.0 = end_text.to_string();
+                    }
                 }
             }
         }
@@ -1051,3 +1119,18 @@ fn should_create_buttons(
     // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
     (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
 }
+//打字机动画
+fn typewriter_system(
+    time: Res<Time>,
+    mut query: Query<(&mut Text, &mut TypewriterText)>,
+) {
+    for (mut text, mut typewriter) in query.iter_mut() {
+        typewriter.timer.tick(time.delta());
+        
+        if typewriter.timer.just_finished() && typewriter.current_length < typewriter.full_text.len() {
+            typewriter.current_length += 1;
+            text.0 = typewriter.full_text.chars().take(typewriter.current_length).collect();
+        }
+    }
+}
+
