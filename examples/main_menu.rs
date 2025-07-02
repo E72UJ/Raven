@@ -34,6 +34,7 @@ fn main() {
         .init_state::<GameScene>()
         .add_systems(Startup, setup)
         .add_systems(Update, button_system)
+        .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
         .add_systems(OnEnter(GameScene::Menu), setup_menu_scene)
         .add_systems(OnEnter(GameScene::Game), setup_game_scene)
         .add_systems(OnEnter(GameScene::Settings), setup_settings_scene)
@@ -133,39 +134,67 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
-            align_items: AlignItems::Start,  // 改为Start，左对齐
-            justify_content: JustifyContent::Center,
-            flex_direction: FlexDirection::Column,
-            padding: UiRect {
-                left: Val::Px(50.0),
-                right: Val::Px(30.0),
-                top: Val::Px(0.0),
-                bottom: Val::Px(70.0),
-            },
-            row_gap: Val::Px(20.0),
+            flex_direction: FlexDirection::Row, // 改为水平布局
             ..default()
         },
-        // BackgroundColor(Color::srgb(0.2, 0.6, 0.8)), // 蓝色背景代表学校
         children![
+            // 左侧菜单区域
             (
-                Text::new("Raven demo"),
-                TextFont {
-                    font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 48.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
                 Node {
-                    margin: UiRect::bottom(Val::Px(50.0)),
+                    width: Val::Percent(50.0), // 占一半宽度
+                    height: Val::Percent(100.0),
+                    align_items: AlignItems::Start,
+                    justify_content: JustifyContent::Center,
+                    flex_direction: FlexDirection::Column,
+                    padding: UiRect {
+                        left: Val::Px(50.0),
+                        right: Val::Px(30.0),
+                        top: Val::Px(0.0),
+                        bottom: Val::Px(70.0),
+                    },
+                    row_gap: Val::Px(20.0),
                     ..default()
                 },
+                children![
+                    (
+                        Text::new("Raven demo"),
+                        TextFont {
+                            font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 48.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(50.0)),
+                            ..default()
+                        },
+                    ),
+                    create_button(&assets, "开始游戏", MenuToGameButton),
+                    create_button(&assets, "设置", SettingsButton),
+                    create_button(&assets, "读取存档", LoadGameButton),
+                    create_button(&assets, "帮助", HelpButton),
+                    create_button(&assets, "关于", AboutButton),
+                    create_button(&assets, "退出游戏", ExitGameButton),
+                ],
             ),
-            create_button(&assets, "开始游戏", MenuToGameButton),
-            create_button(&assets, "设置", SettingsButton),
-            create_button(&assets, "读取存档", LoadGameButton),
-            create_button(&assets, "帮助", HelpButton),
-            create_button(&assets, "关于", AboutButton),
-            create_button(&assets, "退出游戏", ExitGameButton),
+            // 右侧图片区域
+            (
+                Node {
+                    width: Val::Percent(50.0), // 占另一半宽度
+                    height: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                children![(
+                    ImageNode::new(assets.load("background/bg2.png")), // 替换为你的图片路径
+                    Node {
+                        width: Val::Px(1152.0), // 设置图片显示大小
+                        height: Val::Px(800.0),
+                        ..default()
+                    },
+                )],
+            ),
         ],
     ));
 }
