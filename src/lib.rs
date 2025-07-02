@@ -1,23 +1,17 @@
 // src/lib.rs
 use bevy::prelude::*;
 
-// 导出 AppState
-#[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
-pub enum AppState {
+pub mod menu;
+pub use menu::MenuPlugin;
+
+// 导出 GameScene，让外部可以使用
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum GameScene {
     #[default]
     Menu,
-    InGame,
+    Game,
+    Settings,
 }
 
-// 最小的 MenuPlugin
-pub struct MenuPlugin;
-
-impl Plugin for MenuPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Menu), setup_menu);
-    }
-}
-
-fn setup_menu() {
-    println!("Menu setup called!");
-}
+// 如果你想要一个叫 AppState 的别名，可以这样做：
+pub use GameScene as AppState;
