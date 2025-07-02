@@ -160,7 +160,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
                         Text::new("Raven demo"),
                         TextFont {
                             font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 48.0,
+                            font_size: 28.0,
                             ..default()
                         },
                         TextColor(Color::WHITE),
@@ -169,12 +169,12 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
                             ..default()
                         },
                     ),
-                    create_button(&assets, "开始游戏", MenuToGameButton),
-                    create_button(&assets, "设置", SettingsButton),
-                    create_button(&assets, "读取存档", LoadGameButton),
-                    create_button(&assets, "帮助", HelpButton),
-                    create_button(&assets, "关于", AboutButton),
-                    create_button(&assets, "退出游戏", ExitGameButton),
+                    create_button(&assets, "start", MenuToGameButton),
+                    create_button(&assets, "setting", SettingsButton),
+                    create_button(&assets, "save", LoadGameButton),
+                    // create_button(&assets, "帮助", HelpButton),
+                    // create_button(&assets, "关于", AboutButton),
+                    // create_button(&assets, "退出游戏", ExitGameButton),
                 ],
             ),
             // 右侧图片区域
