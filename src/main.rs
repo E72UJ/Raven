@@ -6,6 +6,7 @@ mod config;
 use bevy::prelude::*;
 use menu::MenuPlugin;
 use config::{MainConfig, load_main_config};
+use crate::game::GamePlugin;
 
 
 // 定义游戏场景状态
@@ -17,28 +18,31 @@ pub enum GameScene {
     Settings,
 }
 fn main() {
-    // 载入配置
-    let main_config = MainConfig::load();
-   App::new()
+    
+    let main_config = load_main_config();
+    let (width, height) = (
+        main_config.settings.resolution[0] as f32,
+        main_config.settings.resolution[1] as f32,
+    );
+    
+    App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: main_config.title.clone(),  // 正确的访问方式
+                title: main_config.title.clone(),
                 name: Some("raven.app".into()),
                 resizable: false,
                 enabled_buttons: bevy::window::EnabledButtons {
                     maximize: false,
                     ..Default::default()
                 },
-                resolution: (
-                    main_config.settings.resolution[0] as f32,
-                    main_config.settings.resolution[1] as f32,
-                ).into(),
-                ..default()  // 简写形式
+                resolution: (width, height).into(),
+                ..default()
             }),
             ..default()
         }))
-        .insert_resource(main_config)  // 将配置作为资源插入
+        .insert_resource(main_config)
+        .add_plugins(menu::MenuPlugin)    // 主菜单插件
         .init_state::<GameScene>()
-        .add_plugins(MenuPlugin)
+        .add_plugins(GamePlugin)  // 只添加 GamePlugin，移除 MenuPlugin
         .run();
 }
