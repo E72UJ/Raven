@@ -164,10 +164,9 @@ impl Plugin for GamePlugin {
             .add_systems(Startup, (
                 load_main_config_system,
                 setup_camera,
-                setup_minimal_swf
-                // load_portraits,
-                // load_audio_resources,
-                // load_backgrounds,
+                load_portraits,
+                load_audio_resources,
+                load_backgrounds,
                 // load_swf_assets,
                 // setup_ui,  // 移除这行！
                 
@@ -176,28 +175,27 @@ impl Plugin for GamePlugin {
             // 进入游戏场景时才创建UI和游戏状态
             .add_systems(OnEnter(GameScene::Game), (
                 setup_game_state,
-                setup_minimal_swf
-                // setup_ui,  // 移到这里
-                // load_swf_assets
+                setup_ui,  // 移到这里
+                load_swf_assets
             ).chain())
             
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
                 Update,
                 (
-                    // handle_input,
-                    // debug_flash_position,
-                    // output_game_state,
-                    // update_dialogue, 
-                    // update_portrait,
-                    flash_animation
-                    // apply_jump,
-                    // update_background,
-                    // update_swf.run_if(in_state(GameScene::Game)),
-                    // keyboard_system,
-                    // handle_choice_buttons,
-                    // create_dynamic_buttons.run_if(should_create_buttons),
-                    // button_interaction_system
+                    handle_input,
+                    debug_flash_position,
+                    output_game_state,
+                    update_dialogue, 
+                    update_portrait,
+                    flash_animation.run_if(in_state(GameScene::Game)),
+                    apply_jump,
+                    update_background,
+                    update_swf.run_if(in_state(GameScene::Game)),
+                    keyboard_system,
+                    handle_choice_buttons,
+                    create_dynamic_buttons.run_if(should_create_buttons),
+                    button_interaction_system
                 ).run_if(in_state(GameScene::Game))
             );
     }
@@ -225,17 +223,17 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
         },
         Transform::default(),
     ));
-    commands.spawn((
-        Name::new("svgload"),
-        FlashAnimation {
-            // name:"a1",
-            swf: asset_server.load("swf/66.swf")
-        },
-        // Transform::default().with_scale(Vec3::ZERO),
-        Visibility::Visible,
-        Transform::from_translation(Vec3::new(-400.0, 240.0, 10.0)).with_scale(Vec3::splat(1.0)),
+    // commands.spawn((
+    //     Name::new("svgload"),
+    //     FlashAnimation {
+    //         // name:"a1",
+    //         swf: asset_server.load("swf/66.swf")
+    //     },
+    //     // Transform::default().with_scale(Vec3::ZERO),
+    //     Visibility::Visible,
+    //     Transform::from_translation(Vec3::new(-400.0, 0.0, 1.0)), // 放在中心，z=1确保在前景
 
-    ));
+    // ));
     let dialogues: Vec<Dialogue> = load_dialogues(&config);
     
     // 创建标签映射
@@ -471,17 +469,17 @@ commands.spawn((
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
-    commands.spawn((
-        Name::new("svgload"),
-        FlashAnimation {
-            // name:"a1",
-            swf: asset_server.load("swf/66.swf")
-        },
-        // Transform::default().with_scale(Vec3::ZERO),
-        Visibility::Visible,
-        Transform::from_translation(Vec3::new(-400.0, 240.0, 10.0)).with_scale(Vec3::splat(1.0)),
+    // commands.spawn((
+    //     Name::new("svgload"),
+    //     FlashAnimation {
+    //         // name:"a1",
+    //         swf: asset_server.load("swf/66.swf")
+    //     },
+    //     // Transform::default().with_scale(Vec3::ZERO),
+    //     Visibility::Visible,
+    //     Transform::from_translation(Vec3::new(-400.0, 240.0, 10.0)).with_scale(Vec3::splat(1.0)),
 
-    ));
+    // ));
 
     commands.spawn((
         Name::new("spritebox"),
