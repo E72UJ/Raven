@@ -215,14 +215,14 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
     info!("进入游戏场景");
     commands.spawn(Camera2d);
    // 添加测试精灵
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(1.0, 0.0, 0.0), // 红色
-            custom_size: Some(Vec2::new(100.0, 100.0)),
-            ..default()
-        },
-        Transform::default(),
-    ));
+    // commands.spawn((
+    //     Sprite {
+    //         color: Color::srgb(1.0, 0.0, 0.0), // 红色
+    //         custom_size: Some(Vec2::new(100.0, 100.0)),
+    //         ..default()
+    //     },
+    //     Transform::default(),
+    // ));
     // commands.spawn((
     //     Name::new("svgload"),
     //     FlashAnimation {
