@@ -1069,10 +1069,10 @@ fn update_swf(
     //     }
     // }
     
-    // 首先隐藏所有swf动画
-    // for (_, mut visibility) in query.iter_mut() {
-    //     *visibility = Visibility::Hidden;
-    // }
+
+    for (_, mut visibility) in query.iter_mut() {
+        *visibility = Visibility::Hidden;
+    }
     
     // 根据当前对话中的swf字段显示对应动画
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {

@@ -26,6 +26,8 @@ fn main() {
     );
     
     App::new()
+    
+        .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: main_config.title.clone(),

@@ -10,7 +10,7 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
             // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使用
-            .insert_resource(WinitSettings::desktop_app())
+            // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
             .init_resource::<InputFocus>()
             // 删除这行！不要重复初始化状态 - main.rs 已经初始化了
@@ -190,8 +190,8 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
         button_type,
         Button,
         Node {
-            width: Val::Px(290.0),
-            height: Val::Px(65.0),
+            width: Val::Px(270.0),
+            height: Val::Px(55.0),
             border: UiRect::all(Val::Px(2.0)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
@@ -216,6 +216,7 @@ fn cleanup_scene(mut commands: Commands,
     scene_query: Query<Entity, With<SceneEntity>>,
     camera_query: Query<Entity, With<MenuCamera>>, // 清理摄像机
 ) {
+    println!("摄像机清理！！！");
     // 清理场景UI
     for entity in &scene_query {
         commands.entity(entity).despawn();
