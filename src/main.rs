@@ -1,7 +1,8 @@
 mod game;
 mod menu;
 mod config;
-mod audio;  // 这行声明 audio 模块
+mod audio;  
+mod transition; // 添加模块
 
 
 use bevy::prelude::*;
@@ -10,6 +11,7 @@ use config::{MainConfig, load_main_config};
 use crate::game::GamePlugin;
 use crate::audio::AudioPlugin;
 use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
+use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
 // 定义游戏场景状态
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
@@ -27,6 +29,9 @@ fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // // 循环播放背景音乐
     // play_audio_loop(&mut commands, &asset_server, "audio/background_music.ogg", 0.3);
+}
+fn menu_exit_system(mut commands: Commands) {
+    fade_in(&mut commands, 1.7); // 1.0渐入
 }
 fn main() {
     
@@ -57,8 +62,11 @@ fn main() {
         .add_plugins(menu::MenuPlugin)    // 主菜单插件
         .init_state::<GameScene>()
         .add_systems(Startup, my_system)  
+        .add_plugins(TransitionPlugin)
         .add_plugins(GamePlugin)  // 只添加 GamePlugin，移除 MenuPlugin
         .add_plugins(AudioPlugin)
+        // .add_systems(OnEnter(GameScene::Menu), menu_exit_system)  
+        .add_systems(OnEnter(GameScene::Game), menu_exit_system)
         .run();
 }
 
