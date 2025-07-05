@@ -48,10 +48,13 @@ pub struct ExitGameButton;
 struct SceneEntity;
 
 // 按钮颜色常量
-const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.1, 0.1, 0.1);
+// const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
+// const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+// const PRESSED_BUTTON: Color = Color::srgb(0.1, 0.1, 0.1);
 
+const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
+const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.2);
+const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.3);
 fn button_system(
     mut input_focus: ResMut<InputFocus>,
     mut next_state: ResMut<NextState<GameScene>>,
@@ -154,6 +157,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
                             margin: UiRect::bottom(Val::Px(20.0)),
                             ..default()
                         },
+                        GlobalZIndex(99)
                     ),
                     create_button(&assets, "开始游戏", StartGameButton),
                     create_button(&assets, "载入存档", LoadGameButton),
@@ -166,11 +170,11 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
             // 右侧图片区域
             (
                 Node {
-                    // width: Val::Percent(50.0),
                     // height: Val::Percent(100.0),
+                    position_type: PositionType::Absolute,
                     width: Val::Px(1280.0),
                     height: Val::Px(720.0),
-                    left: Val::Px(-350.0), // 向左偏移50像素，可以调整数值
+                    left: Val::Px(00.0), // 向左偏移50像素，可以调整数值
                     top: Val::Px(-2.0), // 向左偏移50像素，可以调整数值    
                     // justify_content: JustifyContent::Center,
                     // align_items: AlignItems::Center,
@@ -208,26 +212,27 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
         button_type,
         Button,
         Node {
-            width: Val::Px(270.0),
-            height: Val::Px(55.0),
-            border: UiRect::all(Val::Px(2.0)),
+            width: Val::Px(150.0),
+            height: Val::Px(20.0),
+            // border: UiRect::all(Val::Px(2.0)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             ..default()
         },
-        BorderColor(Color::WHITE),
-        // BackgroundColor(NORMAL_BUTTON),
+        // BorderColor(Color::WHITE),
+        // BackgroundColor(None),
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)), // 完全透明
         GlobalZIndex(55),
         children![(
             Text::new(text),
             TextFont {
                 font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                font_size: 28.0,
+                font_size: 20.0,
                 ..default()
             },
             // TextColor(Color::srgb(0.9, 0.9, 0.9)),
             
-            TextShadow::default(),
+            // TextShadow::default(),
         )]
     )
 }

@@ -1,14 +1,15 @@
 mod game;
 mod menu;
 mod config;
+mod audio;  // 这行声明 audio 模块
 
 
 use bevy::prelude::*;
 use menu::MenuPlugin;
 use config::{MainConfig, load_main_config};
 use crate::game::GamePlugin;
-
-
+use crate::audio::AudioPlugin;
+use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 // 定义游戏场景状态
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
@@ -16,6 +17,16 @@ pub enum GameScene {
     Menu,
     Game,
     Settings,
+}
+fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // 播放一次性音效
+    play_audio(&mut commands, &asset_server, "audio/one.ogg");
+
+    // // 播放音效并设置音量
+    // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
+
+    // // 循环播放背景音乐
+    // play_audio_loop(&mut commands, &asset_server, "audio/background_music.ogg", 0.3);
 }
 fn main() {
     
@@ -45,6 +56,11 @@ fn main() {
         .insert_resource(main_config)
         .add_plugins(menu::MenuPlugin)    // 主菜单插件
         .init_state::<GameScene>()
+        .add_systems(Startup, my_system)  
         .add_plugins(GamePlugin)  // 只添加 GamePlugin，移除 MenuPlugin
+        .add_plugins(AudioPlugin)
         .run();
 }
+
+
+
