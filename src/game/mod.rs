@@ -184,7 +184,7 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     handle_input,
-                    debug_flash_position,
+                    // debug_flash_position,
                     output_game_state,
                     update_dialogue, 
                     update_portrait,
@@ -1000,7 +1000,9 @@ fn load_backgrounds(
             Background, // 添加背景组件标识
             Sprite {
                 image: asset_server.load(bg_path),
+                custom_size: Some(Vec2::new(1157.0, 679.0)), 
                 ..default()
+
                 
             },
             Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
@@ -1445,35 +1447,35 @@ fn any_swf_visible(
 
 // 检查swf 的摄像机事业
 // 检查Flash实体的Transform
-fn debug_flash_position(
-    query: Query<(&Name, &Transform, &Visibility), With<FlashAnimation>>,
-) {
-    for (name, transform, visibility) in query.iter() {
-        println!("Flash {}: pos={:?}, visible={:?}", 
-                name, transform.translation, visibility);
-    }
-}
+// fn debug_flash_position(
+//     query: Query<(&Name, &Transform, &Visibility), With<FlashAnimation>>,
+// ) {
+//     for (name, transform, visibility) in query.iter() {
+//         println!("Flash {}: pos={:?}, visible={:?}", 
+//                 name, transform.translation, visibility);
+//     }
+// }
 
 // flash显示控制器
-fn setup_minimal_swf(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-) {
-    println!("=== 创建最小SWF系统 ===");
+// fn setup_minimal_swf(
+//     mut commands: Commands,
+//     asset_server: Res<AssetServer>,
+// ) {
+//     println!("=== 创建最小SWF系统 ===");
     
-    // 硬编码创建一个SWF实体
-    commands.spawn((
-        Name::new("test_swf"),
-        FlashAnimation {
-            swf: asset_server.load("swf/66.swf")  // 硬编码路径
-        },
-        Transform::from_translation(Vec3::new(-400.0, 0.0, 0.0)).with_scale(Vec3::splat(2.0)),
-        Visibility::Visible,  // 直接设置为可见
-    ));
+//     // 硬编码创建一个SWF实体
+//     commands.spawn((
+//         Name::new("test_swf"),
+//         FlashAnimation {
+//             swf: asset_server.load("swf/66.swf")  // 硬编码路径
+//         },
+//         Transform::from_translation(Vec3::new(-400.0, 0.0, 0.0)).with_scale(Vec3::splat(2.0)),
+//         Visibility::Visible,  // 直接设置为可见
+//     ));
     
-    println!("SWF实体已创建: test_swf");
-    println!("路径: swf/66.swf");
-    println!("位置: (0, 0, 0)");
-    println!("缩放: 1.0");
-    println!("==================");
-}
+//     println!("SWF实体已创建: test_swf");
+//     println!("路径: swf/66.swf");
+//     println!("位置: (0, 0, 0)");
+//     println!("缩放: 1.0");
+//     println!("==================");
+// }

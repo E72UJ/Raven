@@ -27,14 +27,14 @@ fn setup(
             height: Val::Px(190.0),
             position_type: PositionType::Absolute,
             // left: Val::Px(100.0),
-            top: Val::Px(470.0),
+            top: Val::Px(530.0),
             // border: UiRect::all(Val::Px(2.0)),
             // padding: UiRect::all(Val::Px(10.0)),
-            // background_color: BackgroundColor(Color::rgb(0.8, 0.6, 0.4)),
+            // BackgroundColor(Color::WHITE),
             ..default()
         })
         // .insert(BackgroundColor(Color::srgb(0.8, 0.6, 0.4))) // 单独添加
-        .insert(ImageNode::new(asset_server.load("textures/background.png")))
+        .insert(ImageNode::new(asset_server.load("gui/textbox.png")))
         .insert(BorderColor(Color::WHITE))
         .with_children(|parent| {
             // 文本内容
@@ -47,7 +47,8 @@ fn setup(
                     font_size: 24.0,
                     ..default()
                 },
-                TextColor(Color::BLACK),
+                TextColor(Color::WHITE),
+                // BackgroundColor(Color::WHITE),
                 Node {
                     position_type: PositionType::Relative,
                     left: Val::Px(240.0),        // 距离左边20像素

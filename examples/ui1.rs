@@ -34,7 +34,7 @@ fn setup(
         })
         .insert(BackgroundColor(Color::srgb(0.2, 0.2, 0.8)))
         .insert(BorderColor(Color::WHITE))
-        .with_children(|parent| {
+        .with_children(|parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>| {
             // 文本内容
             parent.spawn((
                 Text::new("这是一个带纹理的文本框！\n可以显示多行文本。"),
@@ -43,7 +43,7 @@ fn setup(
                     font_size: 24.0,
                     ..default()
                 },
-                TextColor(Color::WHITE),
+                TextColor(Color::BLACK),
                 Node {
                     margin: UiRect::all(Val::Px(5.0)),
                     ..default()

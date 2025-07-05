@@ -166,20 +166,38 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
             // 右侧图片区域
             (
                 Node {
-                    width: Val::Percent(50.0),
-                    height: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+                    // width: Val::Percent(50.0),
+                    // height: Val::Percent(100.0),
+                    width: Val::Px(1280.0),
+                    height: Val::Px(720.0),
+                    left: Val::Px(-350.0), // 向左偏移50像素，可以调整数值
+                    top: Val::Px(-2.0), // 向左偏移50像素，可以调整数值    
+                    // justify_content: JustifyContent::Center,
+                    // align_items: AlignItems::Center,
                     ..default()
                 },
-                children![(
-                    ImageNode::new(assets.load("background/bg2.png")),
-                    Node {
-                        width: Val::Px(1152.0),
-                        height: Val::Px(800.0),
-                        ..default()
-                    },
-                )],
+    children![(
+        // 下层sprite，可以自定义位置和大小
+        ImageNode::new(assets.load("gui/main_menu.png")),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Px(1157.0),      // 自定义宽度
+            height: Val::Px(650.0),     // 自定义高度
+            // left: Val::Px(100.0),       // 相对位置
+            // top: Val::Px(50.0),         // 相对位置
+            ..default()
+        },
+        GlobalZIndex(-1),
+    ), (
+        // 原有的overlay图片
+        ImageNode::new(assets.load("gui/overlay_main_menu.png")).with_color(Color::hsl(0.6, 2.0, 1.0)),
+        Node {
+            width: Val::Px(1157.0),
+            height: Val::Px(650.0),
+            ..default()
+        },
+        GlobalZIndex(0),
+    )],
             ),
         ],
     ));
@@ -198,7 +216,8 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
             ..default()
         },
         BorderColor(Color::WHITE),
-        BackgroundColor(NORMAL_BUTTON),
+        // BackgroundColor(NORMAL_BUTTON),
+        GlobalZIndex(55),
         children![(
             Text::new(text),
             TextFont {
@@ -206,7 +225,8 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
                 font_size: 28.0,
                 ..default()
             },
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            // TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            
             TextShadow::default(),
         )]
     )
@@ -226,3 +246,6 @@ fn cleanup_scene(mut commands: Commands,
         commands.entity(entity).despawn();
     }
 }
+
+
+

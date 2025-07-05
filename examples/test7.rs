@@ -137,7 +137,7 @@ fn auto_movement_system(
     }
 }
 
-// 移动系统
+// 移动系统 - 修复版：移除震动过滤器，让角色能正常移动
 fn movement_system(
     time: Res<Time>,
     mut query: Query<(&mut Transform, &Movement), Without<ShakeEffect>>,
@@ -153,7 +153,7 @@ fn movement_system(
     }
 }
 
-// 碰撞系统 - 使用事件驱动方式
+// 碰撞系统
 fn collision_system(
     mut commands: Commands,
     mut characters: Query<(Entity, &mut Transform, &mut Movement, &Collider, &Character)>,
@@ -240,14 +240,26 @@ fn collision_system(
     }
 }
 
-// 震动系统
+// 震动系统 - 修复版：让有震动效果的角色也能继续移动
 fn shake_system(
     time: Res<Time>,
     mut commands: Commands,
     mut query: Query<(Entity, &mut Transform, &mut ShakeEffect)>,
+    movement_query: Query<&Movement>,
 ) {
     for (entity, mut transform, mut shake) in query.iter_mut() {
         shake.duration.tick(time.delta());
+        
+        // 先更新原始位置（跟随正常移动）
+        if let Ok(movement) = movement_query.get(entity) {
+            let velocity = movement.velocity.normalize_or_zero() * movement.speed;
+            shake.original_position.x += velocity.x * time.delta_secs();
+            shake.original_position.y += velocity.y * time.delta_secs();
+            
+            // 边界限制
+            shake.original_position.x = shake.original_position.x.clamp(-400.0, 400.0);
+            shake.original_position.y = shake.original_position.y.clamp(-300.0, 300.0);
+        }
         
         if shake.duration.finished() {
             transform.translation = shake.original_position;
