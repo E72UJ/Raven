@@ -28,6 +28,9 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 use crate::config::{MainConfig, load_main_config};
 
 use crate::transition::{fade_in, fade_out};
+
+use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition};
+
 // 包调用结束
 
 // 引用
@@ -227,7 +230,7 @@ impl Plugin for GamePlugin {
                 setup_ui,  // 移到这里
                 load_swf_assets
             ).chain())
-            
+            .add_plugins(RenpyDissolvePlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
                 Update,
@@ -246,7 +249,7 @@ impl Plugin for GamePlugin {
                     create_dynamic_buttons.run_if(should_create_buttons),
                     button_interaction_system,
                     button_image_system,
-                    fade_animation_system
+                    // fade_animation_system
                 ).run_if(in_state(GameScene::Game))
             );
     }
@@ -544,13 +547,20 @@ commands.spawn((
             ..default()
         },
         Visibility::Hidden,
-            AnimationTarget,
-    FadeAnimation {
-        timer: Timer::from_seconds(1.5, TimerMode::Once),
-        start_alpha: 0.0,
-        end_alpha: 1.0,
-    },
+        RenpyDissolve::fade_in(2.5), // 使用渐入效果
     ));
+//     commands.spawn((
+//     Name::new("spritebox2"),
+//     Transform::from_xyz(0.0, -24.0, 0.0),
+//     Sprite {
+//         color: Color::srgba(1.0, 0.0, 0.0, 0.0), // 红色，初始完全透明
+//         custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
+//         ..default()
+//     },
+//     // 不需要 image 字段，就是纯色
+//     Visibility::Visible,
+//     RenpyDissolve::fade_in(2.0),
+// ));
     // commands.spawn((
     //     Name::new("background"),
     //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
@@ -1589,31 +1599,31 @@ fn button_image_system(
 fn menu_exit_system(mut commands: Commands) {
     fade_in(&mut commands, 1.6); // 1.0渐入
 }
-fn fade_animation_system(
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut FadeAnimation, &mut Sprite), With<AnimationTarget>>,
-    mut commands: Commands,
-) {
-    for (entity, mut fade_anim, mut sprite) in query.iter_mut() {
-        fade_anim.timer.tick(time.delta());
+// fn fade_animation_system(
+//     time: Res<Time>,
+//     mut query: Query<(Entity, &mut FadeAnimation, &mut Sprite), With<AnimationTarget>>,
+//     mut commands: Commands,
+// ) {
+//     for (entity, mut fade_anim, mut sprite) in query.iter_mut() {
+//         fade_anim.timer.tick(time.delta());
         
-        if !fade_anim.timer.finished() {
-            let progress = fade_anim.timer.elapsed_secs() / fade_anim.timer.duration().as_secs_f32();
+//         if !fade_anim.timer.finished() {
+//             let progress = fade_anim.timer.elapsed_secs() / fade_anim.timer.duration().as_secs_f32();
             
-            // 使用 Ren'Py 风格的缓动
-            let eased_progress = ren_py_dissolve(progress);
+//             // 使用 Ren'Py 风格的缓动
+//             let eased_progress = ren_py_dissolve(progress);
             
-            let current_alpha = fade_anim.start_alpha + (fade_anim.end_alpha - fade_anim.start_alpha) * eased_progress;
+//             let current_alpha = fade_anim.start_alpha + (fade_anim.end_alpha - fade_anim.start_alpha) * eased_progress;
             
-            // 增加一些平滑处理
-            let smoothed_alpha = (current_alpha * 255.0).round() / 255.0;
-            sprite.color.set_alpha(smoothed_alpha);
-        } else {
-            sprite.color.set_alpha(fade_anim.end_alpha);
-            commands.entity(entity).remove::<FadeAnimation>();
-        }
-    }
-}
+//             // 增加一些平滑处理
+//             let smoothed_alpha = (current_alpha * 255.0).round() / 255.0;
+//             sprite.color.set_alpha(smoothed_alpha);
+//         } else {
+//             sprite.color.set_alpha(fade_anim.end_alpha);
+//             commands.entity(entity).remove::<FadeAnimation>();
+//         }
+//     }
+// }
 
 // 缓动函数 - 超级平滑的渐入效果
 fn ease_out_expo(t: f32) -> f32 {

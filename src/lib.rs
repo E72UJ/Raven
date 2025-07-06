@@ -1,6 +1,6 @@
 // src/lib.rs
 use bevy::prelude::*;
-
+pub mod dissolve;
 pub mod menu;
 pub use menu::MenuPlugin;
 

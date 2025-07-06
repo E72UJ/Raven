@@ -4,7 +4,6 @@ mod config;
 mod audio;  
 mod transition; // 添加模块
 
-
 use bevy::prelude::*;
 use menu::MenuPlugin;
 use config::{MainConfig, load_main_config};
