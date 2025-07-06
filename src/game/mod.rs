@@ -85,7 +85,7 @@ impl Typewriter {
 }
 // 结构体
 // / 位置常量
-const left_box:f32 = 50.0;
+const left_box:f32 = 80.0;
 
 // 点击组件
 #[derive(Component)]
@@ -632,7 +632,7 @@ commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
         Text::new("戴安娜"),
-        Visibility::Hidden,
+        Visibility::Visible,
         TextFont {
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size: 28.0,
@@ -647,7 +647,7 @@ commands.spawn((
         TextLayout::new_with_justify(JustifyText::Center),
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(230.0),
+            bottom: Val::Px(140.0),
             left: Val::Px(left_box),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
@@ -655,8 +655,9 @@ commands.spawn((
             // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
+        BackgroundColor(Color::NONE),
         // 对话框背景颜色
-        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         GlobalZIndex(2),
         // AnimatedText,
     ));
@@ -680,7 +681,7 @@ commands.spawn((
 fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
-    mut query: Query<(&Name, &mut Text)>,
+    mut query: Query<(&Name, &mut Text, &mut Visibility)>,
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
@@ -689,9 +690,10 @@ fn update_dialogue(
         dialogue
     } else {
         // 处理结束游戏状态
-        for (name, mut text) in &mut query {
+        for (name, mut text, mut visibility) in &mut query {
             if name.as_str() == "namebox" {
                 text.0 = "NULL".to_string();
+                *visibility = Visibility::Hidden; // 隐藏 namebox
             }
             if name.as_str() == "textbox" {
                 text.0 = "感谢体验，按下ESC退出".to_string();
@@ -702,9 +704,14 @@ fn update_dialogue(
     };
     
     // 2. 显示当前对话内容
-    for (name, mut text) in &mut query {
+    for (name, mut text, mut visibility) in &mut query {
         if name.as_str() == "namebox" {
-            text.0 = current_dialogue.character.to_string();
+            if current_dialogue.character == "none" {
+                *visibility = Visibility::Hidden; // 如果 character 为 "none", 隐藏 namebox
+            } else {
+                *visibility = Visibility::Visible;
+                text.0 = current_dialogue.character.to_string();
+            }
         }
         if name.as_str() == "textbox" {
             text.0 = current_dialogue.text.to_string();
