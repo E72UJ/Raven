@@ -1,8 +1,7 @@
 // game/mod.rs
-
 use bevy::prelude::*;
 use crate::GameScene;
-
+use std::time::Duration;
 // 基础引用
 use bevy::prelude::*;
 // 更新时间
@@ -27,17 +26,60 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 
 // 包调用
 use crate::config::{MainConfig, load_main_config};
+
+use crate::transition::{fade_in, fade_out};
 // 包调用结束
 
 // 引用
 
 // 按钮组颜色表格
-const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
-const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
-
+// const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
+// const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
+// const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
+const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
+const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
 // 游戏插件
+// 立绘组件
+#[derive(Component)]
+struct FadeAnimation {
+    timer: Timer,
+    start_alpha: f32,
+    end_alpha: f32,
+}
 
+#[derive(Component)]
+struct AnimationTarget;
+// 立绘组件结束
+// 打字机组件
+
+#[derive(Component)]
+struct Typewriter {
+    full_text: String,           // 完整文本
+    current_index: usize,        // 当前显示到第几个字符
+    timer: Timer,                // 控制打字速度的计时器
+    is_finished: bool,           // 是否完成打字
+}
+impl Typewriter {
+    fn new(text: String, chars_per_second: f32) -> Self {
+        let delay = Duration::from_secs_f32(1.0 / chars_per_second);
+        Self {
+            full_text: text,
+            current_index: 0,
+            timer: Timer::new(delay, TimerMode::Repeating),
+            is_finished: false,
+        }
+    }
+    
+    fn get_current_text(&self) -> String {
+        if self.current_index >= self.full_text.len() {
+            return self.full_text.clone();
+        }
+        
+        // 正确处理UTF-8字符
+        self.full_text.chars().take(self.current_index).collect()
+    }
+}
 // 结构体
 // / 位置常量
 const left_box:f32 = 50.0;
@@ -65,6 +107,13 @@ struct Choice {
 
 #[derive(Component)]
 struct ClickHandler(String);
+
+#[derive(Component)]
+struct ButtonImages {
+    normal: Handle<Image>,
+    hovered: Handle<Image>,
+    pressed: Handle<Image>,
+}
 // 按钮组颜色表格结束
 // 主配置结构体
 // #[derive(Debug, Deserialize, Resource)]
@@ -195,7 +244,9 @@ impl Plugin for GamePlugin {
                     keyboard_system,
                     handle_choice_buttons,
                     create_dynamic_buttons.run_if(should_create_buttons),
-                    button_interaction_system
+                    button_interaction_system,
+                    button_image_system,
+                    fade_animation_system
                 ).run_if(in_state(GameScene::Game))
             );
     }
@@ -393,7 +444,7 @@ commands.spawn((
         ButtonContainer,
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(250.0), // 在对话框上方
+            bottom: Val::Px(90.0), // 在对话框上方
             height: Val::Px(150.0),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::Center,
@@ -439,7 +490,7 @@ commands.spawn((
             parent.spawn((
                 Name::new("textbox"),
                 ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
-                Visibility::Hidden, // 设置为可见
+                Visibility::Hidden              , // 设置为可见
                 Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
                 
                 // Name::new("child_element"),
@@ -484,14 +535,21 @@ commands.spawn((
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        Transform::from_xyz(1.0, 1.0, 0.0),
+        Transform::from_xyz(0.0, -24.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {
+            color: Color::srgba(1.0, 1.0, 1.0, 0.0),
             image: asset_server.load("characters/protagonist/default.png"),
             custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
             ..default()
         },
         Visibility::Hidden,
+            AnimationTarget,
+    FadeAnimation {
+        timer: Timer::from_seconds(1.5, TimerMode::Once),
+        start_alpha: 0.0,
+        end_alpha: 1.0,
+    },
     ));
     // commands.spawn((
     //     Name::new("background"),
@@ -519,22 +577,24 @@ commands.spawn((
             // TextLayout::new_with_justify(JustifyText::Left),
             Node {
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(50.0),
+                bottom: Val::Px(0.0),
                 left: Val::Px(50.0),
                 right: Val::Px(50.0),
-                height: Val::Px(170.0),
+                width: Val::Px(1280.0),
+                height: Val::Px(185.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(30.0),
-    right: Val::Px(30.0),
-    top: Val::Px(30.0),
-    bottom: Val::Px(30.0),
-},
+                left: Val::Px(140.0),
+                right: Val::Px(30.0),
+                top: Val::Px(60.0),
+                bottom: Val::Px(30.0),
+                },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
             // 对话框背景颜色
-            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+            ImageNode::new(asset_server.load("gui/textbox.png")),
+            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
             // AnimatedText,
         ))
         .with_children(|parent| {
@@ -546,7 +606,7 @@ commands.spawn((
                 // Text::new("子节点文本"),
                 TextFont {
                     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 28.0,
+                    font_size: 24.0,
                     ..default()
                 },
                 Node {
@@ -562,13 +622,14 @@ commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
         Text::new("戴安娜"),
-        // Visibility::Hidden,
+        Visibility::Hidden,
         TextFont {
             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
             font_size: 28.0,
             line_height: bevy::text::LineHeight::Px(50.),
             ..default()
         },
+        
         TextColor(Color::srgb(0.85, 0.85, 0.85)),
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
@@ -596,6 +657,7 @@ commands.spawn((
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
             position_type: PositionType::Absolute,
+            // bottom: Val::Px(-10.0),
             ..default()
         },
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
@@ -1053,11 +1115,11 @@ fn update_swf(
     flashes: Res<Assets<FlashAnimationSwfData>>, // 添加资源检查
     flash_query: Query<&FlashAnimation>, // 添加Flash组件查询
 ) {
-       println!("=== update_swf 调试信息 ===");
-    println!("查询到的SWF实体数量: {}", query.iter().count());
+    //    println!("=== update_swf 调试信息 ===");
+    // println!("查询到的SWF实体数量: {}", query.iter().count());
     
     for (name, visibility) in query.iter() {
-        println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
+        // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
     }
     // 调试：打印当前状态
     // if game_state.is_changed() {
@@ -1080,7 +1142,7 @@ fn update_swf(
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         if let Some(swf_name) = &dialogue.swf {
             let target_name = format!("swf_{}", swf_name);
-            println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
+            // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
             
             let mut found = false;
             
@@ -1117,11 +1179,11 @@ fn update_swf(
                 }
             }
         } else {
-            println!("当前对话没有SWF字段");
+            // println!("当前对话没有SWF字段");
         }
         
         if game_state.is_changed() {
-            println!("==================");
+            // println!("==================");
         }
     }
 }
@@ -1131,26 +1193,49 @@ fn update_swf(
 fn update_background(
     game_state: Res<GameState>,
     mut query: Query<(&Name, &mut Visibility), With<Background>>,
+    mut commands: Commands,
 ) {
-    // 获取当前对话中的背景信息（如果有的话）
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-        // 隐藏所有背景
-        for (_, mut visibility) in query.iter_mut() {
-            *visibility = Visibility::Hidden;
-        }
-        
-        // 只有当 dialogue.background 有值时才显示对应背景
-        if let Some(bg_name) = &dialogue.background {
-            for (name, mut visibility) in query.iter_mut() {
-                if name.as_str() == format!("background_{}", bg_name) {
-                    *visibility = Visibility::Visible;
+        if let Some(new_bg_name) = &dialogue.background {
+            let target_bg = format!("background_{}", new_bg_name);
+
+            // 检查当前是否已经显示了这个背景
+            let mut current_visible = None;
+            let mut target_exists = false;
+
+            for (name, visibility) in query.iter() {
+                if *visibility == Visibility::Visible {
+                    current_visible = Some(name.as_str());
+                }
+                if name.as_str() == target_bg {
+                    target_exists = true;
                 }
             }
+
+            // 如果目标背景存在且与当前背景不同，执行渐变切换
+            if target_exists && current_visible.as_ref() != Some(&target_bg.as_str()) {
+                println!("切换背景: {:?} -> {}", current_visible, target_bg);
+
+                // 直接调用你的渐变函数
+                fade_in(&mut commands, 0.8);
+                
+                // 更新背景可见性
+                for (name, mut visibility) in query.iter_mut() {
+                    if name.as_str() == target_bg {
+                        *visibility = Visibility::Visible;
+                    } else {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
+            }
+        } else {
+            // 没有背景时，隐藏所有背景
+            for (_, mut visibility) in query.iter_mut() {
+                *visibility = Visibility::Hidden;
+            }
         }
-        // 如果 dialogue.background 是 None，则所有背景都保持隐藏状态
     }
 }
-
 fn keyboard_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut game_state: ResMut<GameState>,
@@ -1249,7 +1334,7 @@ fn create_dynamic_buttons(
                 commands.entity(entity).despawn_recursive();
             }
             
-            // 重新获取对话数据来创建按钮
+    
             if let Some(dialogue) = game_state.dialogues.get(current_line) {
                 if let Some(choices) = &dialogue.choices {
                     println!("发现 {} 个选择分支", choices.len());
@@ -1269,8 +1354,8 @@ fn create_dynamic_buttons(
                                         position_type: PositionType::Relative,
                                         bottom: Val::Px(100.0),
                                         top: Val::Px(-220.0),
-                                        left: Val::Px(410.0),
-                                        width: Val::Px(400.0),
+                                        left: Val::Px(210.0),
+                                        width: Val::Px(700.0),
                                         height: Val::Px(40.0),
                                         border: UiRect::all(Val::Px(2.0)),
                                         justify_content: JustifyContent::Center,
@@ -1283,9 +1368,16 @@ fn create_dynamic_buttons(
                                         },
                                         ..default()
                                     },
-                                    BackgroundColor(NORMAL_BUTTON),
-                                    BorderColor(Color::BLACK),
-                                    BorderRadius::all(Val::Px(5.0)),
+                                     ImageNode::new(asset_server.load("gui/choice_idle_background.png")),
+                                    ButtonImages {
+                                        normal: asset_server.load("gui/choice_idle_background.png"),
+                                        hovered: asset_server.load("gui/choice_hover_background.png"),
+                                        pressed: asset_server.load("gui/choice_hover_background.png"),
+                                    },
+                                    // BackgroundColor(NORMAL_BUTTON),
+                                    // BorderColor(Color::BLACK),
+                                    // BorderRadius::all(Val::Px(5.0)),
+                                    
                                     Visibility::Visible,
                                 )).with_children(|button| {
                                     button.spawn((
@@ -1479,3 +1571,84 @@ fn any_swf_visible(
 //     println!("缩放: 1.0");
 //     println!("==================");
 // }
+fn button_image_system(
+    mut query: Query<
+        (&Interaction, &mut ImageNode, &ButtonImages), 
+        (Changed<Interaction>, With<Button>)
+    >,
+) {
+    for (interaction, mut image_node, button_images) in &mut query {
+        image_node.image = match *interaction {
+            Interaction::Pressed => button_images.pressed.clone(),
+            Interaction::Hovered => button_images.hovered.clone(),
+            Interaction::None => button_images.normal.clone(),
+        };
+    }
+}
+
+fn menu_exit_system(mut commands: Commands) {
+    fade_in(&mut commands, 1.6); // 1.0渐入
+}
+fn fade_animation_system(
+    time: Res<Time>,
+    mut query: Query<(Entity, &mut FadeAnimation, &mut Sprite), With<AnimationTarget>>,
+    mut commands: Commands,
+) {
+    for (entity, mut fade_anim, mut sprite) in query.iter_mut() {
+        fade_anim.timer.tick(time.delta());
+        
+        if !fade_anim.timer.finished() {
+            let progress = fade_anim.timer.elapsed_secs() / fade_anim.timer.duration().as_secs_f32();
+            
+            // 使用 Ren'Py 风格的缓动
+            let eased_progress = ren_py_dissolve(progress);
+            
+            let current_alpha = fade_anim.start_alpha + (fade_anim.end_alpha - fade_anim.start_alpha) * eased_progress;
+            
+            // 增加一些平滑处理
+            let smoothed_alpha = (current_alpha * 255.0).round() / 255.0;
+            sprite.color.set_alpha(smoothed_alpha);
+        } else {
+            sprite.color.set_alpha(fade_anim.end_alpha);
+            commands.entity(entity).remove::<FadeAnimation>();
+        }
+    }
+}
+
+// 缓动函数 - 超级平滑的渐入效果
+fn ease_out_expo(t: f32) -> f32 {
+    if t == 1.0 {
+        1.0
+    } else {
+        1.0 - 2.0_f32.powf(-10.0 * t)
+    }
+}
+fn ren_py_dissolve(t: f32) -> f32 {
+    // Ren'Py 实际使用的是一个分段的平滑曲线
+    if t < 0.1 {
+        // 前10%非常缓慢
+        t * t * 5.0
+    } else if t < 0.8 {
+        // 中间70%线性但稍有加速
+        0.05 + (t - 0.1) * 1.2
+    } else {
+        // 最后20%快速完成
+        0.89 + (t - 0.8) * 0.55 * (2.0 - t)
+    }
+}
+// 可选的其他缓动函数
+fn ease_out_sine(t: f32) -> f32 {
+    (t * std::f32::consts::PI / 2.0).sin()
+}
+
+fn ease_out_cubic(t: f32) -> f32 {
+    1.0 - (1.0 - t).powi(3)
+}
+
+fn ease_in_out_cubic(t: f32) -> f32 {
+    if t < 0.5 {
+        4.0 * t * t * t
+    } else {
+        1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
+    }
+}

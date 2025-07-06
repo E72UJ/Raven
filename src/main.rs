@@ -22,7 +22,7 @@ pub enum GameScene {
 }
 fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 播放一次性音效
-    play_audio(&mut commands, &asset_server, "audio/one.ogg");
+    play_audio(&mut commands, &asset_server, "audio/two.ogg");
 
     // // 播放音效并设置音量
     // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
@@ -31,7 +31,7 @@ fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // play_audio_loop(&mut commands, &asset_server, "audio/background_music.ogg", 0.3);
 }
 fn menu_exit_system(mut commands: Commands) {
-    fade_in(&mut commands, 1.7); // 1.0渐入
+    fade_in(&mut commands, 1.6); // 1.0渐入
 }
 fn main() {
     
@@ -61,12 +61,12 @@ fn main() {
         .insert_resource(main_config)
         .add_plugins(menu::MenuPlugin)    // 主菜单插件
         .init_state::<GameScene>()
-        .add_systems(Startup, my_system)  
+        // .add_systems(Startup, my_system)  
         .add_plugins(TransitionPlugin)
-        .add_plugins(GamePlugin)  // 只添加 GamePlugin，移除 MenuPlugin
+        .add_plugins(GamePlugin)  // 添加游戏插件
         .add_plugins(AudioPlugin)
         // .add_systems(OnEnter(GameScene::Menu), menu_exit_system)  
-        .add_systems(OnEnter(GameScene::Game), menu_exit_system)
+        .add_systems(OnEnter(GameScene::Game), (menu_exit_system, my_system))
         .run();
 }
 
