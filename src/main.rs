@@ -21,13 +21,13 @@ pub enum GameScene {
 }
 fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 播放一次性音效
-    play_audio(&mut commands, &asset_server, "audio/two.ogg");
+    // play_audio(&mut commands, &asset_server, "audio/two.ogg");
 
     // // 播放音效并设置音量
     // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
 
     // // 循环播放背景音乐
-    // play_audio_loop(&mut commands, &asset_server, "audio/background_music.ogg", 0.3);
+    play_audio_loop(&mut commands, &asset_server, "audio/two.ogg", 1.0);
 }
 fn menu_exit_system(mut commands: Commands) {
     fade_in(&mut commands, 1.6); // 1.0渐入

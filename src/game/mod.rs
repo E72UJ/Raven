@@ -543,7 +543,7 @@ commands.spawn((
         Sprite {
             color: Color::srgba(1.0, 1.0, 1.0, 0.0),
             image: asset_server.load("characters/protagonist/default.png"),
-            custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
+            // custom_size: Some(Vec2 { x: 456.0, y: 700.0 }),
             ..default()
         },
         Visibility::Hidden,
@@ -681,7 +681,7 @@ commands.spawn((
 fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
-    mut query: Query<(&Name, &mut Text, &mut Visibility)>,
+    mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
@@ -690,7 +690,7 @@ fn update_dialogue(
         dialogue
     } else {
         // 处理结束游戏状态
-        for (name, mut text, mut visibility) in &mut query {
+        for (name, mut text, mut visibility, text_color) in &mut query {
             if name.as_str() == "namebox" {
                 text.0 = "NULL".to_string();
                 *visibility = Visibility::Hidden; // 隐藏 namebox
@@ -704,13 +704,24 @@ fn update_dialogue(
     };
     
     // 2. 显示当前对话内容
-    for (name, mut text, mut visibility) in &mut query {
+    for (name, mut text, mut visibility, text_color) in &mut query {
         if name.as_str() == "namebox" {
             if current_dialogue.character == "none" {
                 *visibility = Visibility::Hidden; // 如果 character 为 "none", 隐藏 namebox
             } else {
                 *visibility = Visibility::Visible;
                 text.0 = current_dialogue.character.to_string();
+                
+                // 根据角色名称设置不同颜色
+                if let Some(mut color) = text_color {
+                    match current_dialogue.character.as_str() {
+                        "希尔薇" => color.0 = Color::srgb(0.761, 1.0, 0.8), // 粉红色
+                        "我" => color.0 = Color::srgb(0.3, 0.7, 1.0),     // 蓝色
+                        "艾莉娅" => color.0 = Color::srgb(0.8, 0.6, 1.0), // 紫色
+                        "莉莉" => color.0 = Color::srgb(1.0, 0.8, 0.3),   // 金色
+                        _ => color.0 = Color::WHITE,                      // 默认白色
+                    }
+                }
             }
         }
         if name.as_str() == "textbox" {
@@ -718,22 +729,9 @@ fn update_dialogue(
         }
     }
     
-    // 3. 打印调试信息（在显示之后）
-    // println!(
-    //     "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
-    //     game_state.current_line,
-    //     current_dialogue.character,
-    //     current_dialogue.label,
-    //     current_dialogue.jump
-    // );
-    
-    // 4. 处理跳转逻辑（在显示当前内容之后）
+    // 其余代码保持不变...
     if let Some(jump_label) = &current_dialogue.jump {
-        // std::thread::sleep(std::time::Duration::from_millis(500));
-        // println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
-        
         if let Some(&new_line) = label_map.0.get(jump_label) {
-            // println!("执行跳转: {} → {}", game_state.current_line, new_line);
             println!(
                 "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
                 game_state.current_line,
@@ -741,11 +739,6 @@ fn update_dialogue(
                 current_dialogue.label,
                 current_dialogue.jump
             );
-            // game_state.current_line = new_line;
-            // game_state.can_go_back = true;
-            
-            // 递归处理跳转（确保跳转后的内容也能显示）
-            // update_dialogue(game_state, label_map, query);
         } else {
             println!("错误: 找不到标签 '{}' 的跳转目标", jump_label);
         }
