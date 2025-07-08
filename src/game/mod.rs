@@ -55,6 +55,8 @@ struct FadeAnimation {
 struct AnimationTarget;
 // 立绘组件结束
 // 打字机组件
+#[derive(Component)]
+struct CurrentText;
 
 #[derive(Component)]
 struct Typewriter {
@@ -63,6 +65,13 @@ struct Typewriter {
     timer: Timer,                // 控制打字速度的计时器
     is_finished: bool,           // 是否完成打字
 }
+#[derive(Component)]
+struct TypewriterText {
+    full_text: String,
+    current_length: usize,
+    timer: Timer,
+}
+
 impl Typewriter {
     fn new(text: String, chars_per_second: f32) -> Self {
         let delay = Duration::from_secs_f32(1.0 / chars_per_second);
@@ -239,6 +248,7 @@ impl Plugin for GamePlugin {
                     // debug_flash_position,
                     output_game_state,
                     update_dialogue, 
+                    typewriter_system.after(update_dialogue),
                     update_portrait,
                     flash_animation.run_if(in_state(GameScene::Game)),
                     apply_jump,
@@ -249,6 +259,7 @@ impl Plugin for GamePlugin {
                     create_dynamic_buttons.run_if(should_create_buttons),
                     button_interaction_system,
                     button_image_system,
+                    
                     // fade_animation_system
                 ).run_if(in_state(GameScene::Game))
             );
@@ -626,6 +637,12 @@ commands.spawn((
                 },
                 
                 // 其他你需要的组件
+                CurrentText,
+                TypewriterText {
+                    full_text: "".to_string(),
+                    current_length: 0,
+                    timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
+                },
             ));
         });
     commands.spawn((
@@ -682,6 +699,7 @@ fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
+    
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
@@ -725,11 +743,11 @@ fn update_dialogue(
             }
         }
         if name.as_str() == "textbox" {
-            text.0 = current_dialogue.text.to_string();
+                
+                text.0 = current_dialogue.text.to_string();
         }
     }
     
-    // 其余代码保持不变...
     if let Some(jump_label) = &current_dialogue.jump {
         if let Some(&new_line) = label_map.0.get(jump_label) {
             println!(
@@ -1660,5 +1678,19 @@ fn ease_in_out_cubic(t: f32) -> f32 {
         4.0 * t * t * t
     } else {
         1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
+    }
+}
+fn typewriter_system(
+    time: Res<Time>,
+    mut query: Query<(&mut Text, &mut TypewriterText)>,
+) {
+    println!("打字效果触发！");
+    for (mut text, mut typewriter) in query.iter_mut() {
+        typewriter.timer.tick(time.delta());
+        
+        if typewriter.timer.just_finished() && typewriter.current_length < typewriter.full_text.len() {
+            typewriter.current_length += 1;
+            text.0 = typewriter.full_text.chars().take(typewriter.current_length).collect();
+        }
     }
 }

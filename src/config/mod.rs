@@ -75,8 +75,7 @@ impl MainConfig {
     pub fn load() -> Self {
         load_main_config()
     }
-    
-    // 便于访问的辅助方法
+
     pub fn get_window_size(&self) -> (f32, f32) {
         (self.settings.resolution[0] as f32, self.settings.resolution[1] as f32)
     }
