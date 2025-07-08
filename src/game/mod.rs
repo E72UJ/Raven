@@ -31,6 +31,10 @@ use crate::transition::{fade_in, fade_out};
 
 use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition};
 
+use Raven::typewriter;
+use typewriter::{TypewriterText, TypewriterEvent, typewriter_system, typewriter_skip_system, TypewriterPlugin};
+
+
 // 包调用结束
 
 // 引用
@@ -65,12 +69,12 @@ struct Typewriter {
     timer: Timer,                // 控制打字速度的计时器
     is_finished: bool,           // 是否完成打字
 }
-#[derive(Component)]
-struct TypewriterText {
-    full_text: String,
-    current_length: usize,
-    timer: Timer,
-}
+// #[derive(Component)]
+// struct TypewriterText {
+//     full_text: String,
+//     current_length: usize,
+//     timer: Timer,
+// }
 
 impl Typewriter {
     fn new(text: String, chars_per_second: f32) -> Self {
@@ -240,6 +244,7 @@ impl Plugin for GamePlugin {
                 load_swf_assets
             ).chain())
             .add_plugins(RenpyDissolvePlugin)
+            .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
                 Update,
@@ -637,12 +642,12 @@ commands.spawn((
                 },
                 
                 // 其他你需要的组件
-                CurrentText,
-                TypewriterText {
-                    full_text: "".to_string(),
-                    current_length: 0,
-                    timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
-                },
+                // CurrentText,
+                // TypewriterText {
+                //     full_text: "".to_string(),
+                //     current_length: 0,
+                //     timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
+                // },
             ));
         });
     commands.spawn((
@@ -1678,19 +1683,5 @@ fn ease_in_out_cubic(t: f32) -> f32 {
         4.0 * t * t * t
     } else {
         1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
-    }
-}
-fn typewriter_system(
-    time: Res<Time>,
-    mut query: Query<(&mut Text, &mut TypewriterText)>,
-) {
-    println!("打字效果触发！");
-    for (mut text, mut typewriter) in query.iter_mut() {
-        typewriter.timer.tick(time.delta());
-        
-        if typewriter.timer.just_finished() && typewriter.current_length < typewriter.full_text.len() {
-            typewriter.current_length += 1;
-            text.0 = typewriter.full_text.chars().take(typewriter.current_length).collect();
-        }
     }
 }

@@ -3,6 +3,7 @@ use bevy::prelude::*;
 pub mod dissolve;
 pub mod menu;
 pub use menu::MenuPlugin;
+pub mod typewriter;
 
 // 导出 GameScene，让外部可以使用
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
