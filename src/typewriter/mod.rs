@@ -1,101 +1,62 @@
 use bevy::prelude::*;
 
-// 打字机组件
+// 打字机文本组件
 #[derive(Component)]
 pub struct TypewriterText {
     pub full_text: String,
     pub current_length: usize,
     pub timer: Timer,
-    pub is_finished: bool,
+    pub is_active: bool, // 添加这个字段
 }
 
 impl TypewriterText {
-    // 创建新的打字机文本
-    pub fn new(text: String, speed_ms: u64) -> Self {
+    /// 创建新的打字机文本组件
+    pub fn new(text: String, chars_per_second: f32) -> Self {
         Self {
             full_text: text,
             current_length: 0,
-            timer: Timer::from_seconds(speed_ms as f32 / 1000.0, TimerMode::Repeating),
-            is_finished: false,
+            timer: Timer::from_seconds(1.0 / chars_per_second, TimerMode::Repeating),
+            is_active: false, // 初始化为 false
         }
     }
-    
-    // 设置新文本
-    pub fn set_text(&mut self, text: String) {
-        self.full_text = text;
+
+    /// 重置打字机效果
+    pub fn reset(&mut self, new_text: String) {
+        self.full_text = new_text;
         self.current_length = 0;
-        self.is_finished = false;
         self.timer.reset();
     }
-    
-    // 立即显示全部文本
-    pub fn skip_to_end(&mut self) {
-        self.current_length = self.full_text.len();
-        self.is_finished = true;
-    }
-    
-    // 检查是否完成显示
-    pub fn is_finished(&self) -> bool {
-        self.is_finished
-    }
-    
-    // 获取当前显示的文本
-    pub fn get_current_text(&self) -> String {
-        self.full_text.chars().take(self.current_length).collect()
-    }
-}
 
-// 打字机事件
-#[derive(Event)]
-pub enum TypewriterEvent {
-    TextFinished(Entity),  // 文本显示完成
-    CharacterShown(Entity, char),  // 显示了新字符
+    /// 检查是否完成显示
+    pub fn is_finished(&self) -> bool {
+        self.current_length >= self.full_text.len()
+    }
+
+    /// 立即显示全部文本
+    pub fn show_all(&mut self) {
+        self.current_length = self.full_text.len();
+    }
 }
 
 // 打字机系统
 pub fn typewriter_system(
     time: Res<Time>,
-    mut query: Query<(Entity, &mut Text, &mut TypewriterText)>,
-    mut event_writer: EventWriter<TypewriterEvent>,
+    mut query: Query<(&mut Text, &mut TypewriterText)>,
 ) {
-    for (entity, mut text, mut typewriter) in query.iter_mut() {
-        if typewriter.is_finished {
-            continue;
-        }
-        
-        typewriter.timer.tick(time.delta());
-        
-        if typewriter.timer.just_finished() && typewriter.current_length < typewriter.full_text.len() {
-            typewriter.current_length += 1;
+    for (mut text, mut typewriter) in query.iter_mut() {
+        if typewriter.is_active && !typewriter.full_text.is_empty() {
+            typewriter.timer.tick(time.delta());
             
-            // 获取当前字符
-            if let Some(current_char) = typewriter.full_text.chars().nth(typewriter.current_length - 1) {
-                event_writer.send(TypewriterEvent::CharacterShown(entity, current_char));
-            }
-            
-            // 更新显示的文本
-            text.0 = typewriter.get_current_text();
-            
-            // 检查是否完成
-            if typewriter.current_length >= typewriter.full_text.len() {
-                typewriter.is_finished = true;
-                event_writer.send(TypewriterEvent::TextFinished(entity));
-            }
-        }
-    }
-}
-
-// 处理跳过打字机效果的系统
-pub fn typewriter_skip_system(
-    keyboard: Res<ButtonInput<KeyCode>>,
-    mouse: Res<ButtonInput<MouseButton>>,
-    mut query: Query<&mut TypewriterText>,
-) {
-    // 按空格键或点击鼠标跳过
-    if keyboard.just_pressed(KeyCode::Space) || mouse.just_pressed(MouseButton::Left) {
-        for mut typewriter in query.iter_mut() {
-            if !typewriter.is_finished {
-                typewriter.skip_to_end();
+            if typewriter.timer.just_finished() && typewriter.current_length < typewriter.full_text.len() {
+                typewriter.current_length += 1;
+                text.0 = typewriter.full_text.chars().take(typewriter.current_length).collect();
+                
+                println!("打字机更新显示: '{}'", text.0);
+                
+                // 如果完成了，标记为不活跃
+                if typewriter.current_length >= typewriter.full_text.len() {
+                    typewriter.is_active = false;
+                }
             }
         }
     }
@@ -106,11 +67,16 @@ pub struct TypewriterPlugin;
 
 impl Plugin for TypewriterPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<TypewriterEvent>()
-            .add_systems(Update, (
-                typewriter_system,
-                typewriter_skip_system,
-            ));
+        app.add_systems(Update, typewriter_system);
     }
+}
+
+// 辅助函数：为文本实体添加打字机效果
+pub fn add_typewriter_effect(
+    commands: &mut Commands,
+    entity: Entity,
+    text: String,
+    chars_per_second: f32,
+) {
+    commands.entity(entity).insert(TypewriterText::new(text, chars_per_second));
 }

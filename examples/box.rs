@@ -563,7 +563,6 @@ fn update_dialogue(
                     text.0 = dialogue.character.to_string();
                 }
                 if name.as_str() == "textbox" {
-                    println!("触发打字机效果");
                     // 如果有打字机组件，使用打字机效果
                     if let Some(mut typewriter) = typewriter_opt {
                         typewriter.full_text = dialogue.text.to_string();

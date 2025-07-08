@@ -32,7 +32,7 @@ use crate::transition::{fade_in, fade_out};
 use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition};
 
 use Raven::typewriter;
-use typewriter::{TypewriterText, TypewriterEvent, typewriter_system, typewriter_skip_system, TypewriterPlugin};
+// use typewriter::{TypewriterText, TypewriterEvent, typewriter_system, TypewriterPlugin};
 
 
 // 包调用结束
@@ -244,7 +244,7 @@ impl Plugin for GamePlugin {
                 load_swf_assets
             ).chain())
             .add_plugins(RenpyDissolvePlugin)
-            .add_plugins(TypewriterPlugin)
+            // .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
                 Update,
@@ -253,7 +253,7 @@ impl Plugin for GamePlugin {
                     // debug_flash_position,
                     output_game_state,
                     update_dialogue, 
-                    typewriter_system.after(update_dialogue),
+                    // typewriter_system.after(update_dialogue),
                     update_portrait,
                     flash_animation.run_if(in_state(GameScene::Game)),
                     apply_jump,
