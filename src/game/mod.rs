@@ -32,7 +32,7 @@ use crate::transition::{fade_in, fade_out};
 use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition};
 
 use Raven::typewriter;
-// use typewriter::{TypewriterText, TypewriterEvent, typewriter_system, TypewriterPlugin};
+use typewriter::{TypewriterText, typewriter_system, TypewriterPlugin};
 
 
 // 包调用结束
@@ -264,7 +264,7 @@ impl Plugin for GamePlugin {
                     create_dynamic_buttons.run_if(should_create_buttons),
                     button_interaction_system,
                     button_image_system,
-                    
+                    update_typewriter
                     // fade_animation_system
                 ).run_if(in_state(GameScene::Game))
             );
@@ -643,11 +643,12 @@ commands.spawn((
                 
                 // 其他你需要的组件
                 // CurrentText,
-                // TypewriterText {
-                //     full_text: "".to_string(),
-                //     current_length: 0,
-                //     timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
-                // },
+                TypewriterText {
+                    full_text: "".to_string(),
+                    current_length: 0,
+                    timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
+                    is_active: true,  // 添加这一行
+                },
             ));
         });
     commands.spawn((
@@ -706,7 +707,7 @@ fn update_dialogue(
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
     
 ) {
-    // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+    println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
     
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -748,7 +749,6 @@ fn update_dialogue(
             }
         }
         if name.as_str() == "textbox" {
-                
                 text.0 = current_dialogue.text.to_string();
         }
     }
@@ -1684,4 +1684,15 @@ fn ease_in_out_cubic(t: f32) -> f32 {
     } else {
         1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
     }
+}
+
+// 函数测试
+fn update_typewriter(
+     mut query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
+) {
+for (mut text, mut typewriter) in query.iter_mut() {
+    if typewriter.is_active {  // 这里 typewriter 是 Mut<TypewriterText> 而不是 TypewriterText
+        println!("{}",typewriter.is_active);
+    }
+}
 }
