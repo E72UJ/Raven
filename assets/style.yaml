@@ -4,8 +4,8 @@ styles:
     padding: [20.0, 20.0, 20.0, 20.0]
   
   textbox:
-    text_color: [0.9, 0.9, 0.9, 1.0]
-    font_size: 16.0
+    text_color: [1.3, 0.9, 0.9, 1.0]
+    font_size: 12.0
     margin: 10.0
   
   button:
@@ -16,9 +16,9 @@ styles:
   
   namebox:
     background_color: [0.89, 0.222, 0.33, 1.0]
-    text_color: [0.78, 0.111, 0.333, 1.0]
+    text_color: [1.0, 1.0, 1.0, 1.0]
     font_size: 18.0
-    position: [0.0, -20.0, 0.0, 200.0]  # [bottom, left, right, top]
+    position: [0.0, 0.0, 0.0, 400.0]  # [bottom, left, right, top]
     size: [220.0, 50.0]  # [width, height]
     border_color: [0.6, 0.6, 0.6, 1.0]  # 边框颜色 (灰色)
     border_width: 4.0  # 边框宽度

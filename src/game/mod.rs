@@ -477,40 +477,32 @@ commands.spawn((
     ));
 
 // 分支创建结束===============
+// sidebox
     commands.spawn((
         Name::new("sidebox"),
-        
-        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        // Transform::from_xyz(2.0, 1.0, 0.0),
-        // Sprite::sized(Vec2::new(75., 75.)),
-        // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
-        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
-        // Sprite {
-        //     image: asset_server.load("characters/protagonist/02.png"),
-        //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
-        //     ..default()
-        // },
+        ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
+        // Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0))
+        // .with_scale(Vec3::new(0.5, 0.5, 0.0)),                
         Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            left: Val::Px(0.0),
-            top: Val::Px(80.0),
             position_type: PositionType::Absolute,
-            
-            // align_items: AlignItems::Center,
-            // justify_content: JustifyContent::Center,
+            left: Val::Px(-10.0),    // 1450 * 0.2
+            top: Val::Px(166.0),     // (80 + 750) * 0.2
+            width: Val::Px(578.4),   // 2892 * 0.2
+            height: Val::Px(476.8),  // 2384 * 0.2
             ..default()
         },
-        // Visibility::Hidden,
+
+        Visibility::Hidden,
+        // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 0.4)),
         GlobalZIndex(10000),
         ZIndex(1200),
     )).with_children(|parent| {
             // 在这里创建子节点
             parent.spawn((
                 Name::new("textbox"),
-                ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
-                Visibility::Hidden              , // 设置为可见
-                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
+
+                Visibility::Visible              , // 设置为可见
+                // Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
                 
                 // Name::new("child_element"),
                 // Text::new("子节点文本"),
@@ -705,6 +697,7 @@ fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
+    // mut typewriter_query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
     
 ) {
     println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
@@ -749,7 +742,9 @@ fn update_dialogue(
             }
         }
         if name.as_str() == "textbox" {
+
                 text.0 = current_dialogue.text.to_string();
+                println!("{}",current_dialogue.text.to_string());
         }
     }
     
