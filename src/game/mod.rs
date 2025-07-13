@@ -1691,3 +1691,47 @@ for (mut text, mut typewriter) in query.iter_mut() {
     }
 }
 }
+
+
+// fn update_sidebox(
+//     game_state: Res<GameState>,
+//     mut query: Query<(&Name, &mut Visibility, &mut Node), With<ImageNode>>,
+// ) {
+//     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+//         for (name, mut visibility, mut node) in query.iter_mut() {
+//             if name.as_str() == "sidebox" {
+//                 // 根据对话数据决定是否显示
+//                 if dialogue.show_character {
+//                     *visibility = Visibility::Visible;
+                    
+//                     // 动态调整位置
+//                     if dialogue.character_position == "left" {
+//                         node.left = Val::Px(-10.0);
+//                     } else if dialogue.character_position == "right" {
+//                         node.left = Val::Px(1200.0);
+//                     }
+                    
+//                     // 动态调整大小
+//                     match dialogue.character_size {
+//                         "small" => {
+//                             node.width = Val::Px(289.2);   // 0.1倍
+//                             node.height = Val::Px(238.4);
+//                         },
+//                         "medium" => {
+//                             node.width = Val::Px(578.4);   // 0.2倍
+//                             node.height = Val::Px(476.8);
+//                         },
+//                         "large" => {
+//                             node.width = Val::Px(1446.0);  // 0.5倍
+//                             node.height = Val::Px(1192.0);
+//                         },
+//                         _ => {}
+//                     }
+//                 } else {
+//                     *visibility = Visibility::Hidden;
+//                 }
+//                 break;
+//             }
+//         }
+//     }
+// }
