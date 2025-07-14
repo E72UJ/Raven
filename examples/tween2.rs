@@ -68,7 +68,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Transform::from_xyz(0.0, -150.0, 0.0),
         TweenAnimation::new(
-            Vec3::new(0.0, -150.0, 0.0),
+            Vec3::new(0.0, -110.0, 0.0),
             Vec3::new(0.0, 150.0, 0.0),
             1.5,
         ),
