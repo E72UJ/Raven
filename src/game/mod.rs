@@ -282,7 +282,7 @@ fn load_main_config_system(mut commands: Commands) {
 
 // 简化的游戏状态设置
 fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server: Res<AssetServer>) {
-    info!("进入游戏场景");
+    // info!("进入游戏场景");
     commands.spawn(Camera2d);
    // 添加测试精灵
     // commands.spawn((
