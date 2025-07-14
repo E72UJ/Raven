@@ -15,7 +15,7 @@ use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
     #[default]
-    Menu,
+    Menu,     
     Game,
     Settings,
 }
