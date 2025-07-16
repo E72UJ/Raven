@@ -4,7 +4,7 @@ styles:
     padding: [20.0, 20.0, 20.0, 20.0]
   
   textbox:
-    text_color: [1.3, 0.9, 0.9, 1.0]
+    text_color: [1.0, 1.0, 1.0, 1.0]
     font_size: 20.0
     margin: 10.0
   

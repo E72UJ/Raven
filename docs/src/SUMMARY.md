@@ -15,5 +15,6 @@
 - [资产文件结构](./getting-started/assets.md)
 ## 附录
 - [常用命令](./cmd/cmd.md)
+- [常用资源代码](./cmd/code.md)
 - [常量值表](./constant/constant.md)
 - [参考资料](./url/index.md)
