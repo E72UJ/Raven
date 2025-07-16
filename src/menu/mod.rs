@@ -1,6 +1,7 @@
 // src/menu/mod.rs
 use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
+
 #[derive(Component)]
 struct MenuCamera;
 
