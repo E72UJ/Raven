@@ -1,10 +1,12 @@
+# 主程序样式
 styles:
   dialog_box:
     background_color: [0.4, 0.1, 0.1, 0.8]
-    padding: [20.0, 20.0, 20.0, 20.0]
-  
+    padding: [140.0, 30.0, 60.0, 30.0]
+    position: [null, 0.0, 0.0, 0.0] # [顺时针上右下左]
+
   textbox:
-    text_color: [1.0, 1.0, 1.0, 1.0]
+    text_color: [1.0, 0.5, 1.0, 1.0]
     font_size: 20.0
     margin: 10.0
   
@@ -26,3 +28,9 @@ styles:
     position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
     size: [400.0, 600.0] # [width, height]
     background_color: [0.4, 0.4, 0.1, 1.0]
+# 主菜单样式
+menu:
+  dialog_box:
+    background_color: [0.4, 0.1, 0.1, 0.8]
+    padding: [140.0, 30.0, 60.0, 30.0]
+    position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]

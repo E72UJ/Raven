@@ -1,5 +1,6 @@
 // game/mod.rs
 use bevy::prelude::*;
+use crate::style;
 use crate::GameScene;
 use std::time::Duration;
 // 基础引用
@@ -585,8 +586,11 @@ commands.spawn((
     //     },
     //     // Visibility::Hidden,
     // ));
+    let dialog_padding = stylesheet.get_padding("dialog_box");
+    let dialog_pos = stylesheet.get_position("dialog_box");
     commands
         .spawn((
+            
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
             // Name::new("textbox"),
             // Text::new("文本框!"),
@@ -599,17 +603,19 @@ commands.spawn((
             // TextLayout::new_with_justify(JustifyText::Left),
             Node {
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(0.0),
-                left: Val::Px(50.0),
-                right: Val::Px(50.0),
+                // bottom: Val::Px(0.0),
+                top: dialog_pos.top,
+                bottom: dialog_pos.bottom,
+                left: dialog_pos.left,
+                right: dialog_pos.right,
                 width: Val::Px(1280.0),
                 height: Val::Px(185.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-                left: Val::Px(140.0),
-                right: Val::Px(30.0),
-                top: Val::Px(60.0),
-                bottom: Val::Px(30.0),
+                    left: dialog_padding.left,
+                    right: dialog_padding.right,
+                    top: dialog_padding.top,
+                    bottom: dialog_padding.bottom,
                 },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()

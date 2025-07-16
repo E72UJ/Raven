@@ -14,6 +14,7 @@ pub struct UiStyle {
     text_color: Option<[f32; 4]>,
     font_size: Option<f32>,
     padding: Option<[f32; 4]>,
+    pub position: Option<[Option<f32>; 4]>,
     margin: Option<f32>,
     border_radius: Option<f32>,
 }
@@ -98,6 +99,19 @@ impl UiStyleSheet {
             }
         }
         UiRect::all(Val::Px(0.0))
+    }
+    pub fn get_position(&self, style_name: &str) -> UiRect {
+        if let Some(style) = self.styles.get(style_name) {
+            if let Some(position) = style.position {
+                return UiRect {
+                    left: position[3].map_or(Val::Auto, |v| Val::Px(v)),
+                    right: position[1].map_or(Val::Auto, |v| Val::Px(v)),
+                    top: position[0].map_or(Val::Auto, |v| Val::Px(v)),
+                    bottom: position[2].map_or(Val::Auto, |v| Val::Px(v)),
+                };
+            }
+        }
+        UiRect::all(Val::Auto)
     }
 
     pub fn get_margin(&self, style_name: &str) -> UiRect {
