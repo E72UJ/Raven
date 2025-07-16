@@ -433,7 +433,7 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
     // println!("{}",portrait_assets);
     commands.insert_resource(portrait_assets);
 }
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
+fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,stylesheet: Res<UiStyleSheet>,) {
     // debug_print("var2",&asset_server);
     // 点击区域
     println!("执行数据");
@@ -624,13 +624,13 @@ commands.spawn((
             parent.spawn((
                 Name::new("textbox"),
                 Text::new("文本框!"),
-                // Name::new("child_element"),
-                // Text::new("子节点文本"),
                 TextFont {
                     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 24.0,
+                    font_size: stylesheet.get_font_size("textbox"),
+                    
                     ..default()
                 },
+                TextColor(stylesheet.get_text_color("textbox")),
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
@@ -707,11 +707,7 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-   let one =  stylesheet.get_background_color("namebox");
-   println!(
-        "{:?}",
-        one
-    );
+
     
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
