@@ -1,6 +1,6 @@
 styles:
   dialog_box:
-    background_color: [0.1, 0.1, 0.1, 0.8]
+    background_color: [0.4, 0.1, 0.1, 0.8]
     padding: [20.0, 20.0, 20.0, 20.0]
   
   textbox:

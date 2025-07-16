@@ -1,14 +1,15 @@
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
 
-#[derive(Resource, Deserialize, Default)]
-struct UiStyleSheet {
+#[derive(Resource, Deserialize, Default, Debug)]
+pub struct UiStyleSheet {
     styles: HashMap<String, UiStyle>,
 }
-#[derive(Deserialize, Clone)]
-struct UiStyle {
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct UiStyle {
     background_color: Option<[f32; 4]>,
     text_color: Option<[f32; 4]>,
     font_size: Option<f32>,
@@ -16,15 +17,15 @@ struct UiStyle {
     margin: Option<f32>,
     border_radius: Option<f32>,
 }
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (load_styles).chain())
-        // .add_systems(Update, button_interaction)
-        .run();
-}
+
 impl UiStyleSheet {
-    fn debug_print(&self) {
+    pub fn load_from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let content = fs::read_to_string(path)?;
+        let stylesheet: UiStyleSheet = serde_yaml::from_str(&content)?;
+        Ok(stylesheet)
+    }
+
+    pub fn debug_print(&self) {
         println!("=== UI样式表内容 ===");
         for (style_name, style) in &self.styles {
             println!("样式名称: {}", style_name);
@@ -53,17 +54,12 @@ impl UiStyleSheet {
                 println!("  圆角半径: {}", border_radius);
             }
             
-            println!(); // 空行分隔
+            println!();
         }
         println!("===================");
     }
-    fn load_from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let content = fs::read_to_string(path)?;
-        let stylesheet: UiStyleSheet = serde_yaml::from_str(&content)?;
-        Ok(stylesheet)
-    }
 
-    fn get_background_color(&self, style_name: &str) -> Color {
+    pub fn get_background_color(&self, style_name: &str) -> Color {
         if let Some(style) = self.styles.get(style_name) {
             if let Some(color) = style.background_color {
                 return Color::srgba(color[0], color[1], color[2], color[3]);
@@ -72,7 +68,7 @@ impl UiStyleSheet {
         Color::NONE
     }
 
-    fn get_text_color(&self, style_name: &str) -> Color {
+    pub fn get_text_color(&self, style_name: &str) -> Color {
         if let Some(style) = self.styles.get(style_name) {
             if let Some(color) = style.text_color {
                 return Color::srgba(color[0], color[1], color[2], color[3]);
@@ -81,15 +77,16 @@ impl UiStyleSheet {
         Color::WHITE
     }
 
-    fn get_font_size(&self, style_name: &str) -> f32 {
+    pub fn get_font_size(&self, style_name: &str) -> f32 {
         if let Some(style) = self.styles.get(style_name) {
-            style.font_size.unwrap_or(16.0)
-        } else {
-            16.0
+            if let Some(size) = style.font_size {
+                return size;
+            }
         }
+        14.0
     }
 
-    fn get_padding(&self, style_name: &str) -> UiRect {
+    pub fn get_padding(&self, style_name: &str) -> UiRect {
         if let Some(style) = self.styles.get(style_name) {
             if let Some(padding) = style.padding {
                 return UiRect {
@@ -103,7 +100,7 @@ impl UiStyleSheet {
         UiRect::all(Val::Px(0.0))
     }
 
-    fn get_margin(&self, style_name: &str) -> UiRect {
+    pub fn get_margin(&self, style_name: &str) -> UiRect {
         if let Some(style) = self.styles.get(style_name) {
             if let Some(margin) = style.margin {
                 return UiRect::all(Val::Px(margin));
@@ -111,8 +108,19 @@ impl UiStyleSheet {
         }
         UiRect::all(Val::Px(0.0))
     }
+
+    pub fn get_border_radius(&self, style_name: &str) -> BorderRadius {
+        if let Some(style) = self.styles.get(style_name) {
+            if let Some(radius) = style.border_radius {
+                return BorderRadius::all(Val::Px(radius));
+            }
+        }
+        BorderRadius::all(Val::Px(0.0))
+    }
 }
-fn load_styles(mut commands: Commands) {
+
+// 样式加载系统
+pub fn load_styles(mut commands: Commands) {
     match UiStyleSheet::load_from_file("assets/style.yaml") {
         Ok(stylesheet) => {
             stylesheet.debug_print();
@@ -121,11 +129,19 @@ fn load_styles(mut commands: Commands) {
             commands.insert_resource(stylesheet);
             println!("样式表加载成功！");
             println!("=============");
-            
         }
         Err(e) => {
             println!("加载样式表失败: {}", e);
             commands.insert_resource(UiStyleSheet::default());
         }
+    }
+}
+
+// 样式插件
+pub struct StylePlugin;
+
+impl Plugin for StylePlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, load_styles);
     }
 }

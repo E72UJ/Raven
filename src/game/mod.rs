@@ -34,6 +34,8 @@ use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransitio
 use Raven::typewriter;
 use typewriter::{TypewriterText, typewriter_system, TypewriterPlugin};
 
+use crate::style::UiStyleSheet;
+use crate::style::StylePlugin;
 
 // 包调用结束
 
@@ -223,6 +225,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<FlashPlugin>() {
             app.add_plugins(FlashPlugin);
+
         }
         app
             // 只在启动时加载资源，不创建UI
@@ -244,6 +247,7 @@ impl Plugin for GamePlugin {
                 load_swf_assets
             ).chain())
             .add_plugins(RenpyDissolvePlugin)
+            .add_plugins(StylePlugin)  // 确保这行存在
             // .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
@@ -696,11 +700,18 @@ commands.spawn((
 fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
+    stylesheet: Res<UiStyleSheet>,
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
     // mut typewriter_query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
     
 ) {
-    println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+    // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
+
+   let one =  stylesheet.get_background_color("namebox");
+   println!(
+        "{:?}",
+        one
+    );
     
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -1050,9 +1061,6 @@ fn load_audio_resources(
 // }
 // 播放音效的函数
 fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
-    // 这里可以根据需要创建一个新的 AudioPlayer 实例并播放音频
-    // 你可以在这里设置 PlaybackSettings，也可以选择一次性播放或循环播放
-    // 在这里创建音频播放器
     commands.spawn((
         AudioPlayer::new(audio_handle.clone()),
         PlaybackSettings::ONCE,

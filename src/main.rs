@@ -3,6 +3,7 @@ mod menu;
 mod config;
 mod audio;  
 mod transition; // 添加模块
+mod style;
 
 use bevy::prelude::*;
 use menu::MenuPlugin;
