@@ -3,19 +3,10 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (load_styles, setup_ui).chain())
-        .add_systems(Update, button_interaction)
-        .run();
-}
-
 #[derive(Resource, Deserialize, Default)]
 struct UiStyleSheet {
     styles: HashMap<String, UiStyle>,
 }
-
 #[derive(Deserialize, Clone)]
 struct UiStyle {
     background_color: Option<[f32; 4]>,
@@ -25,7 +16,13 @@ struct UiStyle {
     margin: Option<f32>,
     border_radius: Option<f32>,
 }
-
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, (load_styles).chain())
+        // .add_systems(Update, button_interaction)
+        .run();
+}
 impl UiStyleSheet {
     fn debug_print(&self) {
         println!("=== UI样式表内容 ===");
@@ -115,122 +112,16 @@ impl UiStyleSheet {
         UiRect::all(Val::Px(0.0))
     }
 }
-
-#[derive(Component)]
-struct DialogBox;
-
-#[derive(Component)]
-struct CloseButton;
-
 fn load_styles(mut commands: Commands) {
     match UiStyleSheet::load_from_file("assets/style.yaml") {
         Ok(stylesheet) => {
-            println!("样式表加载成功！");
             stylesheet.debug_print();
             commands.insert_resource(stylesheet);
-            
-            
+            println!("样式表加载成功！");
         }
         Err(e) => {
             println!("加载样式表失败: {}", e);
             commands.insert_resource(UiStyleSheet::default());
-        }
-    }
-}
-
-fn setup_ui(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>,
-    stylesheet: Res<UiStyleSheet>
-) {
-    // 创建摄像机
-    commands.spawn(Camera2d);
-
-    // 创建对话框
-    let dialog_box_entity = commands
-        .spawn((
-            Node {
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(50.0),
-                left: Val::Px(50.0),
-                right: Val::Px(50.0),
-                height: Val::Px(200.0),
-                padding: stylesheet.get_padding("dialog_box"),
-                justify_content: JustifyContent::SpaceBetween,
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
-            BackgroundColor(stylesheet.get_background_color("dialog_box")),
-            DialogBox,
-        ))
-        .with_children(|parent| {
-            // 文本框
-            parent.spawn((
-                Text::new("这是一个使用YAML样式的对话框！\n点击关闭按钮来关闭对话框。"),
-                TextFont {
-                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: stylesheet.get_font_size("textbox"),
-                    ..default()
-                },
-                TextColor(stylesheet.get_text_color("textbox")),
-                Node {
-                    margin: stylesheet.get_margin("textbox"),
-                    flex_grow: 1.0,
-                    ..default()
-                },
-            ));
-
-            // 关闭按钮
-            parent.spawn((
-                Button,
-                Node {
-                    padding: stylesheet.get_padding("button"),
-                    align_self: AlignSelf::FlexEnd,
-                    ..default()
-                },
-                BackgroundColor(stylesheet.get_background_color("button")),
-                CloseButton,
-            )).with_children(|button_parent| {
-                button_parent.spawn((
-                    Text::new("关闭"),
-                    TextFont {
-                        font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                        font_size: stylesheet.get_font_size("button"),
-                        ..default()
-                    },
-                    TextColor(stylesheet.get_text_color("textbox")),
-                ));
-            });
-        })
-        .id();
-
-    println!("对话框实体ID: {:?}", dialog_box_entity);
-}
-
-fn button_interaction(
-    mut commands: Commands,
-    mut interaction_query: Query<
-        (&Interaction, &mut BackgroundColor),
-        (Changed<Interaction>, With<CloseButton>),
-    >,
-    dialog_query: Query<Entity, With<DialogBox>>,
-    stylesheet: Res<UiStyleSheet>,
-) {
-    for (interaction, mut background_color) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                // 关闭对话框
-                for dialog_entity in &dialog_query {
-                    commands.entity(dialog_entity).despawn_recursive();
-                }
-                println!("对话框已关闭！");
-            }
-            Interaction::Hovered => {
-                *background_color = Color::srgba(0.3, 0.6, 0.9, 1.0).into();
-            }
-            Interaction::None => {
-                *background_color = stylesheet.get_background_color("button").into();
-            }
         }
     }
 }
