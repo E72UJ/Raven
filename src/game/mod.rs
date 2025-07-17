@@ -588,6 +588,7 @@ commands.spawn((
     // ));
     let dialog_padding = stylesheet.get_padding("dialog_box");
     let dialog_pos = stylesheet.get_position("dialog_box");
+    
     commands
         .spawn((
             
@@ -713,8 +714,8 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-
-    
+    println!("  哈哈哈 : {:?}", stylesheet.get_text_color("textbox"));
+    // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         dialogue
