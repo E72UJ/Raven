@@ -282,6 +282,7 @@ impl Plugin for GamePlugin {
 // 将配置加载作为独立的系统
 fn load_main_config_system(mut commands: Commands) {
     let main_config = load_main_config();
+    println!("{}",main_config.settings.font.clone());
     commands.insert_resource(main_config);
 }
 
@@ -588,7 +589,7 @@ commands.spawn((
     // ));
     let dialog_padding = stylesheet.get_padding("dialog_box");
     let dialog_pos = stylesheet.get_position("dialog_box");
-    
+    let main_config = load_main_config();
     commands
         .spawn((
             
@@ -633,7 +634,8 @@ commands.spawn((
                 Name::new("textbox"),
                 Text::new("文本框!"),
                 TextFont {
-                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                    // font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                    font: asset_server.load(main_config.settings.font.clone()),
                     font_size: stylesheet.get_font_size("textbox"),
                     
                     ..default()

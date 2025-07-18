@@ -33,6 +33,7 @@ pub struct SettingsConfig {
     pub text_speed: u32,
     pub auto_save: bool,
     pub resolution: [u32; 2],
+    pub font: String
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -62,6 +63,7 @@ impl Default for MainConfig {
                 text_speed: 50,
                 auto_save: true,
                 resolution: [1200, 660],
+                font: "fonts/GenSenMaruGothicTW-Bold.ttf".to_string()
             },
             global_variables: GlobalVariables {
                 player_name: "主角".to_string(),
