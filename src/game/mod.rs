@@ -603,6 +603,8 @@ commands.spawn((
             // },
             // TextShadow::default(),
             // TextLayout::new_with_justify(JustifyText::Left),
+            Name::new("text"),
+            Visibility::Hidden,
             Node {
                 position_type: PositionType::Absolute,
                 // bottom: Val::Px(0.0),
@@ -622,6 +624,7 @@ commands.spawn((
                 },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
+                
             },
             // 对话框背景颜色
             // ImageNode::new(asset_server.load("gui/textbox.png")),
@@ -676,17 +679,17 @@ commands.spawn((
         TextLayout::new_with_justify(JustifyText::Center),
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(140.0),
-            left: Val::Px(left_box),
+            bottom: Val::Px(230.0),
+            left: Val::Px(50.0),
             right: Val::Px(50.0),
             height: Val::Px(50.0),
             width: Val::Px(220.0),
             // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
-        BackgroundColor(Color::NONE),
+        // BackgroundColor(Color::NONE),
         // 对话框背景颜色
-        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         GlobalZIndex(2),
         // AnimatedText,
     ));
@@ -711,13 +714,14 @@ fn update_dialogue(
     mut game_state: ResMut<GameState>,
     label_map: Res<LabelMap>,
     stylesheet: Res<UiStyleSheet>,
+    mut dialog_query: Query<(&Name, &mut Visibility, &mut Node), Without<Text>>, // 查询对话框容器
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
     // mut typewriter_query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
     
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-    println!("  哈哈哈 : {:?}", stylesheet.get_position("dialog_box"));
+    // println!("  哈哈哈 : {:?}", stylesheet.get_position("dialog_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -758,13 +762,27 @@ fn update_dialogue(
                 }
             }
         }
+
         if name.as_str() == "textbox" {
+            // if name.as_str() == "text" {
+
+            // }
 
                 text.0 = current_dialogue.text.to_string();
                 println!("{}",current_dialogue.text.to_string());
         }
     }
-    
+     // 查找对话框容器
+    for (name, mut visibility, mut node) in dialog_query.iter_mut() {
+        if name.as_str() == "text" {
+            // 处理对话框显示/隐藏逻辑
+             if current_dialogue.text == "none" {
+                    *visibility = Visibility::Hidden; // 如果 character 为 "none", 隐藏 namebox
+                } else {
+                    *visibility = Visibility::Visible;
+                }
+        }
+    }
     if let Some(jump_label) = &current_dialogue.jump {
         if let Some(&new_line) = label_map.0.get(jump_label) {
             println!(
