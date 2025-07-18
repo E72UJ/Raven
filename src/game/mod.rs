@@ -609,7 +609,8 @@ commands.spawn((
                 bottom: dialog_pos.bottom,
                 left: dialog_pos.left,
                 right: dialog_pos.right,
-                width: Val::Px(1280.0),
+                // width: Val::Px(1080.0),
+                
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
@@ -714,7 +715,7 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-    println!("  哈哈哈 : {:?}", stylesheet.get_text_color("textbox"));
+    println!("  哈哈哈 : {:?}", stylesheet.get_position("dialog_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {

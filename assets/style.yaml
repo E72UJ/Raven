@@ -2,9 +2,9 @@
 styles:
   dialog_box:
     background_color: [0.4, 0.1, 0.1, 0.8]
-    padding: [140.0, 30.0, 60.0, 30.0]
-    position: [null, 0.0, 0.0, 0.0] # [顺时针 上右下左 ]
-
+    padding: [30.0, 30.0, 30.0, 30.0]
+    position: [null, 50.0, 50.0, 50.0] # [顺时针 上右下左 ]
+    
   textbox:
     text_color: [1.0, 1.0, 1.0, 1.0]
     font_size: 20.0
