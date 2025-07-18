@@ -610,7 +610,7 @@ commands.spawn((
                 left: dialog_pos.left,
                 right: dialog_pos.right,
                 width: Val::Px(1280.0),
-                height: Val::Px(185.0),
+                height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
                     left: dialog_padding.left,
@@ -622,8 +622,8 @@ commands.spawn((
                 ..default()
             },
             // 对话框背景颜色
-            ImageNode::new(asset_server.load("gui/textbox.png")),
-            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+            // ImageNode::new(asset_server.load("gui/textbox.png")),
+            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
             // AnimatedText,
         ))
         .with_children(|parent| {
@@ -1138,7 +1138,7 @@ fn load_swf_assets(
             FlashAnimation {
                 swf: swf_handle
             },
-            Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
+            Transform::from_translation(Vec3::new(200.0,100.0, 0.0)).with_scale(Vec3::splat(1.0)),
             Visibility::Hidden,
         ));
         
