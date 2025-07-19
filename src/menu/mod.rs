@@ -10,7 +10,7 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
-            // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使用
+            // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使      用
             // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
             .init_resource::<InputFocus>()
