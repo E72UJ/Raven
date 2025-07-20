@@ -282,7 +282,7 @@ impl Plugin for GamePlugin {
 // 将配置加载作为独立的系统
 fn load_main_config_system(mut commands: Commands) {
     let main_config = load_main_config();
-    println!("{}",main_config.settings.font.clone());
+    // println!("{}",main_config.settings.font.clone());
     commands.insert_resource(main_config);
 }
 
@@ -420,7 +420,7 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
 
         // 使用正斜杠来确保路径格式一致
         let path_string = format!("{}/default.png", character_path.replace('\\', "/"));
-        println!("{}", path_string);
+        // println!("{}", path_string);
         let handle = asset_server.load(&path_string);
         portrait_assets
             .handles
@@ -438,7 +438,7 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,stylesheet: Res<UiStyleSheet>,) {
     // debug_print("var2",&asset_server);
     // 点击区域
-    println!("执行数据");
+    // println!("执行数据");
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
@@ -507,16 +507,7 @@ commands.spawn((
             parent.spawn((
                 Name::new("textbox"),
 
-                Visibility::Visible              , // 设置为可见
-                // Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
-                
-                // Name::new("child_element"),
-                // Text::new("子节点文本"),
-                // TextFont {
-                //     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                //     font_size: 14.0,
-                //     ..default()
-                // },
+                Visibility::Visible,
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
@@ -769,7 +760,7 @@ fn update_dialogue(
             // }
 
                 text.0 = current_dialogue.text.to_string();
-                println!("{}",current_dialogue.text.to_string());
+                // println!("{}",current_dialogue.text.to_string());
         }
     }
      // 查找对话框容器
@@ -1169,6 +1160,7 @@ fn load_swf_assets(
 }
 // 新增swf更新系统
 // 修改swf更新系统
+
 fn update_swf(
     game_state: Res<GameState>,
     mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
@@ -1181,18 +1173,7 @@ fn update_swf(
     for (name, visibility) in query.iter() {
         // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
     }
-    // 调试：打印当前状态
-    // if game_state.is_changed() {
-    //     println!("=== SWF更新调试 ===");
-    //     println!("当前对话行: {}", game_state.current_line);
-        
-    //     // 列出所有Flash实体
-    //     println!("现有Flash实体:");
-    //     for (name, visibility) in query.iter() {
-    //         println!("  - {}: {:?}", name.as_str(), *visibility);
-    //     }
-    // }
-    
+
 
     for (_, mut visibility) in query.iter_mut() {
         *visibility = Visibility::Hidden;
@@ -1222,7 +1203,7 @@ fn update_swf(
                     
                     if resource_loaded {
                         *visibility = Visibility::Visible;
-                        println!("✓ 成功显示SWF: {}", target_name);
+                        // println!("✓ 成功显示SWF: {}", target_name);
                         found = true;
                         break;
                     } else {
@@ -1382,7 +1363,7 @@ fn create_dynamic_buttons(
         if has_choices {
             // 现在可以安全修改 game_state
             game_state.in_branch_selection = true;
-            println!("{}",game_state.in_branch_selection);
+            // println!("{}",game_state.in_branch_selection);
             
             // 隐藏点击区域
             if let Ok(mut visibility) = click_area_query.get_single_mut() {
@@ -1719,7 +1700,7 @@ fn update_typewriter(
 ) {
 for (mut text, mut typewriter) in query.iter_mut() {
     if typewriter.is_active {  // 这里 typewriter 是 Mut<TypewriterText> 而不是 TypewriterText
-        println!("{}",typewriter.is_active);
+        // println!("{}",typewriter.is_active);
     }
 }
 }
@@ -1767,3 +1748,49 @@ for (mut text, mut typewriter) in query.iter_mut() {
 //         }
 //     }
 // }
+fn update_audio(
+    game_state: Res<GameState>,
+    mut query: Query<(&Name, &mut Visibility), With<Background>>,
+    mut commands: Commands,
+) {
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if let Some(new_bg_name) = &dialogue.background {
+            let target_bg = format!("background_{}", new_bg_name);
+
+            // 检查当前是否已经显示了这个背景
+            let mut current_visible = None;
+            let mut target_exists = false;
+
+            for (name, visibility) in query.iter() {
+                if *visibility == Visibility::Visible {
+                    current_visible = Some(name.as_str());
+                }
+                if name.as_str() == target_bg {
+                    target_exists = true;
+                }
+            }
+
+            // 如果目标背景存在且与当前背景不同，执行渐变切换
+            if target_exists && current_visible.as_ref() != Some(&target_bg.as_str()) {
+                println!("切换背景: {:?} -> {}", current_visible, target_bg);
+
+                // 直接调用你的渐变函数
+                fade_in(&mut commands, 0.8);
+                
+                // 更新背景可见性
+                for (name, mut visibility) in query.iter_mut() {
+                    if name.as_str() == target_bg {
+                        *visibility = Visibility::Visible;
+                    } else {
+                        *visibility = Visibility::Hidden;
+                    }
+                }
+            }
+        } else {
+            // 没有背景时，隐藏所有背景
+            for (_, mut visibility) in query.iter_mut() {
+                *visibility = Visibility::Hidden;
+            }
+        }
+    }
+}
