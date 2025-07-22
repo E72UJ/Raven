@@ -1126,7 +1126,7 @@ fn load_backgrounds(
             Background, // 添加背景组件标识
             Sprite {
                 image: asset_server.load(bg_path),
-                custom_size: Some(Vec2::new(1157.0, 679.0)), 
+                custom_size: Some(Vec2::new(1200.0, 660.0)), 
                 ..default()
 
                 
