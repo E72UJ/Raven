@@ -287,101 +287,175 @@ fn cleanup_all_menu(
     }
 }
 
-fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>, camera_query: Query<Entity, With<MenuCamera>>) {
     println!("在主菜单基础上添加设置界面...");
-    
+
+    // 首先检查是否已经有菜单摄像机存在
+    if camera_query.is_empty() {
+        // 如果没有,则创建一个新的菜单摄像机
+        commands.spawn((Camera2d, MenuCamera));
+    }
+
     // 创建半透明遮罩背景
     commands.spawn((
         Sprite {
-            color: Color::srgba(0.2, 0.4, 0.6, 0.7),
-            custom_size: Some(Vec2::new(1280.0, 720.0)),
+            color: Color::srgba(0.0, 0.0, 0.0, 0.7),
+            custom_size: Some(Vec2::new(880.0, 720.0)),
             ..default()
         },
         Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)),
         SettingsEntity,
     ));
-    
-    // 设置面板背景
+
+    // 设置界面主体
     commands.spawn((
-        Sprite {
-            color: Color::srgb(0.2, 0.2, 0.3),
-            custom_size: Some(Vec2::new(500.0, 400.0)),
+        Node {
+            position_type: PositionType::Absolute,
+            width: Val::Px(400.0),
+            height: Val::Px(300.0),
+            left: Val::Percent(50.0),
+            top: Val::Percent(50.0),
+            margin: UiRect::new(Val::Px(-200.0), Val::Auto, Val::Px(-150.0), Val::Auto),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::SpaceEvenly,
+            padding: UiRect::all(Val::Px(20.0)),
             ..default()
         },
-        Transform::from_translation(Vec3::new(0.0, 0.0, 6.0)),
+        BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
+        BorderColor(Color::WHITE),
         SettingsEntity,
-    ));
-    
-    // 标题文字
-    commands.spawn((
-        Text2d::new("设置"),
-        TextFont {
-            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-            font_size: 32.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        Transform::from_translation(Vec3::new(0.0, 150.0, 7.0)),
-        SettingsEntity,
-    ));
-    
-    // 音量设置文字
-    commands.spawn((
-        Text2d::new("音量"),
-        TextFont {
-            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-            font_size: 20.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        Transform::from_translation(Vec3::new(-150.0, 50.0, 7.0)),
-        SettingsEntity,
-    ));
-    
-    // 音量滑块背景
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.4, 0.4, 0.4),
-            custom_size: Some(Vec2::new(200.0, 10.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(50.0, 50.0, 7.0)),
-        SettingsEntity,
-    ));
-    
-    // 音量滑块
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.2, 0.8, 0.2),
-            custom_size: Some(Vec2::new(20.0, 20.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(20.0, 50.0, 7.5)),
-        SettingsEntity,
-    ));
-    
-    // 返回按钮
-    commands.spawn((
-        Sprite {
-            color: Color::srgb(0.6, 0.3, 0.3),
-            custom_size: Some(Vec2::new(120.0, 40.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(0.0, -120.0, 7.0)),
-        SettingsEntity,
-    ));
-    
-    // 返回按钮文字
-    commands.spawn((
-        Text2d::new("返回"),
-        TextFont {
-            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-            font_size: 18.0,
-            ..default()
-        },
-        TextColor(Color::WHITE),
-        Transform::from_translation(Vec3::new(0.0, -120.0, 7.5)),
-        SettingsEntity,
+        children![
+            // 标题
+            (
+                Text::new("设置"),
+                TextFont {
+                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                    font_size: 28.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ),
+            // 音量设置
+            (
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::SpaceBetween,
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+                children![
+                    (
+                        Text::new("音量"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ),
+                    (
+                        Node {
+                            width: Val::Px(150.0),
+                            height: Val::Px(20.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                    ),
+                ],
+            ),
+            // 文字速度设置
+            (
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::SpaceBetween,
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+                children![
+                    (
+                        Text::new("文字速度"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ),
+                    (
+                        Node {
+                            width: Val::Px(150.0),
+                            height: Val::Px(20.0),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
+                    ),
+                ],
+            ),
+            // 全屏设置
+            (
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::SpaceBetween,
+                    width: Val::Percent(100.0),
+                    ..default()
+                },
+                children![
+                    (
+                        Text::new("全屏"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ),
+                    (
+                        Button,
+                        Node {
+                            width: Val::Px(60.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgb(0.4, 0.4, 0.4)),
+                        children![(
+                            Text::new("关"),
+                            TextFont {
+                                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                font_size: 14.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                        )],
+                    ),
+                ],
+            ),
+            // 关闭按钮
+            (
+                Button,
+                Node {
+                    width: Val::Px(80.0),
+                    height: Val::Px(35.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::srgb(0.4, 0.4, 0.4)),
+                children![(
+                    Text::new("关闭"),
+                    TextFont {
+                        font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                        font_size: 16.0,
+                        ..default()
+                    },
+                    TextColor(Color::WHITE),
+                )],
+            ),
+        ],
     ));
 }
-
