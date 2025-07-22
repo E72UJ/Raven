@@ -1,5 +1,6 @@
 // game/mod.rs
 use bevy::prelude::*;
+use crate::audio;
 use crate::style;
 use crate::GameScene;
 use std::time::Duration;
@@ -37,6 +38,8 @@ use typewriter::{TypewriterText, typewriter_system, TypewriterPlugin};
 
 use crate::style::UiStyleSheet;
 use crate::style::StylePlugin;
+
+use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 
 // 包调用结束
 
@@ -179,6 +182,8 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
+    #[serde(default)]
+    bgm: Option<String>,
     background: Option<String>,  // 新添加的背景字段
     swf: Option<String>, // 新增swf字段
     #[serde(default)] // 如果没有label字段，则为None
@@ -186,6 +191,7 @@ struct Dialogue {
     #[serde(default)] // 如果没有jump字段，则为None
     jump: Option<String>,
     choices: Option<Vec<Choice>>, // 动态的分支选项
+
 }
 // 游戏状态资源
 #[derive(Debug, Resource)]
@@ -218,7 +224,11 @@ struct MyMusic;
 
 
 // 主函数
-
+#[derive(Resource, Default)]
+pub struct CurrentAudio {
+    pub current_bgm: Option<String>,
+    pub current_entity: Option<Entity>, // 添加这一行跟踪音频实体
+}
 // 结构体结束
 pub struct GamePlugin;
 
@@ -245,10 +255,12 @@ impl Plugin for GamePlugin {
             .add_systems(OnEnter(GameScene::Game), (
                 setup_game_state,
                 setup_ui,  // 移到这里
-                load_swf_assets
+                load_swf_assets,
+       
             ).chain())
             .add_plugins(RenpyDissolvePlugin)
             .add_plugins(StylePlugin)  // 确保这行存在
+            .insert_resource(CurrentAudio::default()) 
             // .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
@@ -258,6 +270,7 @@ impl Plugin for GamePlugin {
                     // debug_flash_position,
                     output_game_state,
                     update_dialogue, 
+                    update_audio,
                     // typewriter_system.after(update_dialogue),
                     update_portrait,
                     flash_animation.run_if(in_state(GameScene::Game)),
@@ -1748,48 +1761,57 @@ for (mut text, mut typewriter) in query.iter_mut() {
 //         }
 //     }
 // }
+// fn update_audio(
+//     game_state: Res<GameState>,
+//     mut query: Query<(&Name, &mut Visibility), With<Background>>,
+//     mut commands: Commands,
+//     asset_server: Res<AssetServer>
+// ) {
+//     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+//         if let Some(bgm) = &dialogue.bgm {
+//             let target_name = bgm;
+//             println!("{}",target_name);
+//             play_audio(&mut commands, &asset_server, &target_name);
+
+//         }
+//     }
+    
+    
+// }
 fn update_audio(
     game_state: Res<GameState>,
-    mut query: Query<(&Name, &mut Visibility), With<Background>>,
+    mut current_audio: ResMut<CurrentAudio>,
     mut commands: Commands,
+    asset_server: Res<AssetServer>
 ) {
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-        if let Some(new_bg_name) = &dialogue.background {
-            let target_bg = format!("background_{}", new_bg_name);
+        if let Some(bgm) = &dialogue.bgm {
+            let target_bgm = bgm.clone();
+            let current_playing = current_audio.current_bgm.as_ref();
+            let bgm_changed = current_playing != Some(&target_bgm);
 
-            // 检查当前是否已经显示了这个背景
-            let mut current_visible = None;
-            let mut target_exists = false;
+            if bgm_changed {
+                println!("切换BGM: {:?} -> {}", current_playing, target_bgm);
 
-            for (name, visibility) in query.iter() {
-                if *visibility == Visibility::Visible {
-                    current_visible = Some(name.as_str());
+                // 停止当前播放的音频实体
+                if let Some(entity) = current_audio.current_entity {
+                    commands.entity(entity).despawn();
                 }
-                if name.as_str() == target_bg {
-                    target_exists = true;
-                }
-            }
 
-            // 如果目标背景存在且与当前背景不同，执行渐变切换
-            if target_exists && current_visible.as_ref() != Some(&target_bg.as_str()) {
-                println!("切换背景: {:?} -> {}", current_visible, target_bg);
-
-                // 直接调用你的渐变函数
-                fade_in(&mut commands, 0.8);
+                // 播放新BGM并获取实体
+                let audio_path = format!("audio/{}", bgm);
+                let new_entity = play_audio(&mut commands, &asset_server, &audio_path);
                 
-                // 更新背景可见性
-                for (name, mut visibility) in query.iter_mut() {
-                    if name.as_str() == target_bg {
-                        *visibility = Visibility::Visible;
-                    } else {
-                        *visibility = Visibility::Hidden;
-                    }
-                }
+                // 更新状态
+                current_audio.current_bgm = Some(target_bgm);
+                current_audio.current_entity = Some(new_entity);
             }
         } else {
-            // 没有背景时，隐藏所有背景
-            for (_, mut visibility) in query.iter_mut() {
-                *visibility = Visibility::Hidden;
+            // 没有BGM时，停止当前播放
+            if let Some(entity) = current_audio.current_entity {
+                commands.entity(entity).despawn();
+                current_audio.current_bgm = None;
+                current_audio.current_entity = None;
             }
         }
     }

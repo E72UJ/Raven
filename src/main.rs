@@ -28,7 +28,7 @@ fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
 
     // // 循环播放背景音乐
-    play_audio_loop(&mut commands, &asset_server, "audio/two.ogg", 1.0);
+    // play_audio_loop(&mut commands, &asset_server, "audio/two.ogg", 1.0);
 }
 fn menu_exit_system(mut commands: Commands) {
     fade_in(&mut commands, 1.6); // 1.0渐入

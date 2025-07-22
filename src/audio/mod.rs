@@ -25,12 +25,12 @@ impl Plugin for AudioPlugin {
 ///     play_audio(&mut commands, &asset_server, "audio/button_click.ogg");
 /// }
 /// ```
-pub fn play_audio(commands: &mut Commands, asset_server: &Res<AssetServer>, audio_path: &str) {
+pub fn play_audio(commands: &mut Commands, asset_server: &Res<AssetServer>, audio_path: &str) -> Entity {
     let audio_handle = asset_server.load(audio_path);
     commands.spawn((
         AudioPlayer::new(audio_handle),
         PlaybackSettings::ONCE.with_volume(Volume::Linear(1.0)),
-    ));
+    )).id() // 添加.id()来返回Entity
 }
 
 /// 播放音频文件并设置音量
