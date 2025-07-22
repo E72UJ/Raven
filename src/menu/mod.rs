@@ -3,13 +3,23 @@ use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
 
 #[derive(Component)]
+struct SettingsEntity;
+
+
+
+#[derive(Component)]
 struct MenuCamera;
 
+
+
 pub struct MenuPlugin;
+
+
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
+        
             // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使      用
             // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
@@ -22,7 +32,11 @@ impl Plugin for MenuPlugin {
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             // 只管理菜单场景
             .add_systems(OnEnter(GameScene::Menu), setup_menu_scene)
-            .add_systems(OnExit(GameScene::Menu), cleanup_scene);
+            .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
+            .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
+            .add_systems(OnExit(GameScene::Settings), cleanup_scene);
+
+
     }
 }
 
@@ -236,20 +250,138 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
     )
 }
 
-fn cleanup_scene(mut commands: Commands, 
+fn cleanup_scene(
+    mut commands: Commands, 
     scene_query: Query<Entity, With<SceneEntity>>,
-    camera_query: Query<Entity, With<MenuCamera>>, // 清理摄像机
+    camera_query: Query<Entity, With<MenuCamera>>,
+    current_state: Res<State<GameScene>>,
 ) {
-    println!("摄像机清理！！！");
-    // 清理场景UI
+    println!("清理场景，当前状态: {:?}", current_state.get());
+    
     for entity in &scene_query {
         commands.entity(entity).despawn();
     }
-    // 清理菜单摄像机
+    
+    // 只有进入Game状态时才清理摄像机
+    if *current_state.get() == GameScene::Game {
+        println!("进入游戏状态，清理菜单摄像机");
+        for entity in &camera_query {
+            commands.entity(entity).despawn();
+        }
+    } else {
+        println!("保留摄像机用于其他菜单场景");
+    }
+}
+fn cleanup_all_menu(
+    mut commands: Commands,
+    scene_query: Query<Entity, With<SceneEntity>>,
+    camera_query: Query<Entity, With<MenuCamera>>,
+) {
+    println!("进入游戏，清理所有菜单元素");
+    
+    for entity in &scene_query {
+        commands.entity(entity).despawn();
+    }
     for entity in &camera_query {
         commands.entity(entity).despawn();
     }
 }
 
-
+fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>) {
+    println!("在主菜单基础上添加设置界面...");
+    
+    // 创建半透明遮罩背景
+    commands.spawn((
+        Sprite {
+            color: Color::srgba(0.2, 0.4, 0.6, 0.7),
+            custom_size: Some(Vec2::new(1280.0, 720.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)),
+        SettingsEntity,
+    ));
+    
+    // 设置面板背景
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.2, 0.2, 0.3),
+            custom_size: Some(Vec2::new(500.0, 400.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 6.0)),
+        SettingsEntity,
+    ));
+    
+    // 标题文字
+    commands.spawn((
+        Text2d::new("设置"),
+        TextFont {
+            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+            font_size: 32.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_translation(Vec3::new(0.0, 150.0, 7.0)),
+        SettingsEntity,
+    ));
+    
+    // 音量设置文字
+    commands.spawn((
+        Text2d::new("音量"),
+        TextFont {
+            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+            font_size: 20.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_translation(Vec3::new(-150.0, 50.0, 7.0)),
+        SettingsEntity,
+    ));
+    
+    // 音量滑块背景
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.4, 0.4, 0.4),
+            custom_size: Some(Vec2::new(200.0, 10.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(50.0, 50.0, 7.0)),
+        SettingsEntity,
+    ));
+    
+    // 音量滑块
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.2, 0.8, 0.2),
+            custom_size: Some(Vec2::new(20.0, 20.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(20.0, 50.0, 7.5)),
+        SettingsEntity,
+    ));
+    
+    // 返回按钮
+    commands.spawn((
+        Sprite {
+            color: Color::srgb(0.6, 0.3, 0.3),
+            custom_size: Some(Vec2::new(120.0, 40.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, -120.0, 7.0)),
+        SettingsEntity,
+    ));
+    
+    // 返回按钮文字
+    commands.spawn((
+        Text2d::new("返回"),
+        TextFont {
+            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+            font_size: 18.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+        Transform::from_translation(Vec3::new(0.0, -120.0, 7.5)),
+        SettingsEntity,
+    ));
+}
 

@@ -67,8 +67,28 @@ fn main() {
         .add_plugins(AudioPlugin)
         // .add_systems(OnEnter(GameScene::Menu), menu_exit_system)  
         .add_systems(OnEnter(GameScene::Game), (menu_exit_system, my_system))
+
         .run();
 }
 
 
 
+fn setup_settings_scene(mut commands: Commands) {
+    // 创建设置界面
+    commands.spawn((
+        Text::new("设置页面"),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(100.0),
+            left: Val::Px(100.0),
+            ..default()
+        },
+    ));
+}
+
+fn cleanup_settings_scene(mut commands: Commands, query: Query<Entity, With<Node>>) {
+    // 清理设置界面
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
+    }
+}
