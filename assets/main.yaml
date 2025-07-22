@@ -1,5 +1,5 @@
 # main.yaml
-title: "Raven Engine22 V0.1" 
+title: "Raven Engine V0.1.5" 
 
 # 媒体资源路径变量定义
 assets:
@@ -7,14 +7,24 @@ assets:
   characters:
     protagonist: "characters/protagonist"
     heroine: "characters/heroine"
-    villain: "characters/villain"
+    villain: "characters/villain/one"
+    villain2: "characters/villain/two"
+    villain3: "characters/villain/three"
+    villain4: "characters/villain/a1"
+    villain5: "characters/villain/a2"
+    villain6: "characters/villain/a3"
+    villain7: "characters/villain/a4"
+    none: "characters/none"
   
   # 背景图片
   backgrounds:
-    school: "assets/backgrounds/school.png"
-    cafe: "assets/backgrounds/cafe.png"
-    park: "assets/backgrounds/park.png"
-  
+    school: "background/one.png"
+    cafe: "background/two.png"
+    bg1: "images/bg club.png"
+    bg2: "images/bg lecturehall.png"
+    bg3: "images/bg uni.png"
+    bg4: "images/bg meadow.png"
+    bg5: "images/bg5.png"
   # 音频文件
   audio:
     bgm:
@@ -23,7 +33,8 @@ assets:
     sfx:
       doorbell: "assets/audio/sfx/doorbell.mp3"
       explosion: "assets/audio/sfx/explosion.mp3"
-  
+    click_sound: "typing2.ogg"
+    backclick_sound: "button.ogg"
   # 视频文件
   videos:
     opening: "assets/videos/opening.mp4"
@@ -31,19 +42,26 @@ assets:
   
   # Flash动画(SWF)
   swf:
-    mini_game: "assets/swf/mini_game.swf"
-    special_effect: "assets/swf/special_effect.swf"
+    Ray: "swf/66.swf"
+    Ray2: "swf/16.swf"
+  # swf:
+  #   mini_game:
+  #     path: "assets/swf/mini_game.swf"
+  #     style: "swf_minigame"  # 引用样式
+
+  #   special_effect:
+  #     path: "assets/swf/special_effect.swf"
+  #     style: "swf_foreground_effect"  # 引用样式
 
 # 全局游戏设置
 settings:
   initial_scene: "intro"  # 初始场景ID
   text_speed: 50          # 文本显示速度
   auto_save: true         # 自动保存功能
-  resolution: [1157, 679] # 游戏分辨率
-  
+  resolution: [1157, 650] # 游戏分辨率
+  font: "fonts/zpix.ttf"
 # 其他全局配置
 global_variables:
   player_name: "主角"     # 玩家名称默认值
   affection_points: 0     # 好感度初始值
-window:
-  resize: false
+  
