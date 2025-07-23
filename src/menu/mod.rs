@@ -1,6 +1,8 @@
 // src/menu/mod.rs
 use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
+#[derive(Component)]
+pub struct BackButton;
 
 #[derive(Component)]
 struct SettingsEntity;
@@ -25,6 +27,8 @@ impl Plugin for MenuPlugin {
             .add_systems(Startup, setup)
             // 重要：只在 Menu 状态下运行按钮系统
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
+            .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
+            .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             // 只管理菜单场景
             .add_systems(OnEnter(GameScene::Menu), setup_menu_scene)
@@ -32,7 +36,9 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_scene)
             .add_systems(OnEnter(GameScene::About), setup_about_scene)
-            .add_systems(OnExit(GameScene::About), cleanup_all_menu);
+            .add_systems(OnExit(GameScene::About), cleanup_all_about)
+            .add_systems(OnEnter(GameScene::Help), setup_help_scene)
+            .add_systems(OnExit(GameScene::Help), cleanup_all_about);
 
     }
 }
@@ -89,13 +95,15 @@ fn button_system(
             Option<&StartGameButton>,
             Option<&SettingsButton>,
             Option<&ExitGameButton>,
-            Option<&AboutButton>,  // 添加这行
+            Option<&AboutButton>,  
+            Option<&BackButton>,  
+            Option<&HelpButton>,
         ),
         Changed<Interaction>,
     >,
     mut text_query: Query<&mut Text>,
 ) {
-    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about) in
+    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about,back,help) in
         &mut interaction_query
     {
         let mut text = text_query.get_mut(children[0]).unwrap();
@@ -113,9 +121,13 @@ fn button_system(
                     println!("状态改变了");
                 } else if settings.is_some() {
                     next_state.set(GameScene::Settings);
-                } else if about.is_some() {  // 添加这个条件
+                } else if about.is_some() {
                     next_state.set(GameScene::About);
-                } else if exit_game.is_some() {
+                } else if back.is_some() {  // 添加返回按钮处理
+                    next_state.set(GameScene::Menu);
+                }else if help.is_some() {
+                    next_state.set(GameScene::Help);
+                }  else if exit_game.is_some() {
                     std::process::exit(0);
                 }
             }
@@ -293,6 +305,17 @@ fn cleanup_all_menu(
         commands.entity(entity).despawn();
     }
 }
+fn cleanup_all_about(
+    mut commands: Commands,
+    about_ui_query: Query<Entity, With<AboutUI>>,
+) {
+    println!("清理关于界面");
+    
+    for entity in &about_ui_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+}
 fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
     println!("{}","执行关于界面");
     if camera_query.is_empty() {
@@ -344,9 +367,9 @@ fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,came
                         })
                         .with_children(|parent| {
                             parent.spawn(Text::new("Raven engine v0.1.5"));
-                            parent.spawn(Text::new("开发者：furau"));
+                            parent.spawn(Text::new("开发者：Furau"));
                             parent.spawn(Text::new("双模架构轻量级视觉小说引擎"));
-                            parent.spawn(Text::new("这是一个使用Raven开发的游戏。\n感谢您的游玩！"));
+                            parent.spawn(Text::new("这是一个使用Raven开发的游戏。感谢您的游玩！"));
                         });
 
                     // 返回按钮
@@ -363,7 +386,86 @@ fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,came
                             },
                             BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
                             BorderColor(Color::srgb(0.5, 0.5, 0.7)),
-                            BackToMenuButton,
+                            BackButton,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(Text::new("返回"));
+                        });
+                });
+        });
+}
+
+fn setup_help_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
+    println!("{}","执行帮助界面");
+    if camera_query.is_empty() {
+        // 如果没有,则创建一个新的菜单摄像机
+        commands.spawn((Camera2d, MenuCamera));
+    }
+
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            AboutUI,
+        ))
+        .with_children(|parent| {
+            // 关于窗口
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(600.0),
+                        height: Val::Px(500.0),
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::all(Val::Px(30.0)),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
+                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                ))
+                .with_children(|parent| {
+                    // 标题
+                    parent.spawn(Text::new("帮助"));
+
+                    // 游戏信息容器
+                    parent
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            row_gap: Val::Px(15.0),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn(Text::new("回退上一句:   ←  "));
+                            parent.spawn(Text::new("进入下一句: Enter"));
+                            parent.spawn(Text::new("退出主界面:  ESC "));
+                            parent.spawn(Text::new("感谢您使用本引擎，任何问题可以电邮至Furau@qq.com"));
+                        });
+
+                    // 返回按钮
+                    parent
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(120.0),
+                                height: Val::Px(45.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BackButton,
                         ))
                         .with_children(|parent| {
                             parent.spawn(Text::new("返回"));

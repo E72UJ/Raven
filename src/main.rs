@@ -19,7 +19,8 @@ pub enum GameScene {
     Menu,     
     Game,
     Settings,
-    About,  
+    About,
+    Help
 }
 fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 播放一次性音效
