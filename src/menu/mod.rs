@@ -5,12 +5,8 @@ use crate::GameScene;
 #[derive(Component)]
 struct SettingsEntity;
 
-
-
 #[derive(Component)]
 struct MenuCamera;
-
-
 
 pub struct MenuPlugin;
 
@@ -34,8 +30,9 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(GameScene::Menu), setup_menu_scene)
             .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
-            .add_systems(OnExit(GameScene::Settings), cleanup_scene);
-
+            .add_systems(OnExit(GameScene::Settings), cleanup_scene)
+            .add_systems(OnEnter(GameScene::About), setup_about_scene)
+            .add_systems(OnExit(GameScene::About), cleanup_all_menu);
 
     }
 }
@@ -62,6 +59,14 @@ pub struct ExitGameButton;
 #[derive(Component)]
 struct SceneEntity;
 
+#[derive(Component)]
+pub struct AboutUI;
+
+#[derive(Component)]
+pub struct BackToMenuButton;
+
+
+
 // 按钮颜色常量
 // const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 // const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
@@ -84,12 +89,13 @@ fn button_system(
             Option<&StartGameButton>,
             Option<&SettingsButton>,
             Option<&ExitGameButton>,
+            Option<&AboutButton>,  // 添加这行
         ),
         Changed<Interaction>,
     >,
     mut text_query: Query<&mut Text>,
 ) {
-    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game) in
+    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about) in
         &mut interaction_query
     {
         let mut text = text_query.get_mut(children[0]).unwrap();
@@ -107,8 +113,9 @@ fn button_system(
                     println!("状态改变了");
                 } else if settings.is_some() {
                     next_state.set(GameScene::Settings);
+                } else if about.is_some() {  // 添加这个条件
+                    next_state.set(GameScene::About);
                 } else if exit_game.is_some() {
-                    // 处理退出游戏
                     std::process::exit(0);
                 }
             }
@@ -285,6 +292,84 @@ fn cleanup_all_menu(
     for entity in &camera_query {
         commands.entity(entity).despawn();
     }
+}
+fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
+    println!("{}","执行关于界面");
+    if camera_query.is_empty() {
+        // 如果没有,则创建一个新的菜单摄像机
+        commands.spawn((Camera2d, MenuCamera));
+    }
+
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            AboutUI,
+        ))
+        .with_children(|parent| {
+            // 关于窗口
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(600.0),
+                        height: Val::Px(500.0),
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::all(Val::Px(30.0)),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
+                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                ))
+                .with_children(|parent| {
+                    // 标题
+                    parent.spawn(Text::new("关于"));
+
+                    // 游戏信息容器
+                    parent
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            row_gap: Val::Px(15.0),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn(Text::new("Raven engine v0.1.5"));
+                            parent.spawn(Text::new("开发者：furau"));
+                            parent.spawn(Text::new("双模架构轻量级视觉小说引擎"));
+                            parent.spawn(Text::new("这是一个使用Raven开发的游戏。\n感谢您的游玩！"));
+                        });
+
+                    // 返回按钮
+                    parent
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(120.0),
+                                height: Val::Px(45.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BackToMenuButton,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn(Text::new("返回"));
+                        });
+                });
+        });
 }
 
 fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>, camera_query: Query<Entity, With<MenuCamera>>) {

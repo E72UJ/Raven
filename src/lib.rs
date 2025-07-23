@@ -12,6 +12,7 @@ pub enum GameScene {
     Menu,
     Game,
     Settings,
+    About,    // 添加这一行
 }
 
 // 如果你想要一个叫 AppState 的别名，可以这样做：
