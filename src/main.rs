@@ -12,6 +12,7 @@ use crate::game::GamePlugin;
 use crate::audio::AudioPlugin;
 use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
+use style::StylePlugin;
 // 定义游戏场景状态
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
@@ -64,6 +65,7 @@ fn main() {
         .add_plugins(menu::MenuPlugin)    // 主菜单插件
         .init_state::<GameScene>()
         // .add_systems(Startup, my_system)  
+        .add_plugins(StylePlugin)
         .add_plugins(TransitionPlugin)
         .add_plugins(GamePlugin)  // 添加游戏插件
         .add_plugins(AudioPlugin)

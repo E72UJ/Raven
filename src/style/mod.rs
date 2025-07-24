@@ -172,6 +172,7 @@ pub struct StylePlugin;
 
 impl Plugin for StylePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, load_styles);
+        app.init_resource::<UiStyleSheet>()  // 添加这行来注册资源
+            .add_systems(Startup, load_styles);
     }
 }

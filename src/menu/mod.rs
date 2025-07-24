@@ -5,6 +5,7 @@ use crate::GameScene;
 
 use crate::style::UiStyleSheet;
 use crate::style::StylePlugin;
+
 #[derive(Component)]
 pub struct BackButton;
 
@@ -155,7 +156,11 @@ fn setup(mut commands: Commands) {
     commands.spawn((Camera2d, MenuCamera)); // 添加标记组件
 }
 
-fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
+fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,stylesheet: Res<UiStyleSheet>,) {
+    // 样式渲染
+    let logo_font_size = stylesheet.get_font_size("menu", "logo");
+    println!("{} LOGO 字体大小",logo_font_size);
+    // 样式渲染结束
     commands.spawn((
         SceneEntity,
         Node {
@@ -187,7 +192,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>) {
                         Text::new("Raven demo"),
                         TextFont {
                             font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 28.0,
+                            font_size: 30.0,
                             ..default()
                         },
                         TextColor(Color::WHITE),

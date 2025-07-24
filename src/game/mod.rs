@@ -259,7 +259,7 @@ impl Plugin for GamePlugin {
        
             ).chain())
             .add_plugins(RenpyDissolvePlugin)
-            .add_plugins(StylePlugin)  // 确保这行存在
+            // .add_plugins(StylePlugin)  
             .insert_resource(CurrentAudio::default()) 
             // .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
