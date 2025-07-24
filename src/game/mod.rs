@@ -449,9 +449,6 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
     commands.insert_resource(portrait_assets);
 }
 fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,stylesheet: Res<UiStyleSheet>,) {
-    // debug_print("var2",&asset_server);
-    // 点击区域
-    // println!("执行数据");
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
@@ -591,9 +588,10 @@ commands.spawn((
     //     },
     //     // Visibility::Hidden,
     // ));
-    let dialog_padding = stylesheet.get_padding("dialog_box");
-    let dialog_pos = stylesheet.get_position("dialog_box");
+    let dialog_padding = stylesheet.get_padding("styles","dialog_box");
+    let dialog_pos = stylesheet.get_position("styles","dialog_box");
     let main_config = load_main_config();
+    let menu_bg = stylesheet.get_background_color("menu", "menu_box");
     commands
         .spawn((
             
@@ -643,11 +641,11 @@ commands.spawn((
                 TextFont {
                     // font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
                     font: asset_server.load(main_config.settings.font.clone()),
-                    font_size: stylesheet.get_font_size("textbox"),
+                    font_size: stylesheet.get_font_size("styles","textbox"),
                     
                     ..default()
                 },
-                TextColor(stylesheet.get_text_color("textbox")),
+                TextColor(stylesheet.get_text_color("styles","textbox")),
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
@@ -725,7 +723,7 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-    // println!("  哈哈哈 : {:?}", stylesheet.get_position("dialog_box"));
+    println!("  menu 样式读取: {:?}", stylesheet.get_background_color("menu","menu_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -802,73 +800,7 @@ fn update_dialogue(
     }
 }
 
-// 输入处理系统
-// fn handle_input(
-//     keys: Res<ButtonInput<KeyCode>>,
-//     mouse: Res<ButtonInput<MouseButton>>,
-//     click_sound: Res<ClickSound>, // 引入音频句柄
-//     back_sound: Res<BackClickSound>,
-//     music_controller: Query<&AudioSink, With<MyMusic>>,
-//     // audio: Res<Audio>,
-//     mut commands: Commands,
-//     mut game_state: ResMut<GameState>,
-//     label_map: Res<LabelMap>, // 添加LabelMap资源访问
-// ) {
-//     for key in keys.get_just_pressed() {
-//         match key {
-//             KeyCode::Digit0 => game_state.current_line = 0,
-//             KeyCode::Digit1 => game_state.current_line = 1,
-//             KeyCode::Digit2 => game_state.current_line = 2,
-//             _ => {}
-//         }
-//     };
-//     let click = keys.just_pressed(KeyCode::Space)
-//         || keys.just_pressed(KeyCode::Enter)
-//         || mouse.just_pressed(MouseButton::Left);
 
-//     if click && game_state.current_line < game_state.dialogues.len() {
-//         let current_dialogue = &game_state.dialogues[game_state.current_line];
-        
-//         // 检查是否有跳转指令
-//         if let Some(jump_label) = &current_dialogue.jump {
-//             game_state.jump_label = Some(jump_label.clone());
-//         } else {
-//             // 没有跳转指令则前进到下一行
-//             game_state.current_line += 1;
-//         }
-        
-//         game_state.can_go_back = true;
-//         // 播放点击音效
-//         // play_background_audio("button.ogg")
-//         play_sound(&click_sound.0,commands);
-//         // println!("下一个音效触发: {:?}", click_sound.0.id());
-//             // let sink = music_controller.single();
-//             // sink.toggle_playback();
-        
-
-//         // 结束
-        
-//     }
-//     let back_pressed =
-//         keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
-
-//     if click && game_state.current_line < game_state.dialogues.len() {
-//         game_state.can_go_back = true; // 前进后可以返回
-//     }
-
-//     // 返回上一页
-//     if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
-//         game_state.current_line -= 1;
-//         // play_sound(&back_sound.0);
-//         if game_state.current_line == 0 {
-//             game_state.can_go_back = false; // 回到开始时不能再返回
-//         }
-//     }
-//     // 退出程序
-//     if keys.just_pressed(KeyCode::Escape) {
-//         std::process::exit(0);
-//     }
-// }
 fn handle_input(
     mut interaction_query: Query<(&Interaction, &Name), (Changed<Interaction>, With<Node>)>,
     keys: Res<ButtonInput<KeyCode>>,
