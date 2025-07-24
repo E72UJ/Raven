@@ -34,6 +34,7 @@ menu:
     background_color: [0.6, 0.6, 0.6, 0.6]
     padding: [140.0, 30.0, 60.0, 30.0]
     position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
+    font_size: 20.0
   logo:
     font_size: 20.0
   start_button:

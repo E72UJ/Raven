@@ -723,7 +723,7 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-    println!("  menu 样式读取: {:?}", stylesheet.get_background_color("menu","menu_box"));
+    println!("  menu 样式读取: {:?}", stylesheet.get_font_size("menu","menu_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {

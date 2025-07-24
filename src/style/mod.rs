@@ -6,7 +6,7 @@ use std::fs;
 #[derive(Resource, Deserialize, Default, Debug)]
 pub struct UiStyleSheet {
     #[serde(flatten)]
-    groups: HashMap<String, HashMap<String, UiStyle>>,
+    pub groups: HashMap<String, HashMap<String, UiStyle>>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -24,6 +24,13 @@ pub struct UiStyle {
 }
 
 impl UiStyleSheet {
+    pub fn debug_print_groups(&self) {
+        println!("样式表中的所有分组:");
+        for (group_name, _) in &self.groups {
+            println!("  - {}", group_name);
+        }
+        println!("总共 {} 个分组", self.groups.len());
+    }
     pub fn load_from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let content = fs::read_to_string(path)?;
         let stylesheet: UiStyleSheet = serde_yaml::from_str(&content)?;
@@ -157,8 +164,8 @@ pub fn load_styles(mut commands: Commands) {
             // 测试访问不同分组的样式
             let dialog_box_bg = stylesheet.get_background_color("styles", "dialog_box");
             let menu_box_bg = stylesheet.get_background_color("menu", "menu_box");
-            println!("dialog_box 背景色: {:?}", dialog_box_bg);
-            println!("menu_box 背景色: {:?}", menu_box_bg);
+            // println!("dialog_box 背景色: {:?}", dialog_box_bg);
+            // println!("menu_box 背景色: {:?}", menu_box_bg);
             commands.insert_resource(stylesheet);
             println!("样式表加载成功！");
         }

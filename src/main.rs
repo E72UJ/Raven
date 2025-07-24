@@ -67,9 +67,8 @@ fn main() {
         // .add_systems(Startup, my_system)  
         .add_plugins(StylePlugin)
         .add_plugins(TransitionPlugin)
-        .add_plugins(GamePlugin)  // 添加游戏插件
+        .add_plugins(GamePlugin)  
         .add_plugins(AudioPlugin)
-        // .add_systems(OnEnter(GameScene::Menu), menu_exit_system)  
         .add_systems(OnEnter(GameScene::Game), (menu_exit_system, my_system))
 
         .run();

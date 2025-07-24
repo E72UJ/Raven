@@ -3,8 +3,7 @@ use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
 
 
-use crate::style::UiStyleSheet;
-use crate::style::StylePlugin;
+use crate::style::{UiStyleSheet, load_styles}; 
 
 #[derive(Component)]
 pub struct BackButton;
@@ -22,7 +21,7 @@ pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
-        
+           
             // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使      用
             // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
@@ -158,8 +157,8 @@ fn setup(mut commands: Commands) {
 
 fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,stylesheet: Res<UiStyleSheet>,) {
     // 样式渲染
-    let logo_font_size = stylesheet.get_font_size("menu", "logo");
-    println!("{} LOGO 字体大小",logo_font_size);
+    println!("  测试测试测试: {:?}", stylesheet.get_font_size("menu","menu_box"));
+    stylesheet.debug_print_groups();
     // 样式渲染结束
     commands.spawn((
         SceneEntity,
