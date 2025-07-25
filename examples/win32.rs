@@ -4,7 +4,7 @@ use bevy::window::{WindowMode, PrimaryWindow, MonitorSelection};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup_ui)
+        .add_systems(Startup, (setup_ui, setup_sprite))
         .add_systems(Update, handle_fullscreen_button)
         .run();
 }
@@ -43,7 +43,7 @@ fn setup_ui(mut commands: Commands) {
                 ))
                 .with_children(|parent| {
                     parent.spawn((
-                        Text::new("Toggle Fullscreen"),
+                        Text::new("全屏"),
                         TextColor(Color::WHITE),
                         TextFont {
                             font_size: 20.0,
@@ -52,6 +52,15 @@ fn setup_ui(mut commands: Commands) {
                     ));
                 });
         });
+}
+
+fn setup_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // 使用图片创建sprite
+    commands.spawn((
+        Sprite::from_image(asset_server.load("images/bg club.png")),
+        Transform::from_translation(Vec3::new(-200.0, 0.0, 0.0)),
+    ));
+    
 }
 
 fn handle_fullscreen_button(
