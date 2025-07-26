@@ -26,16 +26,20 @@ impl Plugin for MenuPlugin {
             // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
             .init_resource::<InputFocus>()
+            .init_resource::<UiStyleSheet>()
             // 删除这行！不要重复初始化状态 - main.rs 已经初始化了
             // .init_state::<GameScene>()
-            .add_systems(Startup, setup)
+            .add_systems(Startup, (setup, load_styles).chain())
             // 重要：只在 Menu 状态下运行按钮系统
+            // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
+            
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             // 只管理菜单场景
-            .add_systems(OnEnter(GameScene::Menu), setup_menu_scene)
+            
+            .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
             .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_scene)
@@ -153,12 +157,16 @@ fn button_system(
 fn setup(mut commands: Commands) {
     // UI 摄像机
     commands.spawn((Camera2d, MenuCamera)); // 添加标记组件
+    
 }
 
-fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,stylesheet: Res<UiStyleSheet>,) {
+fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesheet: ResMut<UiStyleSheet>,) {
     // 样式渲染
-    println!("  测试测试测试: {:?}", stylesheet.get_font_size("menu","menu_box"));
-    stylesheet.debug_print_groups();
+    println!("测试时间点，menu.menu_box.font_size = {:?}", 
+            stylesheet.get_font_size("menu", "menu_box"));
+    println!("当前系统名称: [系统名]");
+    println!("资源地址: {:p}", &*stylesheet);
+    // stylesheet.debug_print_groups();
     // 样式渲染结束
     commands.spawn((
         SceneEntity,

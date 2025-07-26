@@ -157,21 +157,18 @@ impl UiStyleSheet {
 }
 
 // 更新加载系统
-pub fn load_styles(mut commands: Commands) {
+pub fn load_styles(mut stylesheet: ResMut<UiStyleSheet>) {
     match UiStyleSheet::load_from_file("assets/style.yaml") {
-        Ok(stylesheet) => {
-            stylesheet.debug_print();
-            // 测试访问不同分组的样式
-            let dialog_box_bg = stylesheet.get_background_color("styles", "dialog_box");
-            let menu_box_bg = stylesheet.get_background_color("menu", "menu_box");
-            // println!("dialog_box 背景色: {:?}", dialog_box_bg);
-            // println!("menu_box 背景色: {:?}", menu_box_bg);
-            commands.insert_resource(stylesheet);
+        Ok(loaded_stylesheet) => {
+            loaded_stylesheet.debug_print();
+            
+            // 直接替换资源内容，立即生效
+            *stylesheet = loaded_stylesheet;
             println!("样式表加载成功！");
         }
         Err(e) => {
             println!("加载样式表失败: {}", e);
-            commands.insert_resource(UiStyleSheet::default());
+            *stylesheet = UiStyleSheet::default();
         }
     }
 }
