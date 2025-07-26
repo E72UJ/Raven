@@ -29,7 +29,7 @@ impl Plugin for MenuPlugin {
             .init_resource::<UiStyleSheet>()
             // 删除这行！不要重复初始化状态 - main.rs 已经初始化了
             // .init_state::<GameScene>()
-            .add_systems(Startup, (setup, load_styles).chain())
+            .add_systems(Startup, setup)
             // 重要：只在 Menu 状态下运行按钮系统
             // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
             
@@ -39,7 +39,7 @@ impl Plugin for MenuPlugin {
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             // 只管理菜单场景
             
-            .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
+            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
             .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_scene)
@@ -162,10 +162,10 @@ fn setup(mut commands: Commands) {
 
 fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesheet: ResMut<UiStyleSheet>,) {
     // 样式渲染
-    println!("测试时间点，menu.menu_box.font_size = {:?}", 
-            stylesheet.get_font_size("menu", "menu_box"));
-    println!("当前系统名称: [系统名]");
-    println!("资源地址: {:p}", &*stylesheet);
+
+    let logo_font_size = stylesheet.get_font_size("menu", "logo");
+    let logo_text_color = stylesheet.get_text_color("menu", "logo");
+    let logo_position = stylesheet.get_text_color("menu", "logo");
     // stylesheet.debug_print_groups();
     // 样式渲染结束
     commands.spawn((
@@ -199,10 +199,10 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                         Text::new("Raven demo"),
                         TextFont {
                             font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 30.0,
+                            font_size: logo_font_size,
                             ..default()
                         },
-                        TextColor(Color::WHITE),
+                        TextColor(logo_text_color),
                         Node {
                             margin: UiRect::bottom(Val::Px(20.0)),
                             ..default()

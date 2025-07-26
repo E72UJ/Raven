@@ -4,7 +4,7 @@ styles:
     background_color: [0.7, 0.1, 0.1, 0.8]
     padding: [30.0, 30.0, 30.0, 30.0]
     position: [null, 50.0, 50.0, 50.0] # [顺时针 上右下左 ]
-    
+
   textbox:
     text_color: [1.0, 1.0, 1.0, 1.0]
     font_size: 20.0
@@ -36,7 +36,8 @@ menu:
     position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
     font_size: 20.0
   logo:
-    font_size: 20.0
+    font_size: 30.0
+    text_color: [0.5, 0.3, 0.8, 1.0]
   start_button:
     background_color: [0.6, 0.6, 0.6, 0.6]
     padding: [140.0, 30.0, 60.0, 30.0]

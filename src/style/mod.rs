@@ -160,8 +160,8 @@ impl UiStyleSheet {
 pub fn load_styles(mut stylesheet: ResMut<UiStyleSheet>) {
     match UiStyleSheet::load_from_file("assets/style.yaml") {
         Ok(loaded_stylesheet) => {
-            loaded_stylesheet.debug_print();
-            
+            // loaded_stylesheet.debug_print();
+            println!("我被调用了");
             // 直接替换资源内容，立即生效
             *stylesheet = loaded_stylesheet;
             println!("样式表加载成功！");
