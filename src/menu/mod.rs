@@ -32,7 +32,7 @@ impl Plugin for MenuPlugin {
             .add_systems(Startup, setup)
             // 重要：只在 Menu 状态下运行按钮系统
             // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
-            
+            .add_systems(Update, button_system.run_if(in_state(GameScene::Settings)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
@@ -42,7 +42,7 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
             .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
-            .add_systems(OnExit(GameScene::Settings), cleanup_scene)
+            .add_systems(OnExit(GameScene::Settings), cleanup_settings_overlay)
             .add_systems(OnEnter(GameScene::About), setup_about_scene)
             .add_systems(OnExit(GameScene::About), cleanup_all_about)
             .add_systems(OnEnter(GameScene::Help), setup_help_scene)
@@ -332,6 +332,16 @@ fn cleanup_all_about(
     }
 
 }
+fn cleanup_settings_overlay(
+    mut commands: Commands,
+    settings_query: Query<Entity, With<SettingsEntity>>,
+) {
+    println!("清理设置界面");
+    
+    for entity in &settings_query {
+        commands.entity(entity).despawn_recursive();
+    }
+}
 fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
     println!("{}","执行关于界面");
     if camera_query.is_empty() {
@@ -491,174 +501,435 @@ fn setup_help_scene(mut commands: Commands, asset_server: Res<AssetServer>,camer
 }
 
 fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>, camera_query: Query<Entity, With<MenuCamera>>) {
-    println!("在主菜单基础上添加设置界面...");
-
-    // 首先检查是否已经有菜单摄像机存在
+    println!("执行设置界面");
+    
     if camera_query.is_empty() {
-        // 如果没有,则创建一个新的菜单摄像机
         commands.spawn((Camera2d, MenuCamera));
     }
 
-    // 创建半透明遮罩背景
-    commands.spawn((
-        Sprite {
-            color: Color::srgba(0.0, 0.0, 0.0, 0.7),
-            custom_size: Some(Vec2::new(880.0, 720.0)),
-            ..default()
-        },
-        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)),
-        SettingsEntity,
-    ));
-
-    // 设置界面主体
-    commands.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            width: Val::Px(400.0),
-            height: Val::Px(300.0),
-            left: Val::Percent(50.0),
-            top: Val::Percent(50.0),
-            margin: UiRect::new(Val::Px(-200.0), Val::Auto, Val::Px(-150.0), Val::Auto),
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::SpaceEvenly,
-            padding: UiRect::all(Val::Px(20.0)),
-            ..default()
-        },
-        BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-        BorderColor(Color::WHITE),
-        SettingsEntity,
-        children![
-            // 标题
-            (
-                Text::new("设置"),
-                TextFont {
-                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 28.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ),
-            // 音量设置
-            (
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceBetween,
-                    width: Val::Percent(100.0),
-                    ..default()
-                },
-                children![
-                    (
-                        Text::new("音量"),
-                        TextFont {
-                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ),
-                    (
-                        Node {
-                            width: Val::Px(150.0),
-                            height: Val::Px(20.0),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
-                    ),
-                ],
-            ),
-            // 文字速度设置
-            (
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceBetween,
-                    width: Val::Percent(100.0),
-                    ..default()
-                },
-                children![
-                    (
-                        Text::new("文字速度"),
-                        TextFont {
-                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ),
-                    (
-                        Node {
-                            width: Val::Px(150.0),
-                            height: Val::Px(20.0),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.3, 0.3, 0.3)),
-                    ),
-                ],
-            ),
-            // 全屏设置
-            (
-                Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceBetween,
-                    width: Val::Percent(100.0),
-                    ..default()
-                },
-                children![
-                    (
-                        Text::new("全屏"),
-                        TextFont {
-                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ),
-                    (
-                        Button,
-                        Node {
-                            width: Val::Px(60.0),
-                            height: Val::Px(30.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.4, 0.4, 0.4)),
-                        children![(
-                            Text::new("关"),
-                            TextFont {
-                                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(Color::WHITE),
-                        )],
-                    ),
-                ],
-            ),
-            // 关闭按钮
-            (
-                Button,
-                Node {
-                    width: Val::Px(80.0),
-                    height: Val::Px(35.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::srgb(0.4, 0.4, 0.4)),
-                children![(
-                    Text::new("关闭"),
-                    TextFont {
-                        font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                        font_size: 16.0,
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            SettingsEntity,
+        ))
+        .with_children(|parent| {
+            // 设置窗口
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(650.0),
+                        height: Val::Px(580.0),
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::all(Val::Px(30.0)),
+                        border: UiRect::all(Val::Px(2.0)),
                         ..default()
                     },
-                    TextColor(Color::WHITE),
-                )],
-            ),
-        ],
-    ));
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
+                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                ))
+                .with_children(|parent| {
+                    // 标题
+                    parent.spawn((
+                        Text::new("游戏设置"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 28.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    ));
+
+                    // 设置项容器
+                    parent
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Stretch,
+                            row_gap: Val::Px(20.0),
+                            width: Val::Percent(100.0),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            // 音效音量
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("音效音量"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                              // 音量滑块容器
+                                    parent
+                                        .spawn(Node {
+                                            width: Val::Px(200.0),
+                                            height: Val::Px(25.0),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("████████░░"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.7, 0.7, 0.9)),
+                                            ));
+                                        });
+                                });
+
+                            // 背景音乐音量
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("背景音乐音量"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    parent
+                                        .spawn(Node {
+                                            width: Val::Px(200.0),
+                                            height: Val::Px(25.0),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("██████░░░░"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.7, 0.7, 0.9)),
+                                            ));
+                                        });
+                                });
+
+                            // 文字显示速度
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("文字显示速度"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    parent
+                                        .spawn(Node {
+                                            flex_direction: FlexDirection::Row,
+                                            column_gap: Val::Px(10.0),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            // 慢速按钮
+                                            parent
+                                                .spawn((
+                                                    Button,
+                                                    Node {
+                                                        width: Val::Px(50.0),
+                                                        height: Val::Px(30.0),
+                                                        justify_content: JustifyContent::Center,
+                                                        align_items: AlignItems::Center,
+                                                        border: UiRect::all(Val::Px(1.0)),
+                                                        ..default()
+                                                    },
+                                                    BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                                                    BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                                ))
+                                                .with_children(|parent| {
+                                                    parent.spawn((
+                                                        Text::new("慢"),
+                                                        TextFont {
+                                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                            font_size: 14.0,
+                                                            ..default()
+                                                        },
+                                                        TextColor(Color::WHITE),
+                                                    ));
+                                                });
+                                            
+                                            // 中速按钮
+                                            parent
+                                                .spawn((
+                                                    Button,
+                                                    Node {
+                                                        width:Val::Px(50.0),
+                                                        height: Val::Px(30.0),
+                                                        justify_content: JustifyContent::Center,
+                                                        align_items: AlignItems::Center,
+                                                        border: UiRect::all(Val::Px(2.0)),
+                                                        ..default()
+                                                    },
+                                                    BackgroundColor(Color::srgb(0.4, 0.4, 0.6)),
+                                                    BorderColor(Color::srgb(0.8, 0.8, 1.0)),
+                                                ))
+                                                .with_children(|parent| {
+                                                    parent.spawn((
+                                                        Text::new("中"),
+                                                        TextFont {
+                                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                            font_size: 14.0,
+                                                            ..default()
+                                                        },
+                                                        TextColor(Color::WHITE),
+                                                    ));
+                                                });
+                                            
+                                            // 快速按钮
+                                            parent
+                                                .spawn((
+                                                    Button,
+                                                    Node {
+                                                        width: Val::Px(50.0),
+                                                        height: Val::Px(30.0),
+                                                        justify_content: JustifyContent::Center,
+                                                        align_items: AlignItems::Center,
+                                                        border: UiRect::all(Val::Px(1.0)),
+                                                        ..default()
+                                                    },
+                                                    BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                                                    BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                                ))
+                                                .with_children(|parent| {
+                                                    parent.spawn((
+                                                        Text::new("快"),
+                                                        TextFont {
+                                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                            font_size: 14.0,
+                                                            ..default()
+                                                        },
+                                                        TextColor(Color::WHITE),
+                                                    ));
+                                                });
+                                        });
+                                });
+
+                            // 自动播放速度
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("自动播放速度"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    parent
+                                        .spawn(Node {
+                                            width: Val::Px(200.0),
+                                            height: Val::Px(25.0),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("█████░░░░░"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.7, 0.7, 0.9)),
+                                            ));
+                                        });
+                                });
+
+                            // 全屏模式
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("全屏模式"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    parent
+                                        .spawn((
+                                            Button,
+                                            Node {
+                                                width: Val::Px(80.0),
+                                                height: Val::Px(35.0),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                border: UiRect::all(Val::Px(2.0)),
+                                                ..default()
+                                            },
+                                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                        ))
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("关闭"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::WHITE),
+                                            ));
+                                        });
+                                });
+
+                            // 跳过已读文本
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::SpaceBetween,
+                                    width: Val::Percent(100.0),
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: UiRect::all(Val::Px(1.0)),
+                                    ..default()
+                                })
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new("跳过已读文本"),
+                                        TextFont {
+                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                            font_size: 18.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::WHITE),
+                                    ));
+                                    
+                                    parent
+                                        .spawn((
+                                            Button,
+                                            Node {
+                                                width: Val::Px(80.0),
+                                                height: Val::Px(35.0),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                border: UiRect::all(Val::Px(2.0)),
+                                                ..default()
+                                            },
+                                            BackgroundColor(Color::srgb(0.4, 0.4, 0.6)),
+                                            BorderColor(Color::srgb(0.8, 0.8, 1.0)),
+                                        ))
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("开启"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::WHITE),
+                                            ));
+                                        });
+                                });
+                        });
+
+                    // 返回按钮
+                    parent
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(120.0),
+                                height: Val::Px(45.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BackButton,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Text::new("返回"),
+                                TextFont {
+                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+                });
+        });
 }
