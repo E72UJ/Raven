@@ -21,7 +21,9 @@ pub enum GameScene {
     Game,
     Settings,
     About,
-    Help
+    Help,
+    Logo,
+    LoadButton,
 }
 fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 播放一次性音效

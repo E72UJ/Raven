@@ -22,23 +22,24 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
            
-            // 只有在有用户输入时才运行应用程序，这将显著减少CPU/GPU使      用
             // .insert_resource(WinitSettings::desktop_app())
             // 必须设置 `InputFocus` 以便辅助功能识别按钮
             .init_resource::<InputFocus>()
             .init_resource::<UiStyleSheet>()
-            // 删除这行！不要重复初始化状态 - main.rs 已经初始化了
             // .init_state::<GameScene>()
             .add_systems(Startup, setup)
             // 重要：只在 Menu 状态下运行按钮系统
             // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
+            .add_systems(Update, button_system.run_if(in_state(GameScene::LoadButton)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Settings)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             // 只管理菜单场景
-            
+// 修改为：
+            .add_systems(OnEnter(GameScene::LoadButton), setup_load_scene)     // 调用载入场景设置函数
+            .add_systems(OnExit(GameScene::LoadButton), cleanup_load_scene)    // 调用载入场景清理函数
             .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
             .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
@@ -62,6 +63,9 @@ pub struct SettingsButton;
 pub struct LoadGameButton;
 
 #[derive(Component)]
+pub struct LoadButton;
+
+#[derive(Component)]
 pub struct HelpButton;
 
 #[derive(Component)]
@@ -75,6 +79,9 @@ struct SceneEntity;
 
 #[derive(Component)]
 pub struct AboutUI;
+
+#[derive(Component)]
+pub struct LoadUI;
 
 #[derive(Component)]
 pub struct BackToMenuButton;
@@ -106,15 +113,16 @@ fn button_system(
             Option<&AboutButton>,  
             Option<&BackButton>,  
             Option<&HelpButton>,
+            Option<&LoadGameButton>
         ),
         Changed<Interaction>,
     >,
     mut text_query: Query<&mut Text>,
 ) {
-    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about,back,help) in
+    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about,back,help,load) in
         &mut interaction_query
     {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+        // let mut text = text_query.get_mut(children[0]).unwrap();
 
         match *interaction {
             Interaction::Pressed => {
@@ -131,11 +139,13 @@ fn button_system(
                     next_state.set(GameScene::Settings);
                 } else if about.is_some() {
                     next_state.set(GameScene::About);
-                } else if back.is_some() {  // 添加返回按钮处理
+                } else if back.is_some() {  
                     next_state.set(GameScene::Menu);
-                }else if help.is_some() {
+                } else if help.is_some() {
                     next_state.set(GameScene::Help);
-                }  else if exit_game.is_some() {
+                } else if load.is_some() {  
+                    next_state.set(GameScene::LoadButton);
+                } else if exit_game.is_some() {
                     std::process::exit(0);
                 }
             }
@@ -331,6 +341,16 @@ fn cleanup_all_about(
         commands.entity(entity).despawn_recursive();
     }
 
+}
+fn cleanup_load_scene(
+    mut commands: Commands,
+    load_query: Query<Entity, With<LoadUI>>,
+) {
+    println!("清理载入界面");
+    
+    for entity in &load_query {
+        commands.entity(entity).despawn_recursive();
+    }
 }
 fn cleanup_settings_overlay(
     mut commands: Commands,
@@ -901,6 +921,290 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                             ));
                                         });
                                 });
+                        });
+
+                    // 返回按钮
+                    parent
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Px(120.0),
+                                height: Val::Px(45.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                border: UiRect::all(Val::Px(2.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BackButton,
+                        ))
+                        .with_children(|parent| {
+                            parent.spawn((
+                                Text::new("返回"),
+                                TextFont {
+                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+                });
+        });
+}
+fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, camera_query: Query<Entity, With<MenuCamera>>) {
+    println!("执行载入界面");
+    
+    if camera_query.is_empty() {
+        commands.spawn((Camera2d, MenuCamera));
+    }
+
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            LoadUI,
+        ))
+        .with_children(|parent| {
+            // 载入窗口
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(700.0),
+                        height: Val::Px(600.0),
+                        flex_direction: FlexDirection::Column,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::all(Val::Px(30.0)),
+                        border: UiRect::all(Val::Px(2.0)),
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
+                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                ))
+                .with_children(|parent| {
+                    // 标题
+                    parent.spawn((
+                        Text::new("载入游戏"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: 28.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.9, 0.9, 1.0)),
+                    ));
+
+                    // 存档槽容器
+                    parent
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Stretch,
+                            row_gap: Val::Px(15.0),
+                            width: Val::Percent(100.0),
+                            height: Val::Px(420.0),
+                            overflow: Overflow::clip_y(),
+                            ..default()
+                        })
+                        .with_children(|parent| {
+                            // 存档槽1
+                            parent
+                                .spawn((
+                                    Button,
+                                    Node {
+                                        flex_direction: FlexDirection::Row,
+                                        align_items: AlignItems::Center,
+                                        justify_content: JustifyContent::SpaceBetween,
+                                        width: Val::Percent(100.0),
+                                        height: Val::Px(80.0),
+                                        padding: UiRect::all(Val::Px(15.0)),
+                                        border: UiRect::all(Val::Px(1.0)),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                                    BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                ))
+                                .with_children(|parent| {
+                                    // 存档信息
+                                    parent
+                                        .spawn(Node {
+                                            flex_direction: FlexDirection::Column,
+                                            align_items: AlignItems::Start,
+                                            row_gap: Val::Px(5.0),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("存档槽 1"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 16.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::WHITE),
+                                            ));
+                                            parent.spawn((
+                                                Text::new("第一章 - 你好"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.8, 0.8, 0.9)),
+                                            ));
+                                            parent.spawn((
+                                                Text::new("2025/07/27 14:30"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 12.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.7, 0.7, 0.8)),
+                                            ));
+                                        });
+                                    
+                                    // 预览图占位符
+                                    parent.spawn((
+                                        Node {
+                                            width: Val::Px(80.0),
+                                            height: Val::Px(50.0),
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            ..default()
+                                        },
+                                        BackgroundColor(Color::srgb(0.4, 0.4, 0.5)),
+                                        BorderColor(Color::srgb(0.6, 0.6, 0.7)),
+                                    ));
+                                });
+
+                            // 存档槽2
+                            parent
+                                .spawn((
+                                    Button,
+                                    Node {
+                                        flex_direction: FlexDirection::Row,
+                                        align_items: AlignItems::Center,
+                                        justify_content: JustifyContent::SpaceBetween,
+                                        width: Val::Percent(100.0),
+                                        height: Val::Px(80.0),
+                                        padding: UiRect::all(Val::Px(15.0)),
+                                        border: UiRect::all(Val::Px(1.0)),
+                                        ..default()
+                                    },
+                                    BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
+                                    BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                ))
+                                .with_children(|parent| {
+                                    parent
+                                        .spawn(Node {
+                                            flex_direction: FlexDirection::Column,
+                                            align_items: AlignItems::Start,
+                                            row_gap: Val::Px(5.0),
+                                            ..default()
+                                        })
+                                        .with_children(|parent| {
+                                            parent.spawn((
+                                                Text::new("存档槽 2"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 16.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::WHITE),
+                                            ));
+                                            parent.spawn((
+                                                Text::new("第二章 - 转折"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 14.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.8, 0.8, 0.9)),
+                                            ));
+                                            parent.spawn((
+                                                Text::new("2025/07/30 20:15"),
+                                                TextFont {
+                                                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                    font_size: 12.0,
+                                                    ..default()
+                                                },
+                                                TextColor(Color::srgb(0.7, 0.7, 0.8)),
+                                            ));
+                                        });
+                                    
+                                    parent.spawn((
+                                        Node {
+                                            width: Val::Px(80.0),
+                                            height: Val::Px(50.0),
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            ..default()
+                                        },
+                                        BackgroundColor(Color::srgb(0.4, 0.4, 0.5)),
+                                        BorderColor(Color::srgb(0.6, 0.6, 0.7)),
+                                    ));
+                                });
+
+                            // 空存档槽
+                            for i in 3..=4 {
+                                parent
+                                    .spawn((
+                                        Node {
+                                            flex_direction: FlexDirection::Row,
+                                            align_items: AlignItems::Center,
+                                            justify_content: JustifyContent::SpaceBetween,
+                                            width: Val::Percent(100.0),
+                                            height: Val::Px(80.0),
+                                            padding: UiRect::all(Val::Px(15.0)),
+                                            border: UiRect::all(Val::Px(1.0)),
+                                            ..default()
+                                        },
+                                        BackgroundColor(Color::srgb(0.25, 0.25, 0.3)),
+                                        BorderColor(Color::srgb(0.4, 0.4, 0.5)),
+                                    ))
+                                    .with_children(|parent| {
+                                        parent
+                                            .spawn(Node {
+                                                flex_direction: FlexDirection::Column,
+                                                align_items: AlignItems::Start,
+                                                row_gap: Val::Px(5.0),
+                                                ..default()
+                                            })
+                                            .with_children(|parent| {
+                                                parent.spawn((
+                                                    Text::new(&format!("存档槽 {}", i)),
+                                                    TextFont {
+                                                        font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                        font_size: 16.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(Color::srgb(0.6, 0.6, 0.7)),
+                                                ));
+                                            });
+                                        
+                                        parent.spawn((
+                                            Node {
+                                                width: Val::Px(80.0),
+                                                height: Val::Px(50.0),
+                                                border: UiRect::all(Val::Px(1.0)),
+                                                justify_content: JustifyContent::Center,
+                                                align_items: AlignItems::Center,
+                                                ..default()
+                                            },
+                                            BackgroundColor(Color::srgb(0.3, 0.3, 0.35)),
+                                            BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                        ));
+                                    });
+                            }
                         });
 
                     // 返回按钮
