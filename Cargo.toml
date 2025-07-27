@@ -1,6 +1,6 @@
 [package]
 name = "Raven"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 authors = ["Furau"]
 license = "MIT OR Apache-2.0"
