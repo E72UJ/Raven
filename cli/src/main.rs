@@ -1,31 +1,47 @@
 use clap::{Parser, Subcommand};
 use std::fs;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Command;
 
 // 嵌入资源常量
-const EMBEDDED_FONT_FIRA_MONO: &[u8] = include_bytes!("../../crates/assets/fonts/FiraMono-Medium.ttf");
-const EMBEDDED_FONT_GENSEN_MARU: &[u8] = include_bytes!("../../crates/assets/fonts/GenSenMaruGothicTW-Bold.ttf");
-const EMBEDDED_FONT_SOURCE_HAN: &[u8] = include_bytes!("../../crates/assets/fonts/SourceHanSansSC-Medium.otf");
-const EMBEDDED_RAVEN_EXE: &[u8] = include_bytes!("../../crates/assets/Raven");
-const EMBEDDED_PORTRAIT_ALICE: &[u8] = include_bytes!("../../crates/assets/portraits/alice.png");
-const EMBEDDED_PORTRAIT_BOB: &[u8] = include_bytes!("../../crates/assets/portraits/bob.png");
-const EMBEDDED_PORTRAIT_NARRATOR: &[u8] = include_bytes!("../../crates/assets/portraits/narrator.png");
-const EMBEDDED_SVG_SCIHUB: &[u8] = include_bytes!("../../crates/assets/portraits/SciHub.svg");
-const EMBEDDED_MAIN_YAML: &[u8] = include_bytes!("../../crates/assets/main.yaml");
-const EMBEDDED_DIALOGUES_YAML: &[u8] = include_bytes!("../../crates/assets/dialogues.yaml");
-const EMBEDDED_CHAR_HEROINE_DEFAULT: &[u8] = include_bytes!("../../crates/assets/characters/heroine/default.png");
-const EMBEDDED_CHAR_PROTAGONIST_DEFAULT: &[u8] = include_bytes!("../../crates/assets/characters/protagonist/default.png");
-const EMBEDDED_CHAR_VILLAIN_DEFAULT: &[u8] = include_bytes!("../../crates/assets/characters/villain/default.png");
-const EMBEDDED_SVG_LONG: &[u8] = include_bytes!("../../crates/assets/characters/svg/long.svg");
-const EMBEDDED_SWF_66: &[u8] = include_bytes!("../../crates/assets/swf/66.swf"); // 新增SWF资源
+const EMBEDDED_FONT_FIRA_MONO: &[u8] = include_bytes!("../../assets/fonts/FiraMono-Medium.ttf");
+const EMBEDDED_FONT_GENSEN_MARU: &[u8] = include_bytes!("../../assets/fonts/GenSenMaruGothicTW-Bold.min.woff2");
+const EMBEDDED_FONT_SOURCE_HAN: &[u8] = include_bytes!("../../assets/fonts/SourceHanSansSC-Medium.min.woff2");
+const EMBEDDED_RAVEN_EXE: &[u8] = include_bytes!("../../assets/Raven");
+const EMBEDDED_PORTRAIT_ALICE: &[u8] = include_bytes!("../../assets/portraits/alice.png");
+const EMBEDDED_PORTRAIT_BOB: &[u8] = include_bytes!("../../assets/portraits/bob.png");
+const EMBEDDED_PORTRAIT_NARRATOR: &[u8] = include_bytes!("../../assets/portraits/narrator.png");
+const EMBEDDED_SVG_SCIHUB: &[u8] = include_bytes!("../../assets/portraits/SciHub.svg");
+const EMBEDDED_MAIN_YAML: &[u8] = include_bytes!("../../assets/main.yaml");
+const EMBEDDED_DIALOGUES_YAML: &[u8] = include_bytes!("../../assets/dialogues.yaml");
+const EMBEDDED_CHAR_HEROINE_DEFAULT: &[u8] = include_bytes!("../../assets/characters/heroine/default.png");
+const EMBEDDED_CHAR_PROTAGONIST_DEFAULT: &[u8] = include_bytes!("../../assets/characters/protagonist/default.png");
+const EMBEDDED_CHAR_VILLAIN_DEFAULT: &[u8] = include_bytes!("../../assets/characters/villain/default.png");
+const EMBEDDED_SVG_LONG: &[u8] = include_bytes!("../../assets/characters/svg/long.svg");
+const EMBEDDED_SWF_66: &[u8] = include_bytes!("../../assets/swf/66.swf"); // 新增SWF资源
 
 #[derive(Parser)]
 #[command(name = "Raven")]
 #[command(version = "0.1.0")]
 #[command(arg_required_else_help = true)]
-#[command(about = r#"
+#[cfg_attr(
+    windows,
+    command(about = r#"
+  ____                      
+ |  _ \    __ _  __   __   ___   _ __  
+ | |_) |  / _` | \ \ / /  / _ \ | '_ \ 
+ |  _ <  | (_| |  \ V /  |  __/ | | | |
+ |_| \_\  \__,_|   \_/    \___| |_| |_|
+
+ 编译设备: Windows i5
+ 作者:Furau
+ 最后更新时间:2025年5月21日
+ 版本号:0.1
+"#)
+)]
+#[cfg_attr(
+    target_os = "macos",
+    command(about = r#"
   ____                      
  |  _ \    __ _  __   __   ___   _ __  
  | |_) |  / _` | \ \ / /  / _ \ | '_ \ 
@@ -36,7 +52,8 @@ const EMBEDDED_SWF_66: &[u8] = include_bytes!("../../crates/assets/swf/66.swf");
  作者:Furau
  最后更新时间:2025年5月21日
  版本号:0.1
-"#)]
+"#)
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -103,11 +120,11 @@ fn create_project(name: &str) {
     );
     write_embedded_file(
         EMBEDDED_FONT_GENSEN_MARU,
-        &assets.join("fonts/GenSenMaruGothicTW-Bold.ttf"),
+        &assets.join("fonts/GenSenMaruGothicTW-Bold.min.woff2"),
     );
     write_embedded_file(
         EMBEDDED_FONT_SOURCE_HAN,
-        &assets.join("fonts/SourceHanSansSC-Medium.otf"),
+        &assets.join("fonts/SourceHanSansSC-Medium.min.woff2"),
     );
     
     // 写入立绘
@@ -185,8 +202,8 @@ fn print_project_tree(project_dir: &str) {
     │       └── default.png ({} KB)
     ├── fonts/
     │   ├── FiraMono-Medium.ttf
-    │   ├── GenSenMaruGothicTW-Bold.ttf
-    │   └── SourceHanSansSC-Medium.otf
+    │   ├── GenSenMaruGothicTW-Bold.min.woff2
+    │   └── SourceHanSansSC-Medium.min.woff2
     ├── main.yaml
     └── dialogues.yaml"#,
         project_dir,
