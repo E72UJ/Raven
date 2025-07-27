@@ -1,0 +1,9 @@
+{
+    "cSpell.words": [
+        "bytemuck",
+        "flate",
+        "indexmap",
+        "serde",
+        "thiserror"
+    ]
+}

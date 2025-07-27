@@ -1,10 +1,10 @@
 /target
 
-*/.DS_Store
+**/.DS_Store
 
 cli/**/target
 
-/crates
+# /crates
 
 cli/crates/
 

@@ -1,0 +1,39 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --release --package=swf_to_json
+
+    - name: Package
+      run: |
+        mkdir -p output
+        cp target/release/swf_to_json.exe output/
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4.4.3
+      with:
+        # Artifact name
+        name: swf_to_json
+        # A file, directory or wildcard pattern that describes what to upload
+        path: output/swf_to_json.exe
+
+        if-no-files-found: error
+        # If true, an artifact with a matching name will be deleted before a new one is uploaded. If false, the action will fail if an artifact for the given name already exists. Does not fail if the artifact does not exist.
+        overwrite: true # optional, default is false
+          

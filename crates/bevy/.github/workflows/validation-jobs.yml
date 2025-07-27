@@ -1,0 +1,216 @@
+name: validation jobs
+
+on:
+  merge_group:
+  pull_request:
+  push:
+    branches:
+      - release-*
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
+  # If nightly is breaking CI, modify this variable to target a specific nightly version.
+  NIGHTLY_TOOLCHAIN: nightly
+
+jobs:
+  build-and-install-on-iOS:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            target
+          key: ${{ runner.os }}-ios-install-${{ hashFiles('**/Cargo.lock') }}
+
+      # TODO: remove x86 target once it always run on arm GitHub runners
+      - name: Add iOS targets
+        run: rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
+
+      - name: Build and install iOS app in iOS Simulator.
+        run: cd examples/mobile && make install
+
+  build-android:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-build-android-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Install Android targets
+        run: rustup target add aarch64-linux-android
+
+      - name: Install Cargo NDK
+        run: cargo install --force cargo-ndk
+
+      - name: Build .so file
+        run: cargo ndk -t arm64-v8a -o android_example/app/src/main/jniLibs build --package bevy_mobile_example
+
+      - name: Build app for Android
+        run: cd examples/mobile/android_example && chmod +x gradlew && ./gradlew build
+
+  run-examples-on-wasm:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: wasm32-unknown-unknown
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            ~/.github/start-wasm-example/node_modules
+            target/
+          key: ${{ runner.os }}-wasm-run-examples-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Install wasm-bindgen
+        run: cargo install --force wasm-bindgen-cli
+
+      - name: Setup playwright
+        run: |
+          cd .github/start-wasm-example
+          npm install
+          npx playwright install --with-deps
+          cd ../..
+
+      - name: First Wasm build
+        run: |
+          cargo build --release --example testbed_ui --target wasm32-unknown-unknown
+
+      - name: Run examples
+        shell: bash
+        run: |
+          # start a webserver
+          python3 -m http.server --directory examples/wasm &
+
+          xvfb-run cargo run -p build-wasm-example -- --browsers chromium --browsers firefox --frames 25 --test 2d_shapes lighting text_debug breakout
+
+      - name: Save screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-wasm
+          path: .github/start-wasm-example/screenshot-*.png
+
+  build-without-default-features:
+    if: ${{ github.event_name == 'merge_group' }}
+    timeout-minutes: 30
+    strategy:
+      max-parallel: 1
+      matrix:
+        crate: [bevy_ecs, bevy_reflect, bevy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+      - name: Build
+        run: cargo build -p ${{ matrix.crate }} --no-default-features
+        env:
+          RUSTFLAGS: "-C debuginfo=0 -D warnings"
+
+  build-without-default-features-status:
+    if: |
+      always() &&
+      github.event_name == 'merge_group'
+    needs: build-without-default-features
+    runs-on: ubuntu-latest
+    steps:
+      - name: Successful
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Failing
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
+
+  check-unused-dependencies:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-check-unused-dependencies-${{ hashFiles('**/Cargo.toml') }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.NIGHTLY_TOOLCHAIN }}
+      - name: Installs cargo-udeps
+        run: cargo install --force cargo-udeps
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+      - name: Run cargo udeps
+        run: cargo udeps
+
+  check-example-showcase-patches-still-work:
+    if: ${{ github.event_name == 'merge_group' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-check-showcase-patches-${{ hashFiles('**/Cargo.toml') }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+      - name: Apply patches
+        run: |
+          CODE=0
+          for patch in tools/example-showcase/*.patch; do
+            # Try applying the patch, logging an error if it fails.
+            git apply --ignore-whitespace $patch || { echo "::error::$patch failed to apply."; CODE=1; }
+          done
+          exit $CODE
+      - name: Build with patches
+        run: cargo build

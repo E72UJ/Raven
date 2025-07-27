@@ -1,0 +1,29 @@
+[package]
+name = "flash_runtime"
+version = "0.1.0"
+edition = "2024"
+authors = ["傲娇小霖霖"]
+description = "A simple flash animation runtime"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/aojiaoxiaolinlin/swf_animation"
+
+[dependencies]
+swf_derive = { path = "../swf_derive" }
+h263-rs-yuv = { path = "../h263-rs/yuv" }
+swf = "0.2.2"
+jpeg-decoder = "0.3"
+png = "0.17"
+gif = "0.13"
+flate2 = "1.1"
+lyon_tessellation = "1.0"
+glam = "0.29"
+
+indexmap = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+enum-map = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

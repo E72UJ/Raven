@@ -1,0 +1,26 @@
+[workspace]
+members = [
+    "h263",
+    "yuv",
+    "deblock",
+]
+resolver = "2"
+
+# Don't optimize build scripts and macros.
+[profile.release.build-override]
+opt-level = 0
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[profile.dev.package.h263-rs]
+opt-level = 3
+
+[profile.dev.package.h263-rs-yuv]
+opt-level = 3
+
+[profile.dev.package.h263-rs-deblock]
+opt-level = 3
