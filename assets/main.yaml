@@ -18,7 +18,7 @@ assets:
   
   # 背景图片
   backgrounds:
-    school: "background/one.png"
+    school: "images/one.png"
     cafe: "background/two.png"
     bg1: "images/bg club.png"
     bg2: "images/bg lecturehall.png"
@@ -58,8 +58,8 @@ settings:
   initial_scene: "intro"  # 初始场景ID
   text_speed: 50          # 文本显示速度
   auto_save: true         # 自动保存功能
-  resolution: [1200, 660] # 游戏分辨率
-  font: "fonts/GenSenMaruGothicTW-Bold.ttf"
+  resolution: [1400, 770] # 游戏分辨率
+  font: "fonts/ark.ttf"
 # 其他全局配置
 global_variables:
   player_name: "主角"     # 玩家名称默认值
