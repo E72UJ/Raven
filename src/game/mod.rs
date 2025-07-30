@@ -629,8 +629,8 @@ commands.spawn((
                 
             },
             // 对话框背景颜色
-            // ImageNode::new(asset_server.load("gui/textbox.png")),
-            BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
+            ImageNode::new(asset_server.load("gui/textbox2.png")),
+            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
             // AnimatedText,
         ))
         .with_children(|parent| {
