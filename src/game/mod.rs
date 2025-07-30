@@ -693,6 +693,8 @@ commands.spawn((
         // 对话框背景颜色
         BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         GlobalZIndex(2),
+        // ImageNode::new(asset_server.load("gui/textbox2.png")),
+
         // AnimatedText,
     ));
     // 点击区域
