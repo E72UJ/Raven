@@ -20,8 +20,8 @@ impl AnimationTimer {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 加载所有帧图片
     let mut frames = Vec::new();
-    for i in 1..=14 {
-        let path = format!("fps/1_{}.png", i);
+    for i in 1..=60 {
+        let path = format!("fps/frame_{}.png", i);
         frames.push(asset_server.load(path));
     }
     
@@ -31,7 +31,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 创建动画精灵，从第一帧开始
     commands.spawn((
         Sprite::from_image(frames[0].clone()),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+       Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
+            .with_scale(Vec3::new(0.5, 0.5, 1.0)), // 放大2倍
         AnimationTimer::new(frames, 30.0),
     ));
 }
