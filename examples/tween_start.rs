@@ -88,7 +88,7 @@ fn setup_typewriter(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
     // 加载字体
-    let font = asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf");
+    let font = asset_server.load("fonts/ark.ttf");
 
     // 创建全屏容器来实现居中
     commands

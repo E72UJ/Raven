@@ -1337,7 +1337,6 @@ fn create_dynamic_buttons(
                                     ClickHandler(choice.goto.to_string()),
                                     Interaction::default(),
                                     Name::new(format!("choice_{}", index)),
-                                    // 你的按钮样式代码...
                                     Node {
                                         position_type: PositionType::Relative,
                                         bottom: Val::Px(100.0),
@@ -1356,11 +1355,11 @@ fn create_dynamic_buttons(
                                         },
                                         ..default()
                                     },
-                                     ImageNode::new(asset_server.load("gui/choice_idle_background.png")),
+                                     ImageNode::new(asset_server.load("gui/choice_idle_background2.png")),
                                     ButtonImages {
-                                        normal: asset_server.load("gui/choice_idle_background.png"),
-                                        hovered: asset_server.load("gui/choice_hover_background.png"),
-                                        pressed: asset_server.load("gui/choice_hover_background.png"),
+                                        normal: asset_server.load("gui/choice_idle_background2.png"),
+                                        hovered: asset_server.load("gui/choice_hover_background2.png"),
+                                        pressed: asset_server.load("gui/choice_hover_background2.png"),
                                     },
                                     // BackgroundColor(NORMAL_BUTTON),
                                     // BorderColor(Color::BLACK),
