@@ -175,6 +175,8 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
     let logo_font_size = stylesheet.get_font_size("menu", "logo");
     let logo_text_color = stylesheet.get_text_color("menu", "logo");
     let logo_position = stylesheet.get_text_color("menu", "logo");
+    let menu_game_main_size = stylesheet.get_size("menu", "menu_game_menu");
+    println!("测试内容{:?}", menu_game_main_size);  
     // stylesheet.debug_print_groups();
     // 样式渲染结束
     commands.spawn((
@@ -241,12 +243,13 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
     children![(
         // 下层sprite，可以自定义位置和大小
-        ImageNode::new(assets.load("gui/game_menu.png")),
+        ImageNode::new(assets.load("gui/game_menu2.png")),
         Node {
             position_type: PositionType::Absolute,
             // left: Val::Px(100.0),       // X位置
             // top: Val::Px(50.0),         // Y位置
             width: Val::Px(1400.0),      // 宽度
+            // height: menu_game_main_size[1],
             // height: Val::Px(300.0),     // 高度
             ..default()
         },
@@ -267,6 +270,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
 }
 
 fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Component) -> impl Bundle {
+    
     (
         button_type,
         Button,
