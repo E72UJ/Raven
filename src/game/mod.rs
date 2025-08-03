@@ -629,7 +629,7 @@ commands.spawn((
                 
             },
             // 对话框背景颜色
-            ImageNode::new(asset_server.load("gui/textbox2.png")),
+            ImageNode::new(asset_server.load("gui/textbox3.png")),
             // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
             // AnimatedText,
         ))
@@ -1342,7 +1342,7 @@ fn create_dynamic_buttons(
                                         position_type: PositionType::Relative,
                                         bottom: Val::Px(100.0),
                                         top: Val::Px(-220.0),
-                                        left: Val::Px(210.0),
+                                        left: Val::Px(320.0),
                                         width: Val::Px(700.0),
                                         height: Val::Px(40.0),
                                         border: UiRect::all(Val::Px(2.0)),

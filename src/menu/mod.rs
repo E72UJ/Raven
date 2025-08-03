@@ -207,7 +207,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
                 children![
                     (
-                        Text::new("Raven demo"),
+                        Text::new("Freedom"),
                         TextFont {
                             font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
                             font_size: logo_font_size,
@@ -243,7 +243,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
     children![(
         // 下层sprite，可以自定义位置和大小
-        ImageNode::new(assets.load("gui/game_menu2.png")),
+        ImageNode::new(assets.load("gui/test2.png")),
         Node {
             position_type: PositionType::Absolute,
             // left: Val::Px(100.0),       // X位置
@@ -419,6 +419,7 @@ fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,came
                         .with_children(|parent| {
                             parent.spawn(Text::new("Raven engine v0.1.5"));
                             parent.spawn(Text::new("开发者：Furau"));
+                            parent.spawn(Text::new("剧本：秋月寒"));
                             parent.spawn(Text::new("双模架构轻量级视觉小说引擎"));
                             parent.spawn(Text::new("这是一个使用Raven开发的游戏。感谢您的游玩！"));
                         });
