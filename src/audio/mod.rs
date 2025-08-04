@@ -1,14 +1,22 @@
 // src/audio/mod.rs
 use bevy::prelude::*;
 use bevy::audio::Volume;
-
+use std::collections::HashMap;
 pub struct AudioPlugin;
 
 impl Plugin for AudioPlugin {
     fn build(&self, app: &mut App) {
-        // 如果需要音频系统的话可以在这里添加系统
+        app.init_resource::<AudioManager>();
     }
 }
+#[derive(Resource, Default)]
+pub struct AudioManager {
+    pub playing_audio: HashMap<String, Entity>,
+}
+
+
+
+
 
 /// 播放音频文件的简单函数
 /// 
@@ -71,4 +79,22 @@ pub fn play_audio_loop(
         AudioPlayer::new(audio_handle),
         PlaybackSettings::LOOP.with_volume(Volume::Linear(volume)),
     ));
+}
+
+pub fn stop_all_audio(
+    commands: &mut Commands,
+    audio_manager: &mut ResMut<AudioManager>,
+) {
+    for (_tag, entity) in audio_manager.playing_audio.drain() {
+        // 直接尝试销毁，即使实体不存在也不会出错
+        commands.entity(entity).despawn();
+    }
+}
+pub fn stop_all_audio_system(
+    mut commands: Commands,
+    mut audio_manager: ResMut<AudioManager>,
+) {
+    for (_tag, entity) in audio_manager.playing_audio.drain() {
+        commands.entity(entity).despawn();
+    }
 }
