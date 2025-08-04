@@ -33,7 +33,7 @@ fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
     // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
 
     // // 循环播放背景音乐
-    // play_audio_loop(&mut commands, &asset_server, "audio/two.ogg", 1.0);
+    play_audio_loop(&mut commands, &asset_server, "audio/5gzps-9i0ey.ogg", 1.0);
 }
 fn menu_exit_system(mut commands: Commands) {
     fade_in(&mut commands, 1.6); // 1.0渐入
@@ -71,7 +71,7 @@ fn main() {
         .add_plugins(TransitionPlugin)
         .add_plugins(GamePlugin)  
         .add_plugins(AudioPlugin)
-        .add_systems(OnEnter(GameScene::Game), (menu_exit_system, my_system))
+        .add_systems(OnEnter(GameScene::Game), (menu_exit_system,))
 
         .run();
 }

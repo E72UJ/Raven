@@ -1,8 +1,9 @@
 // src/menu/mod.rs
 use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
-
-
+use crate::audio::AudioPlugin;
+use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop,stop_all_audio,stop_all_audio_system};
+use crate::audio::{AudioManager}; 
 use crate::style::{UiStyleSheet, load_styles}; 
 
 #[derive(Component)]
@@ -28,7 +29,7 @@ impl Plugin for MenuPlugin {
             .init_resource::<UiStyleSheet>()
             // .init_state::<GameScene>()
             .add_systems(Startup, setup)
-            // 重要：只在 Menu 状态下运行按钮系统
+            // .add_systems(Startup, my_system)
             // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
             .add_systems(Update, button_system.run_if(in_state(GameScene::LoadButton)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Settings)))
@@ -39,8 +40,8 @@ impl Plugin for MenuPlugin {
             
             .add_systems(OnEnter(GameScene::LoadButton), setup_load_scene)     // 调用载入场景设置函数
             .add_systems(OnExit(GameScene::LoadButton), cleanup_load_scene)    // 调用载入场景清理函数
-            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
-            .add_systems(OnExit(GameScene::Menu), cleanup_all_menu)
+            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene,my_system).chain())
+            .add_systems(OnExit(GameScene::Menu), (cleanup_all_menu,on_exit_game_state,stop_all_audio_system))
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_settings_overlay)
             .add_systems(OnEnter(GameScene::About), setup_about_scene)
@@ -1242,4 +1243,23 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                         });
                 });
         });
+}
+// 音频系统
+fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // 播放一次性音效
+    // play_audio(&mut commands, &asset_server, "audio/two.ogg");
+
+    // // 播放音效并设置音量
+    // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
+
+    // // 循环播放背景音乐
+    play_audio_loop(&mut commands, &asset_server, "audio/5gzps-9i0ey.ogg", 1.0);
+}
+fn on_exit_game_state(
+    mut commands: Commands,
+    mut audio_manager: ResMut<AudioManager>,
+) {
+    // 退出游戏状态时停止所有音频
+    println!("{}","推出所有饮品");
+    stop_all_audio(&mut commands, &mut audio_manager);
 }
