@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
-
+use std::env;
+use std::path::{Path, PathBuf};
 #[derive(Resource, Deserialize, Default, Debug)]
 pub struct UiStyleSheet {
     #[serde(flatten)]
@@ -158,11 +159,28 @@ impl UiStyleSheet {
 
 // 更新加载系统
 pub fn load_styles(mut stylesheet: ResMut<UiStyleSheet>) {
-    match UiStyleSheet::load_from_file("assets/style.yaml") {
+   let program_dir = match std::env::current_exe() {
+        Ok(exe_path) => {
+            // 获取程序所在目录（去掉可执行文件名）
+            let mut dir = exe_path;
+            dir.pop(); // 移除可执行文件名
+            dir
+        }
+        Err(e) => {
+            println!("无法获取程序路径: {}", e);
+            // 降级到当前工作目录
+            std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        }
+    };
+    
+    println!("程序目录: {:?}", program_dir);
+   let style_file_path = program_dir.join("assets").join("style.yaml");
+    println!("样式文件路径: {:?}", style_file_path);
+    println!("文件是否存在: {}", style_file_path.exists());
+    
+    match UiStyleSheet::load_from_file(style_file_path.to_str().unwrap()) {
         Ok(loaded_stylesheet) => {
-            // loaded_stylesheet.debug_print();
             println!("我被调用了");
-            // 直接替换资源内容，立即生效
             *stylesheet = loaded_stylesheet;
             println!("样式表加载成功！");
         }
