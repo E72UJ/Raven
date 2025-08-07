@@ -558,7 +558,7 @@ commands.spawn((
         Sprite {
             color: Color::srgba(1.0, 1.0, 1.0, 0.0),
             image: asset_server.load("characters/protagonist/default.png"),
-            // custom_size: Some(Vec2 { x: 456.0, y: 700.0 }),
+            // custom_size: Some(Vec2 { x: 1400.0, y: 770.0 }),
             ..default()
         },
         Visibility::Hidden,
@@ -1060,7 +1060,7 @@ fn load_backgrounds(
             Background, // 添加背景组件标识
             Sprite {
                 image: asset_server.load(bg_path),
-                custom_size: Some(Vec2::new(1200.0, 660.0)), 
+                custom_size: Some(Vec2::new(1400.0, 770.0)), 
                 ..default()
 
                 
