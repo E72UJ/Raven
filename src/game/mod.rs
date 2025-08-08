@@ -1337,7 +1337,7 @@ fn create_dynamic_buttons(
                                     ClickHandler(choice.goto.to_string()),
                                     Interaction::default(),
                                     Name::new(format!("choice_{}", index)),
-            
+                                    // 你的按钮样式代码...
                                     Node {
                                         position_type: PositionType::Relative,
                                         bottom: Val::Px(100.0),
