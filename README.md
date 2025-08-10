@@ -3,16 +3,7 @@
 <img src="/demo/logo.png" width="350" alt="logo">
 </div>
 
-<!-- PROJECT SHIELDS -->
 
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![LinkedIn][linkedin-shield]][linkedin-url]
-
-<!-- PROJECT LOGO -->
 ## Raven Engine：轻量 Rust 视觉小说引擎
 
 Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引擎，专注于为开发者提供简洁高效的叙事工具链。凭借 Rust 的内存安全性与高性能特性，Raven 能够流畅运行于多平台，同时通过声明式脚本语法和模块化设计，大幅降低视觉小说的开发门槛。
@@ -23,7 +14,10 @@ Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引�
 
 访问 [引擎文档](https://doc.raven.rs/ "中文文档")
 （托管服务器性能较差，最新更新可以查看文档源码）
+## tips
+本程序使用本地依赖编译，如需要获取依赖本身，请访问:
 
+https://github.com/E72UJ/Raven/blob/main/docs/src/getting-started/compile-dependencies.md
 ## Demo
 ![这是图片](https://pic1.imgdb.cn/item/6827b98858cb8da5c8f78dbc.png "Magic Gardens")
 
