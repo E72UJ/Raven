@@ -210,7 +210,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                     (
                         Text::new("Freedom"),
                         TextFont {
-                            font: assets.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font: assets.load("fonts/ark.ttf"),
                             font_size: logo_font_size,
                             ..default()
                         },
@@ -244,7 +244,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
     children![(
         // 下层sprite，可以自定义位置和大小
-        ImageNode::new(assets.load("gui/game_menu3.png")),
+        ImageNode::new(assets.load("gui/game3.png")),
         Node {
             position_type: PositionType::Absolute,
             // left: Val::Px(100.0),       // X位置
@@ -290,7 +290,7 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
         children![(
             Text::new(text),
             TextFont {
-                font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                font: asset_server.load("fonts/ark.ttf"),
                 font_size: 20.0,
                 ..default()
             },
