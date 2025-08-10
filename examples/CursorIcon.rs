@@ -5,20 +5,21 @@ use bevy::winit::cursor::CursorIcon;
 #[derive(Component)]
 struct HoverShape {
     cursor_style: CursorIcon,
+    name: String, // 添加名称用于识别
 }
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                title: "简单光标示例".to_string(),
+                title: "交互案例".to_string(),
                 resolution: (800.0, 600.0).into(),
                 ..default()
             }),
             ..default()
         }))
         .add_systems(Startup, setup)
-        .add_systems(Update, cursor_hover_system)
+        .add_systems(Update, (cursor_hover_system, mouse_click_system))
         .run();
 }
 
@@ -37,6 +38,7 @@ fn setup(
         Transform::from_translation(Vec3::new(-200.0, 0.0, 0.0)),
         HoverShape {
             cursor_style: SystemCursorIcon::Pointer.into(),
+            name: "红色正方形".to_string(),
         },
     ));
 
@@ -46,7 +48,8 @@ fn setup(
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.0, 1.0, 0.0)))),
         Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
         HoverShape {
-            cursor_style: SystemCursorIcon::Text.into(),
+            cursor_style: SystemCursorIcon::Pointer.into(),
+            name: "绿色三角形".to_string(),
         },
     ));
 
@@ -55,9 +58,10 @@ fn setup(
         Mesh2d(meshes.add(Circle::new(50.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.0, 0.0, 1.0)))),
         Transform::from_translation(Vec3::new(200.0, 0.0, 0.0)),
-        HoverShape {
-            cursor_style: SystemCursorIcon::Move.into(),
-        },
+        // HoverShape {
+        //     // cursor_style: SystemCursorIcon::Move.into(),
+        //     name: "蓝色圆形".to_string(),
+        // },
     ));
 }
 
@@ -95,6 +99,41 @@ fn cursor_hover_system(
         // 如果没有悬停在任何形状上，恢复默认光标
         if !cursor_changed {
             commands.entity(window_entity).insert(CursorIcon::from(SystemCursorIcon::Default));
+        }
+    }
+}
+
+// 新增的鼠标点击检测系统
+fn mouse_click_system(
+    mouse_input: Res<ButtonInput<MouseButton>>,
+    windows: Query<&Window>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    shape_query: Query<(&Transform, &HoverShape)>,
+) {
+    // 检测鼠标左键点击
+    if mouse_input.just_pressed(MouseButton::Left) {
+        let Ok(window) = windows.get_single() else { return; };
+        let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
+
+        // 获取鼠标在世界坐标中的位置
+        if let Some(world_position) = window.cursor_position()
+            .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
+            .map(|ray| ray.origin.truncate())
+        {
+            // 检查点击是否在任何形状上
+            for (transform, hover_shape) in shape_query.iter() {
+                let shape_pos = transform.translation.truncate();
+                let distance = world_position.distance(shape_pos);
+
+                if distance < 70.0 {
+                    println!("点击了 {} 在位置 ({:.1}, {:.1})", 
+                        hover_shape.name, 
+                        world_position.x, 
+                        world_position.y
+                    );
+                    break;
+                }
+            }
         }
     }
 }
