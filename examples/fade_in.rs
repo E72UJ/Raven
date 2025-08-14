@@ -15,7 +15,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Sprite::from_image(asset_server.load("background/one.png")),
         
         FadeIn {
-            timer: Timer::from_seconds(1.0, TimerMode::Once), // 2秒淡入
+            timer: Timer::from_seconds(3.0, TimerMode::Once), // 2秒淡入
             end_alpha: 1.0,
         }
     ));

@@ -1,30 +1,863 @@
+- character: "none"
+  text: "窗帘已经不再需要被拉开了，没人需要看向外面，也没人需要来自外面的----日光，或许还有风、声音、形状，那些混乱而扰乱心智的东西。"
+  portrait: "none"
+  background: "school"
+  interactive: "curtain"
 
-  - character: "黛安娜"
-    label: "one"
-    text: "你好，欢迎使用Raven Engine V0.1"
-    portrait: "protagonist"
+- character: "none"
+  text: "人造的暗淡光源僭越着那悬挂在遥远寒冷宇宙中的巨大核反应堆，微弱的电流像是起搏器一般暂时照亮尚存心跳的那些时刻。"
+  portrait: "none"
+  background: "school"
+  interactive: "lamp"
 
-  - character: "黛安娜"
-    text: "Raven是一个使用rust编写的视觉小说引擎，它拥有两个开发模式"
-    portrait: "protagonist"
-    jump: "one"
-    
+- character: "none"
+  text: "它们曾经构成意义，它们已经失去意义。"
+  portrait: "none"
+  background: "dormitory"
+  interactive: "books"
 
-  - character: "黛安娜（立绘2）"
-    text: "既可以使用yaml来写配置和主文本也可以使用专有DSL来实现抽象逻辑"
-    portrait: "villain"
-  - character: "黛安娜"
-    text: "同时依赖于bevy和bevy-flash 以实现相对完善的渲染"
-    portrait: "villain"
-  - character: "黛安娜"
-    text: "它的文本文件和配置都是基于yaml的配置文件"
-    portrait: "protagonist"
+- character: "none"
+  text: "在这里，写下无数个日夜的坚信、谎言、荒诞，仿佛脑脊液和青春和生命一同随着比特的跳动而流逝。"
+  portrait: "none"
+  background: "dormitory"
+  interactive: "computer"
 
-  - character: "黛安娜"
-    text: "它尽量的兼顾性能和轻量"
-    portrait: "protagonist"
-    choices:  # 分支对话选项
-      - text: "继续解析数据"
-        jump: "one"
-      - text: "启动紧急协议"
-        goto: 206
+- character: "none"
+  text: "现在，一切都结束了"
+  portrait: "none"
+  background: "dormitory"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "dormitory"
+
+- character: "none"
+  text: "选择一个待办事项"
+  label: "one"
+  portrait: "none"
+  background: "cafe"
+  choices:
+    - text: "待办：谎言"
+      goto: 7
+    - text: "待办：流逝"
+      goto: 40
+    - text: "待办：虚妄"
+      goto: 68
+    - text: "待办：终结"
+      goto: 113
+
+- character: "none"
+  text: "确认去做这件事吗？"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "确认"
+      goto: 9
+    - text: "这也是谎言"
+      goto: 5
+
+- character: "none"
+  text: "现在，一切都结束了"
+  portrait: "none"
+  background: "dormitory"
+
+- character: "none"
+  text: "进入了幼儿园"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "选择一个待办事项"
+  portrait: "none"
+  background: "none"
+  label: "two"
+  choices:
+    - text: "沙坑"
+      goto: 11
+    - text: "遮阳棚"
+      goto: 13
+    - text: "旋转木马"
+      goto: 15
+    - text: "教学楼"
+      goto: 17
+    - text: "保育员"
+      goto: 19
+
+- character: "none"
+  text: "建构的将要倒塌，埋藏的将会再度露出表面，一切都在脆弱而无情地流动，在孩子眼中的所谓可塑性，最终化为了世界的、生命的无常。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg7"
+  jump: "two"
+
+- character: "none"
+  text: "为什么要逃避太阳？它不是就在那里吗？对着我们微笑——或者说，这其实是一个遮雨棚，只是日光和水，这生命必备的物质在慷慨地从天而降的时候，所有人其实都在叶公好龙。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg7"
+  jump: "two"
+
+- character: "none"
+  text: "距离从来没有被改变，所有人能做的，只是推动木马，假装它们一直在前进罢了。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg7"
+  jump: "two"
+
+- character: "none"
+  text: "看起来比小学和中学活泼得多的教学楼，虽然本质上也是死板的线条构成的冰冷方块，但是贴画、剪纸和丝带，以及那些被粉刷上去的亮丽色彩，让人暂时难以揭露它的原形。"
+  portrait: "none"
+  background: "bg7"
+
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg7"
+  jump: "two"
+
+
+- character: "保育员"
+  text: "保育员:我园的目的就是将大家的孩子引向精英之路"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "保育员:我们将以丰富的活动促进孩子们的天赋开发，让孩子们获得德智体美劳的全面发展。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "在这个普通的社区幼儿园里，大多数人都是如螺丝钉一般再常见不过的体力脑力工人，与精英一词毫不相衬。一种拙劣的包装涂饰着几乎不可能实现的翻身成为人上人的幻想与过度期待。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "至于教学内容，大约都是一样的，绘本、橡皮泥、剪纸、游戏，很难说什么是全面发展，连上厕所都不一定能自己控制的人对此毫无概念。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "小朋友们排好队，开开心心做早操……"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "无序变为有序，是驯化的第一步。人面对的，无非是无意义的混乱与有意义的禁锢，而这将成为之后人生的日常。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "人甚至并无选择的能力与权利，唯一的区别在于，儿时的人尚未意识到这一点，长大后则必须清醒地面对这样的现实。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "爸爸妈妈和老师，跟紧他们别乱跑。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "为了生存拜服于权威的幼体，在成年后大多也忘记了该如何自己寻路，这是迷茫的开端，而即使发现道途的无穷，心中所留的，也是更多的迷茫。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "所以，不曾走失，不曾违背，乃至不曾言语，毕生如亦步亦趋的幼兽，也不失为一种幸福。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "只是这种幸福，已然无福消受。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "太阳高高照，我们的世界真美好！"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "太阳也会让大地干渴，让众生旱死，它只是一个无情的反应堆，没有怜爱和恩赐，世界只是偶然，美好不过是人的附会。是的，这一切的温情脉脉不过是一个名为驯化的谎言，思之令人发笑。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "但如果一开始就讲述真相，培育出的，会否是一群绝望的人？"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "……不，只有揭开谎言之后，留下的才是绝望。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "那边的小朋友？快跟上来呀！"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "谎言！拙劣的谎言！正是你们种下绝望的种子！"
+      goto: 36
+    - text: "这一套已经不再起效了，在无边迷茫的旷野上。"
+      goto: 36
+
+- character: "保育员"
+  text: "原来如此，是这样啊。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "再见，不，永别了。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "保育员"
+  text: "我知道你不会回来的。"
+  portrait: "none"
+  background: "bg7"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg7"
+  jump: "one"
+
+- character: "none"
+  text: "确认去做这件事吗？"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "确认"
+      goto: 42
+    - text: "让它先流逝吧"
+      goto: 5
+
+- character: "none"
+  text: "现在，一切都结束了"
+  portrait: "none"
+  background: "dormitory"
+
+- character: "none"
+  text: "进入了餐厅"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "选择一个待办事项"
+  portrait: "none"
+  background: "none"
+  label: "three"
+  choices:
+    - text: "灯光"
+      goto: 44
+    - text: "吧台"
+      goto: 46
+    - text: "餐桌"
+      goto: 48
+    - text: "老朋友"
+      goto: 50
+
+- character: "none"
+  text: "灯光是暗淡的，因为它们的功能并非宣称自己的存在，而是构成某种所谓的氛围感。神秘，幽静，以至于沉郁。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg8"
+  jump: "three"
+
+- character: "none"
+  text: "暗淡的灯光下，盛装着各色酒液的酒杯如同液体的宝石一般闪烁，萨克斯音乐和调制鸡尾酒时的冰杯摇晃声混合在一起，成为了无趣的白噪音基底。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg8"
+  jump: "three"
+
+- character: "none"
+  text: "食物是有味道的，这是常识，但是它们的味道转瞬即逝，即使不停咀嚼，一遍一遍一口一口地吃进去，也无法记住它们的味道，毫无意义的进食摄取的是营养元素和价值符号。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "bg8"
+  jump: "three"
+
+- character: "老朋友"
+  text: "“老朋友”：我看起来还是和以前一样吗？"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "还是一样的——你希望得到这样的答案吗？但是一切都变了，就算你希望得到的是谎言，一切也都变了，不会再回来。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "为什么这么说呢？我们还是朋友啊。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "从每天见的朋友到一年见不了几次的朋友？好吧，就算还是，但你已经有了新的生活，已经有了新的人际关系替代品，这一点上，你谁都无法欺骗。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "但是我们已有的情谊不会改变，你看，我们曾经那么亲密，无话不谈，就像连体双胞胎那样。还记得那天晚上，我们玩到很晚，一起骑着自行车回去，在空旷的大街上唱着难听的歌。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "是啊，那天的星星很亮。风也是清凉的。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "你看，你这不是还记得吗？只要记得，一切就不会失去。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "但是也不会再有了。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "怎么不会？你也会像我一样拥有新的朋友，获得新的记忆，享受新的人生。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "不，永远不会回来了，这样的时光，这样的人生永远不会再回来了，每一次醒来都离那永久的终结更近一步，那是永远失去的预兆，是毁灭的足音。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "那样的生活其实也没有多可怕，你看我，现在不还是活得好好的？虽然确实累了很多，这样的日子也一眼看不到头，但是终究还是活着，有自己的时间，有自己的生活，所以说……"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "那是你。那一直只是你。你可以什么都不想，把人生变成一段只需要骑着自行车唱着歌的旅程，但是并不是所有人都和你一样。那辆自行车已经生锈了，它的每一个部件都已经锈蚀到无法安装在一起，而它要行的那条路，已经不复存在，或者说……"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "……从来没有存在过。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "别这样，真的，我真的想拉你一把。别再消沉了，你还有未来大把的时间，去把它看作一个新的起点，而不是结束，可以吗？"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "不，早就结束了。"
+      goto: 65
+    - text: "这不是结束……吗？"
+      goto: 65
+
+- character: "老朋友"
+  text: "我知道我没法改变你，毕竟你就是这样啊，我就是因为你原本的样子才和你成为朋友的。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "老朋友"
+  text: "你已经做出了选择，对吗？无论你怎么做……你都永远是我的朋友，永远。"
+  portrait: "none"
+  background: "bg8"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  jump: "one"
+
+
+- character: "none"
+  text: "确认去做这件事吗？"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "确认"
+      goto: 70
+    - text: "虚妄难以捉住"
+      goto: 5
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "dormitory"
+
+- character: "none"
+  text: "进入了教室"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "这里是教室"
+  portrait: "none"
+  background: "none"
+  label: "four"
+  choices:
+    - text: "时钟"
+      goto: 72
+    - text: "黑板"
+      goto: 74
+    - text: "讲台"
+      goto: 76
+    - text: "教授"
+      goto: 78
+
+- character: "none"
+  text: "被驯化的自由的时间滴答滴答地从表针上滴落下来，没有溅起哪怕一点涟漪。一个五十分钟，一个十分钟；又一个五十分钟，又一个十分钟，青春、理想、希望，以此种标准远去。"
+  portrait: "none"
+  background: "bg9"
+
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  jump: "four"
+
+- character: "none"
+  text: "写上，擦掉，再写上，再擦掉，黑色的背景上曾经被重叠着写上的知识，现在化为白色的浮灰不分彼此，浮灰堆积着，成为西西弗斯们一座又一座的山。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  jump: "four"
+
+- character: "none"
+  text: "有人站在上面，有人坐在下面，有人想站上去，一代代的循环中大浪淘沙，注定有一个老师，也注定更多人只能做学生，只能“停止”在学生的身份上，他们只能倾听，哪怕有再多的话想说，最终也只是世界的听众。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  jump: "four"
+
+- character: "教授"
+  text: "这位同学，你还有什么想问的吗？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "■■■■■■■■■■■■■■？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "嗯……这个问题很有意思，我想想该怎么回答你"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "我想，■■■是■■■■■恁■，所以■■■■■■■■■有■■■■，或许我懑可一、假言*殳■■■■■■■■■■■"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "■■■■■■■，■■■■■■■■■。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "很好啊，这个想法是对的，我想你抓住了问题的关键。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "教授，那我可以■入■■石'开■■■？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "没问题，这是我的■■■■，如果你愿意，■■■■■■■"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "谢谢您！■■■■■■秀■■■■者！"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "■■■■■■■■■■■■■■"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "不……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "■■■■■■■■■■■■■■■■■■■■■"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "没关系的，■■你还可以继续■■，修改之后继续投递下一家。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "……好的，教授。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "没关系的。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "有关系。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "为什么你就不明白呢？尊敬的教授？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "学术界已经不再是你年轻时的模样了。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "我的内容改了多少遍？我的格式改了多少遍？我等了多久？我……还要等多久？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "我还能等多久？"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "我在赤潮的红海里游泳，我在里面溺毙，没有氧气的水里沉没的是我曾经的爱、热情和理想。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "■■"
+  text: "对不起，您的文章……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "■■"
+  text: "……已经排到后年了。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "■■"
+  text: "若60天后没有回复则可以转投……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "没关系没关系没关系氵殳&郗Mei……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "够了。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "你可以继续试试，没关系的。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "……嗯。"
+  portrait: "none"
+  background: "bg9"
+
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "是啊，我已经没有时间了。"
+      goto: 108
+    - text: "我只想……一个人待一会。"
+      goto: 108
+
+- character: "教授"
+  text: "其实你做得很好，我的学生。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "教授"
+  text: "我希望你，无论之后是否留在这里，都能好好地度过一生。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "……"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "……呵，一生。"
+  portrait: "none"
+  background: "bg9"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  jump: "one"
+
+- character: "none"
+  text: "确认去做这件事吗？"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "确认"
+      goto: 114
+    - text: "先为终结作准备"
+      goto: 5
+
+- character: "none"
+  text: "终结一切"
+  portrait: "none"
+  background: "none"
+
+- character: "none"
+  text: "终于到了,这如愿以偿的地方。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "快点快点,毕业典礼要开始了!"
+  portrait: "none" 
+  background: "bg10"
+
+- character: "none"
+  text: "你..."
+  portrait: "none"
+  background: "bg10"
+
+- character: "none" 
+  text: "你怎么在这里?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "我是来看毕业典礼的啊,虽然不是我的毕业典礼,但是看见学长学姐们穿着各色的学士服站在台上,我就由衷地为他们感到高兴!"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "你在高兴什么?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "他们如愿以偿完成了学业,即将奔向下一个人生舞台,这种充满成就感的时刻再怎么说都很让人高兴啊!"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "...贫瘠的语言。"
+  portrait: "none" 
+  background: "bg10"
+
+- character: "???"
+  text: "哈哈,没关系的,就算我现在很贫瘠很幼稚,但是我还有大把的时间,等我毕业的时候,一定能像他们一样厉害!"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "...幼稚的想象。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "不试试怎么能行呢?不试试怎么能确定,自己究竟是不是那个会流芳后世的人呢?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "不会的,你只是岸边的沙子。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "岸边的沙子吗?那我是不是和小螃蟹、小鳗鱼还有小海葵成为了好朋友?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "或许吧,至少你们能在同一个锅里被炖熟。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "炖熟也是熟嘛!"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "..."
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "你要去哪?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "...毕业典礼。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "???"
+  text: "我的毕业典礼?"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "不,是我的毕业典礼。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "none"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "因为你已经死了"
+      goto: 136
+    - text: "就让我结束它吧。"
+      goto: 136
+
+- character: "初心"
+  text: "向前走吧，无论未来是怎么样的，无论你经历了什么。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "初心"
+  text: "即使你不再是我，我也仍旧是你。"
+  portrait: "none"
+  background: "bg10"
+
+- character: "none"
+  text: "进入礼堂"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "到这里就结束了吧。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "来吧,为我鼓掌,为我欢呼,为我微笑。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none" 
+  text: "为我戴上最终的冠冕,并称之为——毕业!"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "来吧,我跑过长廊,跳上主席台,我的脚步如此轻盈,我的心情如此轻快。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "让我们一起迎接新的开始,让过去的汗水和眼泪化为喜悦的泉源。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "因为这不是结束,而是人生的全新篇章。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "此刻你直视着那无底的深渊"
+  portrait: "none"
+  background: "none"
+  choices:
+    - text: "来吧，拥抱它吧。"
+      goto: 146
+    - text: "但背后还有声音。"
+      goto: 146
+
+- character: "none"
+  text: "来自生命的原始的恐惧在那一瞬间揪住了我的后颈。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "如同幼兽被母亲叼起，在自由的边缘被强硬地拉回。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "无尽的悲伤和有穷的黑暗中，我动弹不得，如同一块朽木。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "但生命还在继续，本能的喘息和心跳仍旧回荡在世界的潮水之中。"
+  portrait: "none"
+  background: "bg11"
+
+- character: "none"
+  text: "我竟然笑了。"
+  portrait: "none"
+  background: "bg11"
