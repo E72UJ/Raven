@@ -5,7 +5,56 @@ use bevy::winit::cursor::CursorIcon;
 #[derive(Component)]
 struct HoverShape {
     cursor_style: CursorIcon,
-    name: String, // 添加名称用于识别
+    name: String,
+}
+
+// 弹窗组件
+#[derive(Component)]
+pub struct Popup {
+    pub timer: Timer,
+}
+
+impl Popup {
+    pub fn new(duration: f32) -> Self {
+        Self {
+            timer: Timer::from_seconds(duration, TimerMode::Once),
+        }
+    }
+}
+
+// 弹窗生成函数
+pub fn spawn_popup(
+    commands: &mut Commands,
+    message: String,
+    position: Vec2,
+) {
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            left: Val::Px(position.x - 100.0), // 居中显示
+            top: Val::Px(position.y - 50.0),
+            width: Val::Px(200.0),
+            height: Val::Px(100.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            border: UiRect::all(Val::Px(2.0)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.9)),
+        BorderColor(Color::WHITE),
+        BorderRadius::all(Val::Px(10.0)),
+        Popup::new(1.5), // 1.5秒后消失
+        ZIndex(1000), // 确保在最顶层
+    )).with_children(|parent| {
+        parent.spawn((
+            Text::new(message),
+            TextFont {
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+        ));
+    });
 }
 
 fn main() {
@@ -19,7 +68,11 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, setup)
-        .add_systems(Update, (cursor_hover_system, mouse_click_system))
+        .add_systems(Update, (
+            cursor_hover_system, 
+            mouse_click_system,
+            update_popups, // 添加弹窗更新系统
+        ))
         .run();
 }
 
@@ -27,6 +80,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>, 
 ) {
     // 摄像机
     commands.spawn(Camera2d);
@@ -35,18 +89,23 @@ fn setup(
     commands.spawn((
         Mesh2d(meshes.add(Rectangle::new(100.0, 100.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(1.0, 0.0, 0.0)))),
+        Sprite {
+            image: asset_server.load("images/1.png"),
+            custom_size: Some(Vec2::new(1440.0, 750.0)), 
+            ..default()
+        },
         Transform::from_translation(Vec3::new(-200.0, 0.0, 0.0)),
         HoverShape {
-            cursor_style: SystemCursorIcon::Pointer.into(),
+            cursor_style: SystemCursorIcon::Crosshair.into(),
             name: "红色正方形".to_string(),
         },
     ));
 
     // 三角形
     commands.spawn((
-        Mesh2d(meshes.add(RegularPolygon::new(60.0, 3))),
+        Mesh2d(meshes.add(RegularPolygon::new(150.0, 3))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.0, 1.0, 0.0)))),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+        Transform::from_translation(Vec3::new(0.0, -200.0, 1.0)),
         HoverShape {
             cursor_style: SystemCursorIcon::Pointer.into(),
             name: "绿色三角形".to_string(),
@@ -58,10 +117,6 @@ fn setup(
         Mesh2d(meshes.add(Circle::new(50.0))),
         MeshMaterial2d(materials.add(ColorMaterial::from(Color::srgb(0.0, 0.0, 1.0)))),
         Transform::from_translation(Vec3::new(200.0, 0.0, 0.0)),
-        // HoverShape {
-        //     // cursor_style: SystemCursorIcon::Move.into(),
-        //     name: "蓝色圆形".to_string(),
-        // },
     ));
 }
 
@@ -76,19 +131,16 @@ fn cursor_hover_system(
     let Ok(window) = windows.get_single() else { return; };
     let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
 
-    // 获取鼠标在世界坐标中的位置
     if let Some(world_position) = window.cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
         .map(|ray| ray.origin.truncate())
     {
         let mut cursor_changed = false;
 
-        // 检查鼠标是否悬停在任何形状上
         for (transform, hover_shape) in shape_query.iter() {
             let shape_pos = transform.translation.truncate();
             let distance = world_position.distance(shape_pos);
 
-            // 简单的距离检测
             if distance < 70.0 {
                 commands.entity(window_entity).insert(hover_shape.cursor_style.clone());
                 cursor_changed = true;
@@ -96,44 +148,66 @@ fn cursor_hover_system(
             }
         }
 
-        // 如果没有悬停在任何形状上，恢复默认光标
         if !cursor_changed {
             commands.entity(window_entity).insert(CursorIcon::from(SystemCursorIcon::Default));
         }
     }
 }
 
-// 新增的鼠标点击检测系统
+// 修改后的鼠标点击检测系统，集成弹窗功能
 fn mouse_click_system(
+    mut commands: Commands,
     mouse_input: Res<ButtonInput<MouseButton>>,
     windows: Query<&Window>,
     camera_query: Query<(&Camera, &GlobalTransform)>,
     shape_query: Query<(&Transform, &HoverShape)>,
 ) {
-    // 检测鼠标左键点击
     if mouse_input.just_pressed(MouseButton::Left) {
         let Ok(window) = windows.get_single() else { return; };
         let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
 
-        // 获取鼠标在世界坐标中的位置
         if let Some(world_position) = window.cursor_position()
             .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
             .map(|ray| ray.origin.truncate())
         {
-            // 检查点击是否在任何形状上
-            for (transform, hover_shape) in shape_query.iter() {
-                let shape_pos = transform.translation.truncate();
-                let distance = world_position.distance(shape_pos);
+            // 获取屏幕坐标用于弹窗定位
+            if let Some(screen_position) = window.cursor_position() {
+                for (transform, hover_shape) in shape_query.iter() {
+                    let shape_pos = transform.translation.truncate();
+                    let distance = world_position.distance(shape_pos);
 
-                if distance < 70.0 {
-                    println!("点击了 {} 在位置 ({:.1}, {:.1})", 
-                        hover_shape.name, 
-                        world_position.x, 
-                        world_position.y
-                    );
-                    break;
+                    if distance < 70.0 {
+                        println!("点击了 {} 在位置 ({:.1}, {:.1})", 
+                            hover_shape.name, 
+                            world_position.x, 
+                            world_position.y
+                        );
+                        
+                        // 显示弹窗
+                        spawn_popup(
+                            &mut commands,
+                            format!("computer: {}","this is computer"),
+                            screen_position,
+                        );
+                        break;
+                    }
                 }
             }
+        }
+    }
+}
+
+// 弹窗更新和清理系统
+fn update_popups(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut popup_query: Query<(Entity, &mut Popup)>,
+) {
+    for (entity, mut popup) in popup_query.iter_mut() {
+        popup.timer.tick(time.delta());
+        
+        if popup.timer.finished() {
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

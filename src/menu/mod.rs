@@ -208,7 +208,8 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
                 children![
                     (
-                        Text::new("Freedom"),
+                        Text::new("fakefreedom"),
+
                         TextFont {
                             font: assets.load("fonts/ark.ttf"),
                             font_size: logo_font_size,
@@ -216,17 +217,28 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                         },
                         TextColor(logo_text_color),
                         Node {
-                            margin: UiRect::bottom(Val::Px(20.0)),
+                        margin: UiRect {
+                            left: Val::Px(-20.0),
+                            right: Val::Px(0.0),
+                            top: Val::Px(0.0),
+                            bottom: Val::Px(0.0),
+                        },
                             ..default()
                         },
                         GlobalZIndex(99)
                     ),
-                    create_button(&assets, "开始游戏", StartGameButton),
-                    create_button(&assets, "载入存档", LoadGameButton),
-                    create_button(&assets, "设置", SettingsButton),
-                    create_button(&assets, "关于", AboutButton),
-                    create_button(&assets, "帮助", HelpButton),
-                    create_button(&assets, "退出", ExitGameButton),
+                    // create_button(&assets, "开始游戏", StartGameButton),
+                    // create_button(&assets, "载入存档", LoadGameButton),
+                    // create_button(&assets, "设置", SettingsButton),
+                    // create_button(&assets, "关于", AboutButton),
+                    // create_button(&assets, "帮助", HelpButton),
+                    // create_button(&assets, "退出", ExitGameButton),
+                    create_button(&assets, "Start Game", StartGameButton),
+                    // create_button(&assets, "Load Game", LoadGameButton),
+                    // create_button(&assets, "Settings", SettingsButton),
+                    create_button(&assets, "About", AboutButton),
+                    create_button(&assets, "Help", HelpButton),
+                    create_button(&assets, "Exit", ExitGameButton),
                 ],
             ),
             // 右侧图片区域
@@ -279,6 +291,12 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
             width: Val::Px(150.0),
             height: Val::Px(20.0),
             // border: UiRect::all(Val::Px(2.0)),
+            margin: UiRect {
+                left: Val::Px(14.0),
+                right: Val::Px(0.0),
+                top: Val::Px(0.0),
+                bottom: Val::Px(0.0),
+            },
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             ..default()

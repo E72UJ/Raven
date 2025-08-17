@@ -10,7 +10,7 @@ struct AnimationTimer {
 impl AnimationTimer {
     fn new(frames: Vec<Handle<Image>>, fps: f32) -> Self {
         Self {
-            timer: Timer::from_seconds(1.0 / fps, TimerMode::Repeating),
+            timer: Timer::from_seconds(10.0 / fps, TimerMode::Repeating),
             frames,
             current_frame: 0,
         }
@@ -20,8 +20,8 @@ impl AnimationTimer {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 加载所有帧图片
     let mut frames = Vec::new();
-    for i in 1..=60 {
-        let path = format!("fps/frame_{}.png", i);
+    for i in 1..=3 {
+        let path = format!("fps/{}.png", i);
         frames.push(asset_server.load(path));
     }
     
@@ -34,6 +34,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
             .with_scale(Vec3::new(0.5, 0.5, 1.0)), // 放大2倍
         AnimationTimer::new(frames, 30.0),
+    ));
+    commands.spawn((
+        Sprite::from_image(asset_server.load("images/4.png")),
+        Transform::from_translation(Vec3::new(0.0, 0.0, -1.0))
+            .with_scale(Vec3::new(0.5, 0.5, -1.0)), // 放大2倍
     ));
 }
 
