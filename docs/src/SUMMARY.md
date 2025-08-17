@@ -18,3 +18,4 @@
 - [常用资源代码](./cmd/code.md)
 - [常量值表](./constant/constant.md)
 - [参考资料](./url/index.md)
+- [技术词典](./dictionary/index.md)
