@@ -812,7 +812,7 @@ fn handle_input(
     back_sound: Res<BackClickSound>,
     label_map: Res<LabelMap>,
     music_controller: Query<&AudioSink, With<MyMusic>>,
-    mut commands: Commands, // 添加 mut 关键字
+    mut commands: Commands, 
 ) {
     // ESC键始终可用
     if keys.just_pressed(KeyCode::Escape) {
@@ -832,8 +832,11 @@ fn handle_input(
     // 返回上一页（始终可用）
     let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
     if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
+        game_state.can_go_back = false;
+        return;
         game_state.current_line -= 1;
         play_sound(&back_sound.0, commands.reborrow());
+        
         if game_state.current_line == 0 {
             game_state.can_go_back = false;
         }
