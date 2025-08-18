@@ -725,7 +725,7 @@ fn update_dialogue(
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
-    println!("  menu 样式读取: {:?}", stylesheet.get_font_size("menu","menu_box"));
+    // println!("  menu 样式读取: {:?}", stylesheet.get_font_size("menu","menu_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
@@ -813,6 +813,8 @@ fn handle_input(
     label_map: Res<LabelMap>,
     music_controller: Query<&AudioSink, With<MyMusic>>,
     mut commands: Commands, 
+    config: Res<MainConfig>,
+
 ) {
     // ESC键始终可用
     if keys.just_pressed(KeyCode::Escape) {
@@ -829,18 +831,27 @@ fn handle_input(
         }
     }
 
-    // 返回上一页（始终可用）
-    let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
-    if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
-        game_state.can_go_back = false;
-        return;
-        game_state.current_line -= 1;
-        play_sound(&back_sound.0, commands.reborrow());
-        
-        if game_state.current_line == 0 {
-            game_state.can_go_back = false;
-        }
+    println!("数据测试 {}",config.settings.rewind);
+// 返回上一页（根据配置决定是否可用）
+let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
+
+    for key in keys.get_just_pressed() {
+        println!("handle_input 检测到按键: {:?}", key);
     }
+if back_pressed && config.settings.rewind && game_state.can_go_back && game_state.current_line > 0 {
+
+    game_state.current_line -= 1;
+    play_sound(&back_sound.0, commands.reborrow());
+    
+    // 只有在到达第一行时才禁用回退
+    if game_state.current_line == 0 {
+        game_state.can_go_back = false;
+    }
+}else{
+    if config.settings.rewind == false {
+        game_state.can_go_back = false;
+    }
+}
 
     // 如果在分支选择状态，禁用前进操作
     if game_state.in_branch_selection {

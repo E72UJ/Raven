@@ -65,7 +65,8 @@ impl Default for MainConfig {
                 auto_save: true,
                 resolution: [1200, 660],
                 font: "fonts/GenSenMaruGothicTW-Bold.ttf".to_string(),
-                rewind: false
+                // ## 是否允许回档
+                rewind: false    
             },
             global_variables: GlobalVariables {
                 player_name: "主角".to_string(),
