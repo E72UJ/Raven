@@ -15,7 +15,6 @@ bevy_flash = { path = "crates/bevy_flash" }  # 路径指向本地crate目录
 bevy = { path = "crates/bevy", features = ["bevy_dev_tools"] }
 # bevy_svg = "0.16.0-rc1"
 rand = "0.8"
-bevy_mod_picking = "0.20"  # 适配 Bevy 0.16 的版本
 
 lyon_geom = "1.0"
 lyon_tessellation = "1.0"

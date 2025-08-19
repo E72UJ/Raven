@@ -646,6 +646,7 @@ commands.spawn((
                     ..default()
                 },
                 TextColor(stylesheet.get_text_color("styles","textbox")),
+
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
@@ -1764,3 +1765,5 @@ fn update_audio(
         }
     }
 }
+
+

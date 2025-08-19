@@ -92,7 +92,7 @@ fn setup(
     ));
 
     // 加载背景图片
-    let background_image = asset_server.load("images/1.png");
+    let background_image = asset_server.load("gui/game3.png");
 
     // 创建聚光灯材质
     let spotlight_material = materials.add(ParallaxSpotlightMaterial {

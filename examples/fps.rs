@@ -33,7 +33,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Sprite::from_image(frames[0].clone()),
        Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
             .with_scale(Vec3::new(0.5, 0.5, 1.0)), // 放大2倍
-        AnimationTimer::new(frames, 30.0),
+        AnimationTimer::new(frames,60.0),
     ));
     commands.spawn((
         Sprite::from_image(asset_server.load("images/4.png")),
