@@ -59,7 +59,7 @@ settings:
   text_speed: 50          # 文本显示速度
   auto_save: true         # 自动保存功能
   resolution: [1400, 770] # 游戏分辨率
-  font: "fonts/ark.ttf"   # 文本框内容字体
+  font: "fonts/test.ttf"   # 文本框内容字体
   logo_text: "哈哈哈"
 # 其他全局配置
 global_variables:
