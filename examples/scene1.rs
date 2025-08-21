@@ -35,6 +35,10 @@ use std::{fs::File, io::Write};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        // 添加类型注册
+        .register_type::<ComponentA>()
+        .register_type::<ComponentB>()
+        .register_type::<ResourceA>()
         .add_systems(
             Startup,
             (save_scene_system, load_scene_system, infotext_system),
@@ -42,7 +46,6 @@ fn main() {
         .add_systems(Update, (log_system, panic_on_fail))
         .run();
 }
-
 /// # Components, Resources, and Reflection
 ///
 /// Below are some simple examples of how to define your own Bevy `Component` types

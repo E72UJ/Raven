@@ -436,10 +436,10 @@ fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,came
                             ..default()
                         })
                         .with_children(|parent| {
-                            parent.spawn(Text::new("Raven engine v0.1.5"));
+                            parent.spawn(Text::new("新，伪自由之书"));
                             parent.spawn(Text::new("开发者：Furau"));
                             parent.spawn(Text::new("剧本：秋月寒"));
-                            parent.spawn(Text::new("双模架构轻量级视觉小说引擎"));
+                            parent.spawn(Text::new("封面画师：秋月寒"));
                             parent.spawn(Text::new("这是一个使用Raven开发的游戏。感谢您的游玩！"));
                         });
 
@@ -519,7 +519,7 @@ fn setup_help_scene(mut commands: Commands, asset_server: Res<AssetServer>,camer
                             parent.spawn(Text::new("回退上一句:   ←  "));
                             parent.spawn(Text::new("进入下一句: Enter"));
                             parent.spawn(Text::new("退出主界面:  ESC "));
-                            parent.spawn(Text::new("感谢您使用本引擎，任何问题可以电邮至Furau@qq.com"));
+                            // parent.spawn(Text::new("感谢您使用本引擎，任何问题可以电邮至Furau@qq.com"));
                         });
 
                     // 返回按钮
