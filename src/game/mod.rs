@@ -307,27 +307,6 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
 
 
 
-
-   // 添加测试精灵
-    // commands.spawn((
-    //     Sprite {
-    //         color: Color::srgb(1.0, 0.0, 0.0), // 红色
-    //         custom_size: Some(Vec2::new(100.0, 100.0)),
-    //         ..default()
-    //     },
-    //     Transform::default(),
-    // ));
-    // commands.spawn((
-    //     Name::new("svgload"),
-    //     FlashAnimation {
-    //         // name:"a1",
-    //         swf: asset_server.load("swf/66.swf")
-    //     },
-    //     // Transform::default().with_scale(Vec3::ZERO),
-    //     Visibility::Visible,
-    //     Transform::from_translation(Vec3::new(-400.0, 0.0, 1.0)), // 放在中心，z=1确保在前景
-
-    // ));
     let dialogues: Vec<Dialogue> = load_dialogues(&config);
     
     // 创建标签映射
