@@ -380,7 +380,7 @@ commands.spawn((
     ));
     commands.spawn((
         Name::new("spritebox"),
-        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+        // Sprite::from_color(Color::srgba(0., 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
         Transform::from_xyz(1.0, 2.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {

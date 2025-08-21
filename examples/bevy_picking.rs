@@ -28,65 +28,31 @@ fn move_sprite(
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
 
-    let len = 128.0;
+    let len = 1200.0;
     let sprite_size = Vec2::splat(len / 2.0);
 
+    // 只创建一个 sprite 实体
     commands
-        .spawn((Transform::default(), Visibility::default()))
-        .with_children(|commands| {
-            for (anchor_index, anchor) in [
-                Anchor::TopLeft,
-                Anchor::TopCenter,
-                Anchor::TopRight,
-                Anchor::CenterLeft,
-                Anchor::Center,
-                Anchor::CenterRight,
-                Anchor::BottomLeft,
-                Anchor::BottomCenter,
-                Anchor::BottomRight,
-                Anchor::Custom(Vec2::new(0.5, 0.5)),
-            ]
-            .iter()
-            .enumerate()
-            {
-                let i = (anchor_index % 3) as f32;
-                let j = (anchor_index / 3) as f32;
-
-                // Spawn black square behind sprite to show anchor point
-                commands
-                    .spawn((
-                        Sprite::from_color(Color::BLACK, sprite_size),
-                        Transform::from_xyz(i * len - len, j * len - len, -1.0),
-                        Pickable::default(),
-                    ))
-                    // 进入的时候触发红色
-                    .observe(recolor_on::<Pointer<Over>>(Color::srgb(1.0, 0.0, 0.0)))
-                    .observe(recolor_on::<Pointer<Out>>(Color::BLACK))
-                    .observe(recolor_on::<Pointer<Pressed>>(Color::srgb(1.0, 1.0, 0.0)))
-                    .observe(recolor_on::<Pointer<Released>>(Color::srgb(0.0, 1.0, 1.0)));
-
-                commands
-                    .spawn((
-                        Sprite {
-                            image: asset_server.load("branding/bevy_bird_dark.png"),
-                            custom_size: Some(sprite_size),
-                            color: Color::srgb(1.0, 0.0, 0.0),
-                            anchor: anchor.to_owned(),
-                            ..default()
-                        },
-                        // 3x3 grid of anchor examples by changing transform
-                        Transform::from_xyz(i * len - len, j * len - len, 0.0)
-                            .with_scale(Vec3::splat(1.0 + (i - 1.0) * 0.2))
-                            .with_rotation(Quat::from_rotation_z((j - 1.0) * 0.2)),
-                        Pickable::default(),
-                    ))
-                    .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 0.0)))
-                    .observe(recolor_on::<Pointer<Out>>(Color::srgb(1.0, 0.0, 0.0)))
-                    .observe(recolor_on::<Pointer<Pressed>>(Color::srgb(0.0, 0.0, 1.0)))
-                    .observe(recolor_on::<Pointer<Released>>(Color::srgb(0.0, 1.0, 0.0)));
-            }
-        });
+    .spawn((
+        Sprite {
+            image: asset_server.load("fps/6.png"),
+            // custom_size: Some(Vec2::new.0, 543.0)), // 设定精灵大小
+            // custom_size: Some(sprite_size),
+            // color: Color::srgb(1.0, 0.0, 0.0),
+            // anchor: Anchor::Center,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        Pickable::default(),
+    )
+)
+// .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)))
+.observe(on_hover_enter)
+// .observe(recolor_on::<Pointer<Out>>(Color::BLACK))
+.observe(recolor_on::<Pointer<Pressed>>(Color::srgb(1.0, 1.0, 0.0)))
+.observe(recolor_on::<Pointer<Released>>(Color::srgb(0.0, 1.0, 1.0)));
 }
+
 
 #[derive(Component)]
 struct AnimationIndices {
@@ -155,5 +121,17 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
             return;
         };
         sprite.color = color;
+    }
+}
+
+fn on_hover_enter(
+    trigger: Trigger<Pointer<Over>>, 
+    mut sprites: Query<&mut Sprite>,
+) {
+    if let Ok(mut sprite) = sprites.get_mut(trigger.target) { // 使用 trigger.target
+        sprite.color = Color::srgb(0.0, 1.0, 1.0);
+        
+        println!("鼠标悬停进入！");
+        
     }
 }

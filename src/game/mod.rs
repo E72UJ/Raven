@@ -4,6 +4,7 @@ use crate::audio;
 use crate::style;
 use crate::GameScene;
 use std::time::Duration;
+use std::fmt::Debug;
 // 基础引用
 use bevy::prelude::*;
 // 更新时间
@@ -303,6 +304,10 @@ fn load_main_config_system(mut commands: Commands) {
 fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server: Res<AssetServer>) {
     // info!("进入游戏场景");
     commands.spawn(Camera2d);
+
+
+
+
    // 添加测试精灵
     // commands.spawn((
     //     Sprite {
@@ -523,7 +528,7 @@ commands.spawn((
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
-                // 其他你需要的组件
+               
             ));
         });
     commands.spawn((
@@ -538,17 +543,6 @@ commands.spawn((
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
-    // commands.spawn((
-    //     Name::new("svgload"),
-    //     FlashAnimation {
-    //         // name:"a1",
-    //         swf: asset_server.load("swf/66.swf")
-    //     },
-    //     // Transform::default().with_scale(Vec3::ZERO),
-    //     Visibility::Visible,
-    //     Transform::from_translation(Vec3::new(-400.0, 240.0, 10.0)).with_scale(Vec3::splat(1.0)),
-
-    // ));
 
     commands.spawn((
         Name::new("spritebox"),
@@ -832,7 +826,7 @@ fn handle_input(
         }
     }
 
-    println!("数据测试 {}",config.settings.rewind);
+    // println!("数据测试 {}",config.settings.rewind);
 // 返回上一页（根据配置决定是否可用）
 let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
 
@@ -1766,4 +1760,24 @@ fn update_audio(
     }
 }
 
+// 交互区域系统
+fn on_hover_enter(
+    trigger: Trigger<Pointer<Over>>, 
+    mut sprites: Query<&mut Sprite>,
+) {
+    if let Ok(mut sprite) = sprites.get_mut(trigger.target) { // 使用 trigger.target
+        sprite.color = Color::srgb(0.0, 1.0, 1.0);
+        
+        println!("鼠标悬停进入！");
+        
+    }
+}
 
+fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
+    move |ev, mut sprites| {
+        let Ok(mut sprite) = sprites.get_mut(ev.target()) else {
+            return;
+        };
+        sprite.color = color;
+    }
+}
