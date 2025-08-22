@@ -8,6 +8,7 @@ pub struct MainConfig {
     pub assets: AssetsConfig,
     pub settings: SettingsConfig,
     pub global_variables: GlobalVariables,
+    pub variables: HashMap<String, VariableValue>, // 简化为键值对
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -43,10 +44,81 @@ pub struct GlobalVariables {
     pub affection_points: i32,
 }
 
-impl Default for MainConfig {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(untagged)]
+pub enum VariableValue {
+    Boolean(bool),
+    Number(f64),
+    String(String),
+    Array(Vec<VariableValue>),
+    Null,
+}
+
+// 为VariableValue实现Default
+impl Default for VariableValue {
     fn default() -> Self {
+        VariableValue::Null
+    }
+}
+
+// 实现一些便利方法
+impl VariableValue {
+    // 转换为布尔值
+    pub fn as_bool(&self) -> Option<bool> {
+        match self {
+            VariableValue::Boolean(b) => Some(*b),
+            VariableValue::Number(n) => Some(*n != 0.0),
+            VariableValue::String(s) => Some(!s.is_empty()),
+            _ => None,
+        }
+    }
+    
+    // 转换为数字
+    pub fn as_number(&self) -> Option<f64> {
+        match self {
+            VariableValue::Number(n) => Some(*n),
+            VariableValue::Boolean(b) => Some(if *b { 1.0 } else { 0.0 }),
+            VariableValue::String(s) => s.parse().ok(),
+            _ => None,
+        }
+    }
+    
+    // 转换为字符串
+    pub fn as_string(&self) -> Option<String> {
+        match self {
+            VariableValue::String(s) => Some(s.clone()),
+            VariableValue::Number(n) => Some(n.to_string()),
+            VariableValue::Boolean(b) => Some(b.to_string()),
+            VariableValue::Array(a) => Some(format!("{:?}", a)),
+            VariableValue::Null => Some("null".to_string()),
+        }
+    }
+    
+    // 转换为数组
+    pub fn as_array(&self) -> Option<&Vec<VariableValue>> {
+        match self {
+            VariableValue::Array(a) => Some(a),
+            _ => None,
+        }
+    }
+}
+
+
+
+
+
+impl Default for MainConfig {
+
+    fn default() -> Self {
+        // 创建一个包含默认变量的 HashMap
+        let mut default_variables = HashMap::new();
+        default_variables.insert("curtain_opened".to_string(), VariableValue::Boolean(false));
+        default_variables.insert("lamp_on".to_string(), VariableValue::Boolean(false));
+        default_variables.insert("books_read".to_string(), VariableValue::Boolean(false));
+        default_variables.insert("interactions_count".to_string(), VariableValue::Number(0.0));
+        default_variables.insert("visited_locations".to_string(), VariableValue::Array(Vec::new()));
         Self {
-            title: "Raven Engine V0.1".to_string(),
+            title: "Raven Engine".to_string(),
             assets: AssetsConfig {
                 characters: HashMap::new(),
                 backgrounds: HashMap::new(),
@@ -72,6 +144,7 @@ impl Default for MainConfig {
                 player_name: "主角".to_string(),
                 affection_points: 0,
             },
+            variables: default_variables
         }
     }
 }
@@ -121,3 +194,5 @@ pub fn load_main_config() -> MainConfig {
         }
     }
 }
+
+// 变量系统
