@@ -54,6 +54,23 @@ const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
 const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
 const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
 // 游戏插件
+
+// 阻塞系统
+#[derive(Debug, Resource)]
+struct BlockState {
+    blocked: bool,
+    blocked_line: Option<usize>,
+    unblock_condition: Option<UnblockCondition>,
+}
+
+#[derive(Debug)]
+enum UnblockCondition {
+    Click,          // 点击后解除阻塞
+    KeyPress(KeyCode), // 按下特定键后解除
+    Timer(Duration), // 定时器到期后解除
+}
+
+// 阻塞系统结束
 // 立绘组件
 #[derive(Component)]
 struct FadeAnimation {
@@ -202,6 +219,7 @@ struct GameState {
     can_go_back: bool, // 添加标志位判断是否可以返回
     jump_label: Option<String>, // 新增的跳转标签字段
     in_branch_selection: bool, // 新增：是否在分支选择状态
+    is_blocked: bool, // 是否被阻塞
 }
 // 立绘组件
 #[derive(Component)]
@@ -322,7 +340,8 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
         dialogues,
         can_go_back: false,
         jump_label: None,
-        in_branch_selection: false
+        in_branch_selection: false,
+        is_blocked: false
     });
     
     commands.insert_resource(LabelMap(label_map));
@@ -394,7 +413,8 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         dialogues: load_dialogues(&config),
         can_go_back: false, // 初始时不能返回
         jump_label: None,
-        in_branch_selection: false
+        in_branch_selection: false,
+        is_blocked:false
     });
     // println!("label_map: {:?}", label_map[1].jump);
     commands.insert_resource(LabelMap(label_map));
@@ -537,6 +557,21 @@ commands.spawn((
         Visibility::Hidden,
         RenpyDissolve::fade_in(2.5), // 使用渐入效果
     ));
+
+    // commands.spawn((
+    //     Name::new("one"),
+    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+    //     Transform::from_xyz(0.0, -24.0, 0.0),
+    //     // Sprite::sized(Vec2::new(75., 75.)),
+    //     Sprite {
+    //         color: Color::srgba(1.0, 1.0, 1.0, 0.0),
+    //         image: asset_server.load("fps/6.png"),
+    //         // custom_size: Some(Vec2 { x: 1400.0, y: 770.0 }),
+    //         ..default()
+    //     },
+    //     Visibility::Visible,
+    //     RenpyDissolve::fade_in(2.5), // 使用渐入效果
+    // ));
 //     commands.spawn((
 //     Name::new("spritebox2"),
 //     Transform::from_xyz(0.0, -24.0, 0.0),
@@ -841,7 +876,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
     for (interaction, name) in &interaction_query {
         if *interaction == Interaction::Pressed && name.as_str() == "click_area" {
             click_area_pressed = true;
-            println!("点击了透明区域");
+            println!("test 点击了透明区域");
             break;
         }
     }

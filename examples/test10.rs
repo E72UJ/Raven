@@ -157,7 +157,7 @@ fn setup_scene_b(
     
     // 创建场景特定的资源
     commands.insert_resource(SceneData {
-        background_image: asset_server.load("gui/text"),
+        background_image: asset_server.load("gui/textbox.png"),
     });
     
     // 创建相机
@@ -213,7 +213,7 @@ fn setup_scene_b(
     
     // 创建背景图片
     commands.spawn((
-        ImageNode::new(asset_server.load("gui/text")),
+        ImageNode::new(asset_server.load("gui/textbox.png")),
         Node {
             position_type: PositionType::Absolute,
             width: Val::Percent(100.0),
@@ -265,7 +265,7 @@ fn check_scene_loaded(
     scene_data: Option<Res<SceneData>>,
     current_state: Res<State<GameScene>>,
 ) {
-    println!("Checking scene loaded for {}", current_state.get());
+    // println!("Checking scene loaded for {}", current_state.get());
 }
 
 // 主函数
