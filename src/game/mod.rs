@@ -855,7 +855,7 @@ fn handle_input(
 
 ) {
 
-    println!("===========");
+    println!("===============");
 if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
     match dialogue.pause {
         Some(true) => {
