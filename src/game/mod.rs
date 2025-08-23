@@ -50,6 +50,10 @@ use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 // const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
 // const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 // const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
+
+#[derive(Component)]
+struct Option1Button;
+
 const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
 const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
 const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
@@ -209,7 +213,8 @@ struct Dialogue {
     #[serde(default)] // 如果没有jump字段，则为None
     jump: Option<String>,
     choices: Option<Vec<Choice>>, // 动态的分支选项
-
+    #[serde(default)] // 如果没有pause字段，则为None
+    pause: Option<bool>, //
 }
 // 游戏状态资源
 #[derive(Debug, Resource)]
@@ -287,6 +292,7 @@ impl Plugin for GamePlugin {
                 (
                     handle_input,
                     // debug_flash_position,
+                    
                     output_game_state,
                     update_dialogue, 
                     update_audio,
@@ -300,6 +306,7 @@ impl Plugin for GamePlugin {
                     handle_choice_buttons,
                     create_dynamic_buttons.run_if(should_create_buttons),
                     button_interaction_system,
+
                     button_image_system,
                     update_typewriter
                     // fade_animation_system
@@ -542,6 +549,26 @@ commands.spawn((
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
+// 交互按钮2
+    commands.spawn((
+
+            Button,
+            Node {
+                width: Val::Px(200.0),
+                height: Val::Px(220.0),
+                border: UiRect::all(Val::Px(2.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            Text::new("选项1"),
+            BorderColor(Color::BLACK),
+            BorderRadius::all(Val::Px(1.0)),
+            BackgroundColor(NORMAL_BUTTON),
+            GlobalZIndex(10000),
+            Option1Button
+  
+    ));
 
     commands.spawn((
         Name::new("spritebox"),
@@ -732,11 +759,13 @@ fn update_dialogue(
     // mut typewriter_query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
     
 ) {
+
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
 
     // println!("  menu 样式读取: {:?}", stylesheet.get_font_size("menu","menu_box"));
     // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
+
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         dialogue
     } else {
@@ -825,6 +854,29 @@ fn handle_input(
     config: Res<MainConfig>,
 
 ) {
+
+    println!("===========");
+if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+    match dialogue.pause {
+        Some(true) => {
+            // 处理暂停逻辑
+            println!("交互已经被阻塞");
+            game_state.is_blocked = true;
+            return;
+        }
+        Some(false) => {
+            // 不需要暂停
+            println!("这一行不需要暂停");
+        }
+        None => {
+            // pause 字段不存在或为 None，按不暂停处理
+            println!("pause 字段为 None");
+        }
+    }
+}
+
+    println!("============");
+    
     // ESC键始终可用
     if keys.just_pressed(KeyCode::Escape) {
         std::process::exit(0);
@@ -1793,5 +1845,39 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
             return;
         };
         sprite.color = color;
+    }
+}
+
+fn button_interaction_system2(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            Option<&Option1Button>,
+        ),
+        (Changed<Interaction>, With<Button>),
+    >,
+) {
+    for (interaction, mut color, mut border_color, option1_button) in &mut interaction_query {
+        match *interaction {
+            Interaction::Pressed => {
+                *color = PRESSED_BUTTON.into();
+                *border_color = Color::srgb(1.0, 0.0, 0.0).into(); // 红色
+                
+                if option1_button.is_some() {
+                    println!("选项1被点击了！");
+                    // 添加你的按钮逻辑
+                }
+            }
+            Interaction::Hovered => {
+                *color = HOVERED_BUTTON.into();
+                *border_color = Color::srgb(1.0, 1.0, 1.0).into(); // 白色
+            }
+            Interaction::None => {
+                *color = NORMAL_BUTTON.into();
+                *border_color = Color::srgb(0.0, 0.0, 0.0).into(); // 黑色
+            }
+        }
     }
 }
