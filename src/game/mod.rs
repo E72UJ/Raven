@@ -291,6 +291,7 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     handle_input,
+                    handle_input.after(handle_option1_button),
                     // debug_flash_position,
                     
                     output_game_state,
@@ -550,25 +551,36 @@ commands.spawn((
         Portrait,
     ));
 // 交互按钮2
-    commands.spawn((
-
+        commands.spawn((
             Button,
             Node {
-                width: Val::Px(200.0),
+                position_type: PositionType::Absolute,
+                top: Val::Px(300.0),
+                left: Val::Px(120.0),
+                width: Val::Px(300.0),
                 height: Val::Px(220.0),
                 border: UiRect::all(Val::Px(2.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
             },
-            Text::new("选项1"),
             BorderColor(Color::BLACK),
             BorderRadius::all(Val::Px(1.0)),
             BackgroundColor(NORMAL_BUTTON),
             GlobalZIndex(10000),
-            Option1Button
-  
-    ));
+            Option1Button,
+        )).with_children(|parent| {
+            // Text作为子节点
+            parent.spawn((
+                Text::new("选项1"),
+                TextFont {
+                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
 
     commands.spawn((
         Name::new("spritebox"),
@@ -856,25 +868,54 @@ fn handle_input(
 ) {
 
     println!("===============");
-if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-    match dialogue.pause {
-        Some(true) => {
-            // 处理暂停逻辑
-            println!("交互已经被阻塞");
-            game_state.is_blocked = true;
-            return;
+   // 检查是否被阻塞
+    let is_paused = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        match dialogue.pause {
+            Some(true) => {
+                println!("当前行需要暂停交互");
+                true
+            }
+            Some(false) => {
+                println!("这一行不需要暂停");
+                false
+            }
+            None => {
+                println!("pause 字段为 None，默认不暂停");
+                false
+            }
         }
-        Some(false) => {
-            // 不需要暂停
-            println!("这一行不需要暂停");
-        }
-        None => {
-            // pause 字段不存在或为 None，按不暂停处理
-            println!("pause 字段为 None");
+    } else {
+        false
+    };
+    
+    // 检查是否有按钮点击（可以解除阻塞）
+    let mut button_clicked = false;
+    for (interaction, name) in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            // 检查是否是选择按钮或其他可交互按钮
+            if name.as_str().starts_with("choice_") || 
+               name.as_str() == "Option1Button" ||
+               name.as_str() == "click_area" {
+                button_clicked = true;
+                println!("检测到按钮点击: {}", name.as_str());
+                break;
+            }
         }
     }
-}
-
+    
+    // 如果点击了按钮，解除阻塞
+    if button_clicked && is_paused {
+        println!("按钮点击，解除阻塞");
+        // 不设置 is_blocked，让按钮系统处理具体逻辑
+        return; // 让按钮系统处理点击
+    }
+    
+    // 如果被阻塞且没有按钮点击，阻止输入处理
+    if is_paused && !button_clicked {
+        println!("输入被阻塞，等待按钮交互");
+        return;
+    }
+    
     println!("============");
     
     // ESC键始终可用
@@ -1848,36 +1889,24 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
     }
 }
 
-fn button_interaction_system2(
-    mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            Option<&Option1Button>,
-        ),
-        (Changed<Interaction>, With<Button>),
-    >,
+fn handle_option1_button(
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<Option1Button>)>,
+    mut game_state: ResMut<GameState>,
+    click_sound: Res<ClickSound>,
+    mut commands: Commands,
 ) {
-    for (interaction, mut color, mut border_color, option1_button) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = PRESSED_BUTTON.into();
-                *border_color = Color::srgb(1.0, 0.0, 0.0).into(); // 红色
-                
-                if option1_button.is_some() {
-                    println!("选项1被点击了！");
-                    // 添加你的按钮逻辑
-                }
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-                *border_color = Color::srgb(1.0, 1.0, 1.0).into(); // 白色
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-                *border_color = Color::srgb(0.0, 0.0, 0.0).into(); // 黑色
-            }
+    for interaction in &interaction_query {
+        if *interaction == Interaction::Pressed {
+            println!("Option1按钮被点击！");
+            
+            // 播放音效
+            // play_sound(&click_sound.0, commands.reborrow());
+            
+            // 解除阻塞并前进
+            // game_state.is_blocked = false;
+            
+            // 根据你的逻辑决定如何处理
+
         }
     }
 }
