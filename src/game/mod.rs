@@ -291,7 +291,6 @@ impl Plugin for GamePlugin {
                 Update,
                 (
                     handle_input,
-                    handle_input.after(handle_option1_button),
                     // debug_flash_position,
                     
                     output_game_state,
@@ -472,7 +471,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 bottom: Val::Px(50.0),
                 left: Val::Px(0.0),  // 添加左边定位
                 position_type: PositionType::Absolute,
- 
+                
                 ..default()
             },
             BackgroundColor(Color::NONE), // 完全透明
@@ -551,36 +550,38 @@ commands.spawn((
         Portrait,
     ));
 // 交互按钮2
-        commands.spawn((
-            Button,
-            Node {
-                position_type: PositionType::Absolute,
-                top: Val::Px(300.0),
-                left: Val::Px(120.0),
-                width: Val::Px(300.0),
-                height: Val::Px(220.0),
-                border: UiRect::all(Val::Px(2.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BorderColor(Color::BLACK),
-            BorderRadius::all(Val::Px(1.0)),
-            BackgroundColor(NORMAL_BUTTON),
-            GlobalZIndex(10000),
-            Option1Button,
-        )).with_children(|parent| {
-            // Text作为子节点
-            parent.spawn((
-                Text::new("选项1"),
-                TextFont {
-                    font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::WHITE),
-            ));
-        });
+        // commands.spawn((
+        //     Button,
+        //     Node {
+        //         position_type: PositionType::Absolute,
+        //         top: Val::Px(300.0),
+        //         left: Val::Px(120.0),
+        //         width: Val::Px(300.0),
+        //         height: Val::Px(220.0),
+        //         border: UiRect::all(Val::Px(2.0)),
+        //         justify_content: JustifyContent::Center,
+        //         align_items: AlignItems::Center,
+        //         ..default()
+        //     },
+        //     Visibility::Hidden,
+        //     BorderColor(Color::BLACK),
+        //     BorderRadius::all(Val::Px(1.0)),
+        //     BackgroundColor(NORMAL_BUTTON),
+        //     GlobalZIndex(10000),
+            
+        //     Option1Button,
+        // )).with_children(|parent| {
+        //     // Text作为子节点
+        //     parent.spawn((
+        //         Text::new("选项1"),
+        //         TextFont {
+        //             font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+        //             font_size: 20.0,
+        //             ..default()
+        //         },
+        //         TextColor(Color::WHITE),
+        //     ));
+        // });
 
     commands.spawn((
         Name::new("spritebox"),
@@ -976,7 +977,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
 
     // 统一处理前进逻辑
     let should_advance = keyboard_click || mouse_click || click_area_pressed;
-    
+    let should_advance = click_area_pressed || keyboard_click;
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
         
