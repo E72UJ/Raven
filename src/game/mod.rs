@@ -292,7 +292,7 @@ impl Plugin for GamePlugin {
                 (
                     handle_input,
                     // debug_flash_position,
-                    
+                    create_dynamic_buttons.after(handle_input), // 确保输入处理在按钮创建之前
                     output_game_state,
                     update_dialogue, 
                     update_audio,
@@ -466,9 +466,9 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             // Button, // 添加这行
             ClickArea,
             Node {
-                width: Val::Px(1200.0),     // 固定宽度800像素
-                height: Val::Px(660.0),    // 固定高度600像素
-                bottom: Val::Px(50.0),
+                width: Val::Px(1400.0),     // 固定宽度800像素
+                height: Val::Px(700.0),    // 固定高度600像素
+                bottom: Val::Px(80.0),
                 left: Val::Px(0.0),  // 添加左边定位
                 position_type: PositionType::Absolute,
                 
@@ -957,8 +957,18 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
 }
 
     // 如果在分支选择状态，禁用前进操作
-    if game_state.in_branch_selection {
-        return;
+   if game_state.in_branch_selection {
+        println!("🚫 输入被阻塞 - 当前在分支选择状态");
+        println!("   当前行: {}", game_state.current_line);
+        if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+            if let Some(choices) = &dialogue.choices {
+                println!("   可用选项: {}", choices.len());
+                for (i, choice) in choices.iter().enumerate() {
+                    println!("     {}. {}", i + 1, choice.text);
+                }
+            }
+        }
+        return; // 这里就是问题所在！
     }
 
     // 检测前进输入（键盘 + 鼠标 + 点击区域）
@@ -976,7 +986,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
     }
 
     // 统一处理前进逻辑
-    let should_advance = keyboard_click || mouse_click || click_area_pressed;
+    // let should_advance = keyboard_click || mouse_click || click_area_pressed;
     let should_advance = click_area_pressed || keyboard_click;
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
@@ -1542,7 +1552,7 @@ fn handle_choice_buttons(
     for (interaction, click_handler) in &interaction_query {
         if *interaction == Interaction::Pressed {
             // play_sound(&click_sound.0, commands);
-            
+            println!("===============分支按钮被按下=");
             // 解析跳转目标
             if let Ok(goto_line) = click_handler.0.parse::<usize>() {
                 game_state.current_line = goto_line;
