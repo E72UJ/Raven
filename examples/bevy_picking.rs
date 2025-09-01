@@ -37,7 +37,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Sprite {
             image: asset_server.load("fps/6.png"),
             // custom_size: Some(Vec2::new.0, 543.0)), // 设定精灵大小
-            // custom_size: Some(sprite_size),
+            custom_size: Some(sprite_size),
             // color: Color::srgb(1.0, 0.0, 0.0),
             // anchor: Anchor::Center,
             ..default()
@@ -46,7 +46,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         Pickable::default(),
     )
 )
-// .observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)))
+.observe(recolor_on::<Pointer<Over>>(Color::srgb(0.0, 1.0, 1.0)))
 .observe(on_hover_enter)
 // .observe(recolor_on::<Pointer<Out>>(Color::BLACK))
 .observe(recolor_on::<Pointer<Pressed>>(Color::srgb(1.0, 1.0, 0.0)))
