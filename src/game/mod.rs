@@ -1,47 +1,46 @@
 // game/mod.rs
-use bevy::prelude::*;
-use crate::audio;
-use crate::style;
-use crate::GameScene;
-use std::time::Duration;
-use std::fmt::Debug;
-// 基础引用
-use bevy::prelude::*;
-// 更新时间
-use bevy::text::cosmic_text::ttf_parser::Style;
-// use bevy_svg::prelude::*;
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::env;
-use std::fs;
-use bevy::audio::{ AudioPlugin, PlaybackSettings};
-use std::path::PathBuf;
-// 正确的导入方式
-use bevy::{
-    color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
-    winit::WinitSettings,
-    ui::FocusPolicy, // 添加这行
+use std::{
+    collections::HashMap,
+    env,
+    fmt::Debug,
+    fs,
+    path::PathBuf,
+    time::Duration,
 };
-use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
-use bevy::{audio::Volume, math::ops, prelude::*};
+
+// 第三方 crate 导入
+use bevy::{
+    audio::{AudioPlugin, PlaybackSettings, Volume},
+    color::palettes::basic::*,
+    ecs::relationship::RelatedSpawnerCommands,
+    prelude::*,
+    ui::FocusPolicy,
+    winit::WinitSettings,
+};
+use bevy_flash::{
+    assets::FlashAnimationSwfData,
+    bundle::FlashAnimation,
+    FlashPlugin,
+};
+use serde::Deserialize;
+
+// 当前 crate 模块导入
+use crate::{
+    audio::{play_audio, play_audio_loop, play_audio_with_volume},
+    config::{load_main_config, MainConfig},
+    style::{StylePlugin, UiStyleSheet},
+    transition::{fade_in, fade_out},
+    GameScene,
+};
+
+// 外部 crate 导入（使用项目名）
+use Raven::{
+    dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition},
+    typewriter::{TypewriterPlugin, TypewriterText, typewriter_system},
+};
+
+// 常量定义
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
-
-
-// 包调用
-use crate::config::{MainConfig, load_main_config};
-
-use crate::transition::{fade_in, fade_out};
-
-use Raven::dissolve::{RenpyDissolve, RenpyDissolvePlugin, RenpyDissolveTransition};
-
-use Raven::typewriter;
-use typewriter::{TypewriterText, typewriter_system, TypewriterPlugin};
-
-use crate::style::UiStyleSheet;
-use crate::style::StylePlugin;
-
-use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
-
 // 包调用结束
 
 // 引用
@@ -1829,36 +1828,3 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
     }
 }
 
-fn button_interaction_system2(
-    mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            Option<&Option1Button>,
-        ),
-        (Changed<Interaction>, With<Button>),
-    >,
-) {
-    for (interaction, mut color, mut border_color, option1_button) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                *color = PRESSED_BUTTON.into();
-                *border_color = Color::srgb(1.0, 0.0, 0.0).into(); // 红色
-                
-                if option1_button.is_some() {
-                    println!("选项1被点击了！");
-                    // 添加你的按钮逻辑
-                }
-            }
-            Interaction::Hovered => {
-                *color = HOVERED_BUTTON.into();
-                *border_color = Color::srgb(1.0, 1.0, 1.0).into(); // 白色
-            }
-            Interaction::None => {
-                *color = NORMAL_BUTTON.into();
-                *border_color = Color::srgb(0.0, 0.0, 0.0).into(); // 黑色
-            }
-        }
-    }
-}
