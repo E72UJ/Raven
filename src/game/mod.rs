@@ -259,7 +259,6 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         if !app.is_plugin_added::<FlashPlugin>() {
             app.add_plugins(FlashPlugin);
-
         }
         app
             // 只在启动时加载资源，不创建UI
@@ -473,7 +472,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
  
                 ..default()
             },
-            BackgroundColor(Color::NONE), // 完全透明
+            BackgroundColor(Color::BLACK), // 完全透明
             GlobalZIndex(9999),
             Interaction::default(), 
             // Button,
@@ -915,7 +914,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
 
     // 统一处理前进逻辑
     let should_advance = keyboard_click || mouse_click || click_area_pressed;
-    
+    let should_advance = keyboard_click  || click_area_pressed;
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
         

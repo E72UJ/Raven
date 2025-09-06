@@ -3,3 +3,8 @@
 ```
 stylesheet: Res<UiStyleSheet>,
 ```
+
+### 交互区域
+```
+click_area
+```
