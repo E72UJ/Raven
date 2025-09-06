@@ -1,4 +1,4 @@
-# 常用资源代码
+# 常用资源代码关键词
 ### 样式资源
 ```
 stylesheet: Res<UiStyleSheet>,
