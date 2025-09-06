@@ -472,7 +472,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
  
                 ..default()
             },
-            BackgroundColor(Color::BLACK), // 完全透明
+            BackgroundColor(Color::NONE), // 完全透明
             GlobalZIndex(9999),
             Interaction::default(), 
             // Button,

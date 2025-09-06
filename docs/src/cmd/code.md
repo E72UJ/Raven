@@ -8,3 +8,9 @@ stylesheet: Res<UiStyleSheet>,
 ```
 click_area
 ```
+
+### 颜色值设定
+
+```
+BackgroundColor(Color::NONE)
+```
