@@ -552,16 +552,16 @@ commands.spawn((
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        Transform::from_xyz(0.0, -24.0, 0.0),
+        Transform::from_xyz(0.0, 10.0, 0.0),
         // Sprite::sized(Vec2::new(75., 75.)),
         Sprite {
             color: Color::srgba(1.0, 1.0, 1.0, 0.0),
             image: asset_server.load("characters/protagonist/default.png"),
-            // custom_size: Some(Vec2 { x: 1400.0, y: 770.0 }),
+            // custom_size: Some(Vec2 { x: 350.0, y: 540.0 }),
             ..default()
         },
         Visibility::Hidden,
-        RenpyDissolve::fade_in(2.5), // 使用渐入效果
+        RenpyDissolve::fade_in(0.0), // 使用渐入效果
     ));
 
     // commands.spawn((
