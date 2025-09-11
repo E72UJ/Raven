@@ -1,3 +1,4 @@
+use bevy::log;
 // src/menu/mod.rs
 use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
@@ -5,7 +6,7 @@ use crate::audio::AudioPlugin;
 use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop,stop_all_audio,stop_all_audio_system};
 use crate::audio::{AudioManager}; 
 use crate::style::{UiStyleSheet, load_styles}; 
-
+use crate::config::MainConfig;
 #[derive(Component)]
 pub struct BackButton;
 
@@ -170,7 +171,7 @@ fn setup(mut commands: Commands) {
     
 }
 
-fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesheet: ResMut<UiStyleSheet>,) {
+fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesheet: ResMut<UiStyleSheet>,config: Res<MainConfig>) {
     // 样式渲染
 
     let logo_font_size = stylesheet.get_font_size("menu", "logo");
@@ -178,6 +179,8 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
     let logo_position = stylesheet.get_text_color("menu", "logo");
     let menu_game_main_size = stylesheet.get_size("menu", "menu_game_menu");
     println!("测试内容{:?}", menu_game_main_size);  
+    // logo 内容赋值
+    let logo_text = &config.settings.logo_text;
     // stylesheet.debug_print_groups();
     // 样式渲染结束
     commands.spawn((
@@ -208,7 +211,7 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                 },
                 children![
                     (
-                        Text::new("fakefreedom"),
+                        Text::new(logo_text),  // 或者 None),
 
                         TextFont {
                             font: assets.load("fonts/ark.ttf"),
@@ -227,18 +230,18 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                         },
                         GlobalZIndex(99)
                     ),
-                    // create_button(&assets, "开始游戏", StartGameButton),
+                    create_button(&assets, "开始游戏", StartGameButton),
                     // create_button(&assets, "载入存档", LoadGameButton),
                     // create_button(&assets, "设置", SettingsButton),
-                    // create_button(&assets, "关于", AboutButton),
-                    // create_button(&assets, "帮助", HelpButton),
-                    // create_button(&assets, "退出", ExitGameButton),
-                    create_button(&assets, "Start Game", StartGameButton),
-                    // create_button(&assets, "Load Game", LoadGameButton),
-                    // create_button(&assets, "Settings", SettingsButton),
-                    create_button(&assets, "About", AboutButton),
-                    create_button(&assets, "Help", HelpButton),
-                    create_button(&assets, "Exit", ExitGameButton),
+                    create_button(&assets, "关于", AboutButton),
+                    create_button(&assets, "帮助", HelpButton),
+                    create_button(&assets, "退出", ExitGameButton),
+                    // create_button(&assets, "Start Game", StartGameButton),
+                    // // create_button(&assets, "Load Game", LoadGameButton),
+                    // // create_button(&assets, "Settings", SettingsButton),
+                    // create_button(&assets, "About", AboutButton),
+                    // create_button(&assets, "Help", HelpButton),
+                    // create_button(&assets, "Exit", ExitGameButton),
                 ],
             ),
             // 右侧图片区域
@@ -439,7 +442,7 @@ fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,came
                             parent.spawn(Text::new("新，伪自由之书"));
                             parent.spawn(Text::new("开发者：Furau"));
                             parent.spawn(Text::new("剧本：秋月寒"));
-                            parent.spawn(Text::new("封面画师：秋月寒"));
+                            parent.spawn(Text::new("封面画师：鸮笑笑"));
                             parent.spawn(Text::new("这是一个使用Raven开发的游戏。感谢您的游玩！"));
                         });
 

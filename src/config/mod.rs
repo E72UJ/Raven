@@ -35,7 +35,8 @@ pub struct SettingsConfig {
     pub auto_save: bool,
     pub resolution: [u32; 2],
     pub font: String,
-    pub rewind: bool
+    pub rewind: bool,
+    pub logo_text: String,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -136,6 +137,7 @@ impl Default for MainConfig {
                 text_speed: 50,
                 auto_save: true,
                 resolution: [1200, 660],
+                logo_text: "Raven logo".to_string(),
                 font: "fonts/GenSenMaruGothicTW-Bold.ttf".to_string(),
                 // ## 是否允许回档
                 rewind: false    

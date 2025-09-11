@@ -6,6 +6,7 @@ pub use menu::MenuPlugin;
 pub mod style;
 pub mod audio; 
 pub mod typewriter;
+pub mod config;
 // 导出 GameScene，让外部可以使用
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 pub enum GameScene {

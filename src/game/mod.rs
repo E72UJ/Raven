@@ -914,7 +914,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
 
     // 统一处理前进逻辑
     let should_advance = keyboard_click || mouse_click || click_area_pressed;
-    let should_advance = keyboard_click  || click_area_pressed;
+    // let should_advance = keyboard_click  || click_area_pressed;
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
         
@@ -1151,7 +1151,7 @@ fn load_swf_assets(
             FlashAnimation {
                 swf: swf_handle
             },
-            Transform::from_translation(Vec3::new(200.0,100.0, 0.0)).with_scale(Vec3::splat(1.0)),
+            Transform::from_translation(Vec3::new(200.0,100.0, 0.0)).with_scale(Vec3::splat(2.0)),
             Visibility::Hidden,
         ));
         
