@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use bevy::window::{WindowMode, MonitorSelection};
-use bevy::sprite::Anchor; // 添加这行导入 Anchor
+use bevy::sprite::Anchor;
 
 #[derive(Component)]
-struct LeftAnchoredSprite; // 标记需要左对齐的精灵
+struct LeftAnchoredSprite;
 
-// 添加按钮类型枚举
 #[derive(Component, Clone)]
 enum MenuButton {
     StartGame,
@@ -15,16 +14,17 @@ enum MenuButton {
     Exit,
 }
 
-// 添加按钮标记组件
 #[derive(Component)]
 struct LeftAnchoredButton;
 
-// 添加按钮文本标记组件，用于字体切换
 #[derive(Component)]
 struct MenuButtonText;
 
 #[derive(Component)]
 struct FullscreenButton;
+
+#[derive(Component)]
+struct GameMenuOverlay;
 
 fn main() {
     App::new()
@@ -33,10 +33,10 @@ fn main() {
         .add_systems(Update, (
             handle_input, 
             handle_button_click, 
-            handle_menu_button_clicks, // 添加菜单按钮处理
+            handle_menu_button_clicks,
+            update_camera_scale,
+            update_left_anchored_elements,
         ))
-        .add_systems(Update, update_camera_scale)
-        .add_systems(Update, update_left_anchored_elements) // 重命名系统
         .run();
 }
 
@@ -50,13 +50,26 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // 背景图片
     commands.spawn((
         Sprite {
-            image: asset_server.load("gui/main_menu.png"), // 替换为你的图片路径
+            image: asset_server.load("gui/main_menu.png"),
             custom_size: Some(Vec2::new(1920.0, 1080.0)),
-            anchor: Anchor::CenterLeft, // 锚点设为左中心
+            anchor: Anchor::CenterLeft,
             ..default()
         },
-        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.0)), // 向左偏移半个屏幕宽度
-        LeftAnchoredSprite, // 添加标记
+        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.0)),
+        LeftAnchoredSprite,
+    ));
+    
+    // 创建游戏菜单叠加层（默认隐藏）
+    commands.spawn((
+        Sprite {
+            image: asset_server.load("gui/overlay/game_menu.png"),
+            custom_size: Some(Vec2::new(1920.0, 1080.0)),
+            anchor: Anchor::CenterLeft,
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(-1080.0, 0.0, 0.1)),
+        Visibility::Hidden, // 默认隐藏
+        GameMenuOverlay, // 添加标记组件
     ));
     
     // UI 根节点
@@ -87,8 +100,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             button.spawn(Text::new("esc"));
         });
         
-        // 说明文字
-        
         // 菜单按钮配置
         let button_texts = [
             ("开始游戏", MenuButton::StartGame),
@@ -101,13 +112,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // 按钮样式配置
         let button_width = 200.0;
         let button_height = 60.0;
-        let button_spacing = 70.0; // 按钮间距
-        let start_y = 150.0; // 第一个按钮的Y位置
-        let buttons_x = -100.0; // 按钮的X位置（在左侧图片上）
+        let button_spacing = 50.0;
+        let start_y = 150.0;
+        let buttons_x = -100.0;
         
         // 创建菜单按钮
         for (i, (text, button_type)) in button_texts.iter().enumerate() {
-            let y_position = 540.0 - start_y + (i as f32 * button_spacing); // 转换为UI坐标系
+            let y_position = 540.0 - start_y + (i as f32 * button_spacing);
             
             parent.spawn((
                 Button,
@@ -121,20 +132,20 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     align_items: AlignItems::Center,
                     ..default()
                 },
-                BackgroundColor(Color::NONE), // 取消背景
-                BorderColor(Color::NONE), // 取消边框
+                BackgroundColor(Color::NONE),
+                BorderColor(Color::NONE),
                 button_type.clone(),
-                LeftAnchoredButton, // 标记这是需要跟随左侧图片的按钮
+                LeftAnchoredButton,
             )).with_children(|button| {
                 button.spawn((
                     Text::new(*text),
                     TextFont {
-                        font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"), // 默认字体
+                        font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
                         font_size: 26.0,
                         ..default()
                     },
                     TextColor(Color::WHITE),
-                    MenuButtonText, // 添加文本标记
+                    MenuButtonText,
                 ));
             });
         }
@@ -166,8 +177,17 @@ fn update_left_anchored_elements(
             sprite_transform.translation.x = -effective_window_width / 2.0;
         }
         
-        // 更新按钮位置
-        let buttons_x_offset = 210.0; // 按钮相对于屏幕左边缘的偏移
+        // 更新按钮位置 - 针对1920宽度时左移按钮组
+        let base_buttons_x_offset = 210.0; // 基础偏移量
+        
+        // 当窗口宽度为1920时，额外向左移动
+        let extra_left_offset = if window.width() >= 1920.0 {
+            10.0 // 向左额外移动150像素，你可以调整这个值
+        } else {
+            0.0
+        };
+        
+        let buttons_x_offset = base_buttons_x_offset - extra_left_offset;
         let ui_buttons_x = (960.0 - effective_window_width / 2.0) + buttons_x_offset;
         
         for mut button_node in &mut button_query {
@@ -203,48 +223,47 @@ fn handle_button_click(
 fn handle_menu_button_clicks(
     mut button_query: Query<(&Interaction, &MenuButton, &Children), (Changed<Interaction>, With<LeftAnchoredButton>)>,
     mut text_query: Query<&mut TextFont, With<MenuButtonText>>,
+    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>, // 添加叠加层查询
     asset_server: Res<AssetServer>,
 ) {
     for (interaction, button_type, children) in &mut button_query {
-        // 找到按钮的文本子节点
-        for child in children.iter() {  // 移除 & 符号
-            if let Ok(mut text_font) = text_query.get_mut(child) {  // 移除 * 解引用
+        for child in children.iter() {
+            if let Ok(mut text_font) = text_query.get_mut(child) {
                 match *interaction {
                     Interaction::Pressed => {
-                        // 点击时使用Regular字体
                         text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
                         
-                        // 处理按钮点击事件
                         match button_type {
                             MenuButton::StartGame => {
                                 println!("开始游戏被点击！");
-                                // 在这里添加开始游戏的逻辑
                             },
                             MenuButton::About => {
                                 println!("关于被点击！");
-                                // 在这里添加显示关于信息的逻辑
+                                // 切换叠加层状态
+                                if let Ok(mut visibility) = overlay_query.get_single_mut() {
+                                    *visibility = match *visibility {
+                                        Visibility::Visible => Visibility::Hidden,
+                                        Visibility::Hidden => Visibility::Visible,
+                                        Visibility::Inherited => Visibility::Visible, // 如果是继承状态，显示叠加层
+                                    };
+                                }
                             },
                             MenuButton::Settings => {
                                 println!("设置被点击！");
-                                // 在这里添加打开设置菜单的逻辑
                             },
                             MenuButton::Help => {
                                 println!("帮助被点击！");
-                                // 在这里添加显示帮助的逻辑
                             },
                             MenuButton::Exit => {
                                 println!("退出被点击！");
-                                // 在这里添加退出游戏的逻辑
                                 std::process::exit(0);
                             },
                         }
                     },
                     Interaction::Hovered => {
-                        // 悬停时切换到Regular字体
                         text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
                     },
                     Interaction::None => {
-                        // 默认状态使用Light字体
                         text_font.font = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
                     },
                 }
@@ -254,7 +273,7 @@ fn handle_menu_button_clicks(
 }
 
 fn toggle_fullscreen(windows: &mut Query<&mut Window>) {
-    if let Ok(mut window) = windows.single_mut() {  // 使用 single_mut 而不是 get_single_mut
+    if let Ok(mut window) = windows.single_mut() {
         window.mode = match window.mode {
             WindowMode::Windowed => {
                 println!("切换到无边框全屏");
@@ -273,8 +292,8 @@ fn update_camera_scale(
     windows: Query<&Window>,
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
-    if let (Ok(window), Ok(mut camera_transform)) = (windows.get_single(), camera_query.single_mut()) {  // 使用 single_mut
-        let base_width = 1280.0;  // 改为你图片的实际宽度
+    if let (Ok(window), Ok(mut camera_transform)) = (windows.get_single(), camera_query.single_mut()) {
+        let base_width = 1920.0;
         let base_height = 1080.0;
         let window_aspect = window.width() / window.height();
         let target_aspect = base_width / base_height;
