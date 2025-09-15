@@ -5,6 +5,9 @@ use bevy::sprite::Anchor;
 #[derive(Component)]
 struct LeftAnchoredSprite;
 
+#[derive(Component)]
+struct MainMenuBackground;
+
 #[derive(Component, Clone)]
 enum MenuButton {
     StartGame,
@@ -26,6 +29,27 @@ struct FullscreenButton;
 #[derive(Component)]
 struct GameMenuOverlay;
 
+#[derive(Component)]
+struct AboutTitle;
+
+#[derive(Component)]
+struct AboutContent;
+
+#[derive(Component)]
+struct HelpTitle;
+
+#[derive(Component)]
+struct HelpContent;
+
+#[derive(Component)]
+struct RightAnchoredContent;
+
+#[derive(Component)]
+struct SettingsTitle;
+
+#[derive(Component)]
+struct SettingsContent;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -36,6 +60,7 @@ fn main() {
             handle_menu_button_clicks,
             update_camera_scale,
             update_left_anchored_elements,
+            update_right_anchored_elements,
         ))
         .run();
 }
@@ -57,6 +82,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         Transform::from_translation(Vec3::new(-960.0, 0.0, 0.0)),
         LeftAnchoredSprite,
+        MainMenuBackground,
     ));
     
     // 创建游戏菜单叠加层（默认隐藏）
@@ -67,20 +93,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             anchor: Anchor::CenterLeft,
             ..default()
         },
-        Transform::from_translation(Vec3::new(-1080.0, 0.0, 0.1)),
-        Visibility::Hidden, // 默认隐藏
-        GameMenuOverlay, // 添加标记组件
+        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.1)),
+        Visibility::Hidden,
+        GameMenuOverlay,
     ));
     
     // UI 根节点
-    commands.spawn((
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            position_type: PositionType::Absolute,
-            ..default()
-        },
-    )).with_children(|parent| {
+    commands.spawn(Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        position_type: PositionType::Absolute,
+        ..default()
+    }).with_children(|parent| {
         // 全屏按钮
         parent.spawn((
             Button,
@@ -100,6 +124,359 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             button.spawn(Text::new("esc"));
         });
         
+        // 关于标题（默认隐藏）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(20.0),
+                left: Val::Px(20.0),
+                ..default()
+            },
+            Visibility::Hidden,
+            AboutTitle,
+        )).with_children(|title_parent| {
+            title_parent.spawn((
+                Text::new("关于"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 50.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+        
+        // 帮助标题（默认隐藏）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(20.0),
+                left: Val::Px(20.0),
+                ..default()
+            },
+            Visibility::Hidden,
+            HelpTitle,
+        )).with_children(|title_parent| {
+            title_parent.spawn((
+                Text::new("帮助"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 50.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+        
+        // 设置标题（默认隐藏）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(20.0),
+                left: Val::Px(20.0),
+                ..default()
+            },
+            Visibility::Hidden,
+            SettingsTitle,
+        )).with_children(|title_parent| {
+            title_parent.spawn((
+                Text::new("设置"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 50.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+        
+        // 关于页面内容（默认隐藏，右侧显示）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(100.0),
+                right: Val::Px(200.0),
+                width: Val::Px(500.0),
+                height: Val::Px(600.0),
+                padding: UiRect::all(Val::Px(20.0)),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+            Visibility::Hidden,
+            AboutContent,
+            RightAnchoredContent,
+        )).with_children(|about_parent| {
+            about_parent.spawn((
+                Text::new("我的视觉小说游戏"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 28.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 0.8)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
+            
+            about_parent.spawn((
+                Text::new("版本 1.0.0"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(15.0)),
+                    ..default()
+                },
+            ));
+        });
+        
+        // 帮助页面内容（默认隐藏，右侧显示）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(100.0),
+                right: Val::Px(200.0),
+                width: Val::Px(500.0),
+                height: Val::Px(600.0),
+                padding: UiRect::all(Val::Px(20.0)),
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::FlexStart,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+            BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+            Visibility::Hidden,
+            HelpContent,
+            RightAnchoredContent,
+        )).with_children(|help_parent| {
+            help_parent.spawn((
+                Text::new("这是一个简单的帮助页面"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 28.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 1.0, 0.8)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
+            
+            help_parent.spawn((
+                Text::new("您可以在这里找到一些使用提示"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                Node {
+                    margin: UiRect::bottom(Val::Px(15.0)),
+                    ..default()
+                },
+            ));
+        });
+        
+        // 设置页面内容（默认隐藏）
+        parent.spawn((
+            Node {
+                position_type: PositionType::Absolute,
+                top: Val::Px(60.0),
+                left: Val::Px(300.0),
+                width: Val::Px(900.0),
+                height: Val::Px(600.0),
+                padding: UiRect::all(Val::Px(30.0)),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            },
+            Visibility::Hidden,
+            SettingsContent,
+        )).with_children(|settings_parent| {
+            // 左侧列 - 显示选项
+            settings_parent.spawn(Node {
+                width: Val::Px(300.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            }).with_children(|left_column| {
+                // 显示部分标题
+                left_column.spawn((
+                    Text::new("显示"),
+                    TextFont {
+                        font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                ));
+                
+                // 显示选项
+                let display_options = ["窗口", "全屏"];
+                for option in display_options {
+                    left_column.spawn((
+                        Text::new(option),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(10.0)),
+                            ..default()
+                        },
+                    ));
+                }
+            });
+            
+            // 中间列 - 快进选项
+            settings_parent.spawn(Node {
+                width: Val::Px(300.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            }).with_children(|middle_column| {
+                // 快进部分标题
+                middle_column.spawn((
+                    Text::new("快进"),
+                    TextFont {
+                        font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                ));
+                
+                let skip_options = ["未读文本", "选项后继续", "忽略转场"];
+                for option in skip_options {
+                    middle_column.spawn((
+                        Text::new(option),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(10.0)),
+                            ..default()
+                        },
+                    ));
+                }
+            });
+            
+            // 右侧列 - 语言选项
+            settings_parent.spawn(Node {
+                width: Val::Px(400.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                ..default()
+            }).with_children(|right_column| {
+                // 语言部分标题
+                right_column.spawn((
+                    Text::new("语言"),
+                    TextFont {
+                        font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                        font_size: 32.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                ));
+                
+                // 创建两列语言选项
+                right_column.spawn(Node {
+                    width: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    ..default()
+                }).with_children(|lang_row| {
+                    // 左语言列
+                    lang_row.spawn(Node {
+                        width: Val::Percent(48.0),
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::FlexStart,
+                        ..default()
+                    }).with_children(|lang_left| {
+                        let left_languages = ["English", "Český", "Dansk", "Français", "Italiano", "Bahasa Melayu", "Русский"];
+                        for lang in left_languages {
+                            lang_left.spawn((
+                                Text::new(lang),
+                                TextFont {
+                                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                                    font_size: 20.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.8, 0.8, 0.8)),
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(8.0)),
+                                    ..default()
+                                },
+                            ));
+                        }
+                    });
+                    
+                    // 右语言列
+                    lang_row.spawn(Node {
+                        width: Val::Percent(48.0),
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::FlexStart,
+                        ..default()
+                    }).with_children(|lang_right| {
+                        let right_languages = ["Español", "Українська", "日本語", "한국어", "简体中文", "繁體中文"];
+                        for lang in right_languages.iter() {
+                            let color = if lang == &"简体中文" {
+                                Color::srgb(1.0, 0.6, 0.2) // 橙色高亮
+                            } else {
+                                Color::srgb(0.8, 0.8, 0.8)
+                            };
+                            
+                            lang_right.spawn((
+                                Text::new(*lang),
+                                TextFont {
+                                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                                    font_size: 20.0,
+                                    ..default()
+                                },
+                                TextColor(color),
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(8.0)),
+                                    ..default()
+                                },
+                            ));
+                        }
+                    });
+                });
+            });
+        });
+        
         // 菜单按钮配置
         let button_texts = [
             ("开始游戏", MenuButton::StartGame),
@@ -109,14 +486,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ("退出", MenuButton::Exit),
         ];
         
-        // 按钮样式配置
         let button_width = 200.0;
         let button_height = 60.0;
         let button_spacing = 50.0;
-        let start_y = 150.0;
-        let buttons_x = -100.0;
+        let start_y = 300.0;
+        let buttons_x = 20.0;
         
-        // 创建菜单按钮
         for (i, (text, button_type)) in button_texts.iter().enumerate() {
             let y_position = 540.0 - start_y + (i as f32 * button_spacing);
             
@@ -152,6 +527,134 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     });
 }
 
+fn handle_menu_button_clicks(
+    mut button_query: Query<(&Interaction, &MenuButton, &Children), (Changed<Interaction>, With<LeftAnchoredButton>)>,
+    mut text_query: Query<&mut TextFont, With<MenuButtonText>>,
+    mut visibility_query: ParamSet<(
+        Query<&mut Visibility, With<GameMenuOverlay>>,
+        Query<&mut Visibility, With<MainMenuBackground>>,
+        Query<&mut Visibility, With<AboutTitle>>,
+        Query<&mut Visibility, With<AboutContent>>,
+        Query<&mut Visibility, With<HelpTitle>>,
+        Query<&mut Visibility, With<HelpContent>>,
+        Query<&mut Visibility, With<SettingsTitle>>,
+        Query<&mut Visibility, With<SettingsContent>>,
+    )>,
+    asset_server: Res<AssetServer>,
+) {
+    for (interaction, button_type, children) in &mut button_query {
+        for child in children.iter() {
+            if let Ok(mut text_font) = text_query.get_mut(child) {
+                match *interaction {
+                    Interaction::Pressed => {
+                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
+                        
+                        match button_type {
+                            MenuButton::StartGame => {
+                                println!("开始游戏被点击！");
+                            },
+                            MenuButton::About => {
+                                println!("关于被点击！");
+                                // 显示关于页面，隐藏其他页面
+                                if let Ok(mut overlay) = visibility_query.p0().single_mut() {
+                                    *overlay = Visibility::Visible;
+                                }
+                                if let Ok(mut main_menu) = visibility_query.p1().single_mut() {
+                                    *main_menu = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_title) = visibility_query.p2().single_mut() {
+                                    *about_title = Visibility::Visible;
+                                }
+                                if let Ok(mut about_content) = visibility_query.p3().single_mut() {
+                                    *about_content = Visibility::Visible;
+                                }
+                                if let Ok(mut help_title) = visibility_query.p4().single_mut() {
+                                    *help_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_content) = visibility_query.p5().single_mut() {
+                                    *help_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_title) = visibility_query.p6().single_mut() {
+                                    *settings_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_content) = visibility_query.p7().single_mut() {
+                                    *settings_content = Visibility::Hidden;
+                                }
+                            },
+                            MenuButton::Settings => {
+                                println!("设置被点击！");
+                                // 显示设置页面，隐藏其他页面
+                                if let Ok(mut overlay) = visibility_query.p0().single_mut() {
+                                    *overlay = Visibility::Visible;
+                                }
+                                if let Ok(mut main_menu) = visibility_query.p1().single_mut() {
+                                    *main_menu = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_title) = visibility_query.p2().single_mut() {
+                                    *about_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_content) = visibility_query.p3().single_mut() {
+                                    *about_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_title) = visibility_query.p4().single_mut() {
+                                    *help_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_content) = visibility_query.p5().single_mut() {
+                                    *help_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_title) = visibility_query.p6().single_mut() {
+                                    *settings_title = Visibility::Visible;
+                                }
+                                if let Ok(mut settings_content) = visibility_query.p7().single_mut() {
+                                    *settings_content = Visibility::Visible;
+                                }
+                            },
+                            MenuButton::Help => {
+                                println!("帮助被点击！");
+                                // 显示帮助页面，隐藏其他页面
+                                if let Ok(mut overlay) = visibility_query.p0().single_mut() {
+                                    *overlay = Visibility::Visible;
+                                }
+                                if let Ok(mut main_menu) = visibility_query.p1().single_mut() {
+                                    *main_menu = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_title) = visibility_query.p2().single_mut() {
+                                    *about_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_content) = visibility_query.p3().single_mut() {
+                                    *about_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_title) = visibility_query.p4().single_mut() {
+                                    *help_title = Visibility::Visible;
+                                }
+                                if let Ok(mut help_content) = visibility_query.p5().single_mut() {
+                                    *help_content = Visibility::Visible;
+                                }
+                                if let Ok(mut settings_title) = visibility_query.p6().single_mut() {
+                                    *settings_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_content) = visibility_query.p7().single_mut() {
+                                    *settings_content = Visibility::Hidden;
+                                }
+                            },
+                            MenuButton::Exit => {
+                                println!("退出被点击！");
+                                std::process::exit(0);
+                            },
+                        }
+                    },
+                    Interaction::Hovered => {
+                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
+                    },
+                    Interaction::None => {
+                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
+                    },
+                }
+            }
+        }
+    }
+}
+
 fn handle_input(
     mut windows: Query<&mut Window>,
     keyboard: Res<ButtonInput<KeyCode>>,
@@ -161,7 +664,6 @@ fn handle_input(
     }
 }
 
-// 更新左侧锚定元素的位置（包括按钮和图片）
 fn update_left_anchored_elements(
     mut sprite_query: Query<&mut Transform, (With<LeftAnchoredSprite>, Without<Camera2d>)>,
     mut button_query: Query<&mut Node, With<LeftAnchoredButton>>,
@@ -172,17 +674,13 @@ fn update_left_anchored_elements(
         let camera_scale = camera_transform.scale.x;
         let effective_window_width = window.width() * camera_scale;
         
-        // 更新背景图片位置
         for mut sprite_transform in &mut sprite_query {
             sprite_transform.translation.x = -effective_window_width / 2.0;
         }
         
-        // 更新按钮位置 - 针对1920宽度时左移按钮组
-        let base_buttons_x_offset = 210.0; // 基础偏移量
-        
-        // 当窗口宽度为1920时，额外向左移动
+        let base_buttons_x_offset = 0.0;
         let extra_left_offset = if window.width() >= 1920.0 {
-            10.0 // 向左额外移动150像素，你可以调整这个值
+            10.0
         } else {
             0.0
         };
@@ -192,6 +690,31 @@ fn update_left_anchored_elements(
         
         for mut button_node in &mut button_query {
             button_node.left = Val::Px(ui_buttons_x);
+        }
+    }
+}
+
+fn update_right_anchored_elements(
+    mut content_query: Query<&mut Node, With<RightAnchoredContent>>,
+    windows: Query<&Window>,
+    camera_query: Query<&Transform, With<Camera2d>>,
+) {
+    if let (Ok(window), Ok(camera_transform)) = (windows.get_single(), camera_query.get_single()) {
+        let camera_scale = camera_transform.scale.x;
+        let effective_window_width = window.width() * camera_scale;
+        
+        let base_right_offset = 200.0;
+        let extra_right_offset = if window.width() >= 1920.0 {
+            20.0
+        } else {
+            0.0
+        };
+        
+        let right_offset = base_right_offset + extra_right_offset;
+        let ui_right_x = (effective_window_width / 2.0 - 960.0) + right_offset;
+        
+        for mut content_node in &mut content_query {
+            content_node.right = Val::Px(ui_right_x);
         }
     }
 }
@@ -214,59 +737,6 @@ fn handle_button_click(
             }
             Interaction::None => {
                 *color = BackgroundColor(Color::srgb(0.2, 0.2, 0.8));
-            }
-        }
-    }
-}
-
-// 处理菜单按钮点击和hover效果
-fn handle_menu_button_clicks(
-    mut button_query: Query<(&Interaction, &MenuButton, &Children), (Changed<Interaction>, With<LeftAnchoredButton>)>,
-    mut text_query: Query<&mut TextFont, With<MenuButtonText>>,
-    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>, // 添加叠加层查询
-    asset_server: Res<AssetServer>,
-) {
-    for (interaction, button_type, children) in &mut button_query {
-        for child in children.iter() {
-            if let Ok(mut text_font) = text_query.get_mut(child) {
-                match *interaction {
-                    Interaction::Pressed => {
-                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
-                        
-                        match button_type {
-                            MenuButton::StartGame => {
-                                println!("开始游戏被点击！");
-                            },
-                            MenuButton::About => {
-                                println!("关于被点击！");
-                                // 切换叠加层状态
-                                if let Ok(mut visibility) = overlay_query.get_single_mut() {
-                                    *visibility = match *visibility {
-                                        Visibility::Visible => Visibility::Hidden,
-                                        Visibility::Hidden => Visibility::Visible,
-                                        Visibility::Inherited => Visibility::Visible, // 如果是继承状态，显示叠加层
-                                    };
-                                }
-                            },
-                            MenuButton::Settings => {
-                                println!("设置被点击！");
-                            },
-                            MenuButton::Help => {
-                                println!("帮助被点击！");
-                            },
-                            MenuButton::Exit => {
-                                println!("退出被点击！");
-                                std::process::exit(0);
-                            },
-                        }
-                    },
-                    Interaction::Hovered => {
-                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Regular.ttf");
-                    },
-                    Interaction::None => {
-                        text_font.font = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
-                    },
-                }
             }
         }
     }
