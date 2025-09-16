@@ -1,5 +1,4 @@
 use bevy::log;
-// src/menu/mod.rs
 use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
 use crate::GameScene;
 use crate::audio::AudioPlugin;
