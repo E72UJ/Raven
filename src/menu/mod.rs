@@ -23,14 +23,10 @@ impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
            
-            // .insert_resource(WinitSettings::desktop_app())
-            // 必须设置 `InputFocus` 以便辅助功能识别按钮
             .init_resource::<InputFocus>()
             .init_resource::<UiStyleSheet>()
             // .init_state::<GameScene>()
             .add_systems(Startup, setup)
-            // .add_systems(Startup, my_system)
-            // .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
             .add_systems(Update, button_system.run_if(in_state(GameScene::LoadButton)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Settings)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
