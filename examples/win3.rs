@@ -8,6 +8,10 @@ struct LeftAnchoredSprite;
 #[derive(Component)]
 struct MainMenuBackground;
 
+
+#[derive(Component)]
+struct BackButton;
+
 #[derive(Component, Clone)]
 enum MenuButton {
     StartGame,
@@ -15,6 +19,7 @@ enum MenuButton {
     Settings,
     Help,
     Exit,
+    Back,
 }
 
 #[derive(Component)]
@@ -80,9 +85,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             anchor: Anchor::CenterLeft,
             ..default()
         },
-        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.0)),
+        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.2)),
         LeftAnchoredSprite,
         MainMenuBackground,
+    ));
+    commands.spawn((
+        Sprite {
+            image: asset_server.load("gui/game3.png"),
+            custom_size: Some(Vec2::new(1920.0, 1080.0)),
+            anchor: Anchor::CenterLeft,
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.1)),
     ));
     
     // 创建游戏菜单叠加层（默认隐藏）
@@ -93,11 +107,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             anchor: Anchor::CenterLeft,
             ..default()
         },
-        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.1)),
+        Transform::from_translation(Vec3::new(-960.0, 0.0, 0.3)),
         Visibility::Hidden,
         GameMenuOverlay,
     ));
-    
+    // 添加返回按钮
+
     // UI 根节点
     commands.spawn(Node {
         width: Val::Percent(100.0),
@@ -195,7 +210,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             Node {
                 position_type: PositionType::Absolute,
                 top: Val::Px(100.0),
-                right: Val::Px(200.0),
+                left: Val::Px(300.0),
                 width: Val::Px(500.0),
                 height: Val::Px(600.0),
                 padding: UiRect::all(Val::Px(20.0)),
@@ -225,7 +240,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ));
             
             about_parent.spawn((
-                Text::new("版本 1.0.0"),
+                Text::new("版本 0.1.3"),
                 TextFont {
                     font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
                     font_size: 20.0,
@@ -237,6 +252,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..default()
                 },
             ));
+            about_parent.spawn((
+                Text::new("本案例使用 Raven engine 制作"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                    font_size: 20.0,
+                    ..default()
+                },
+                Node {
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    ..default()
+                },
+            ));
         });
         
         // 帮助页面内容（默认隐藏，右侧显示）
@@ -244,7 +271,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             Node {
                 position_type: PositionType::Absolute,
                 top: Val::Px(100.0),
-                right: Val::Px(200.0),
+                left: Val::Px(300.0),
                 width: Val::Px(500.0),
                 height: Val::Px(600.0),
                 padding: UiRect::all(Val::Px(20.0)),
@@ -260,7 +287,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             RightAnchoredContent,
         )).with_children(|help_parent| {
             help_parent.spawn((
-                Text::new("这是一个简单的帮助页面"),
+                Text::new("帮助"),
                 TextFont {
                     font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                     font_size: 28.0,
@@ -273,19 +300,122 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
             ));
             
-            help_parent.spawn((
-                Text::new("您可以在这里找到一些使用提示"),
-                TextFont {
-                    font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.8, 1.0)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(15.0)),
-                    ..default()
-                },
-            ));
+        // 添加游戏操作说明
+        help_parent.spawn((
+            Text::new("游戏操作说明："),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.9, 0.9, 1.0)),
+            Node {
+                margin: UiRect::bottom(Val::Px(10.0)),
+                ..default()
+            },
+        ));
+
+        // 回退上一句操作
+        help_parent.spawn((
+            Text::new("回退上一句：        ←"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.7, 0.7, 0.9)),
+            Node {
+                margin: UiRect::bottom(Val::Px(8.0)),
+                ..default()
+            },
+        ));
+
+        // 进入下一句操作
+        help_parent.spawn((
+            Text::new("进入下一句：        Enter"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.7, 0.7, 0.9)),
+            Node {
+                margin: UiRect::bottom(Val::Px(8.0)),
+                ..default()
+            },
+        ));
+
+        // 退出主界面操作
+        help_parent.spawn((
+            Text::new("退出主界面：        ESC"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.7, 0.7, 0.9)),
+            Node {
+                margin: UiRect::bottom(Val::Px(15.0)),
+                ..default()
+            },
+        ));
+
+        // 添加额外的帮助信息
+        help_parent.spawn((
+            Text::new("游戏提示："),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                font_size: 18.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.9, 0.9, 1.0)),
+            Node {
+                margin: UiRect::bottom(Val::Px(10.0)),
+                ..default()
+            },
+        ));
+
+        help_parent.spawn((
+            Text::new("• 使用方向键可以控制游戏进度"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.6, 0.6, 0.8)),
+            Node {
+                margin: UiRect::bottom(Val::Px(5.0)),
+                ..default()
+            },
+        ));
+
+        help_parent.spawn((
+            Text::new("• 按 ESC 键可以随时返回主菜单"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.6, 0.6, 0.8)),
+            Node {
+                margin: UiRect::bottom(Val::Px(5.0)),
+                ..default()
+            },
+        ));
+
+        help_parent.spawn((
+            Text::new("• 支持键盘快捷键操作"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(Color::srgb(0.6, 0.6, 0.8)),
+            Node {
+                margin: UiRect::bottom(Val::Px(10.0)),
+                ..default()
+            },
+        ));
         });
         
         // 设置页面内容（默认隐藏）
@@ -329,7 +459,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ));
                 
                 // 显示选项
-                let display_options = ["窗口", "全屏"];
+                let display_options = ["窗口", "固定大小"];
                 for option in display_options {
                     left_column.spawn((
                         Text::new(option),
@@ -483,7 +613,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             ("关于", MenuButton::About),
             ("设置", MenuButton::Settings),
             ("帮助", MenuButton::Help),
+            ("返回", MenuButton::Back),
             ("退出", MenuButton::Exit),
+
         ];
         
         let button_width = 200.0;
@@ -491,10 +623,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         let button_spacing = 50.0;
         let start_y = 300.0;
         let buttons_x = 20.0;
-        
+
         for (i, (text, button_type)) in button_texts.iter().enumerate() {
             let y_position = 540.0 - start_y + (i as f32 * button_spacing);
-            
+        // 根据按钮类型确定初始可见性
+            let initial_visibility = match button_type {
+                MenuButton::Back => Visibility::Visible,  // 返回按钮默认隐藏
+                _ => Visibility::Visible,                // 其他按钮默认可见
+            };
             parent.spawn((
                 Button,
                 Node {
@@ -510,6 +646,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 BackgroundColor(Color::NONE),
                 BorderColor(Color::NONE),
                 button_type.clone(),
+                initial_visibility,  // 设置初始可见性
                 LeftAnchoredButton,
             )).with_children(|button| {
                 button.spawn((
@@ -552,6 +689,7 @@ fn handle_menu_button_clicks(
                         match button_type {
                             MenuButton::StartGame => {
                                 println!("开始游戏被点击！");
+                              // 显示返回按钮
                             },
                             MenuButton::About => {
                                 println!("关于被点击！");
@@ -640,6 +778,37 @@ fn handle_menu_button_clicks(
                             MenuButton::Exit => {
                                 println!("退出被点击！");
                                 std::process::exit(0);
+                            },
+                            MenuButton::Back => {
+                                println!("返回被点击！回到主菜单");
+                                // 隐藏遮罩
+                                if let Ok(mut overlay) = visibility_query.p0().single_mut() {
+                                    *overlay = Visibility::Hidden;
+                                }
+                                // 显示主菜单背景
+                                if let Ok(mut main_menu) = visibility_query.p1().single_mut() {
+                                    *main_menu = Visibility::Visible;
+                                }
+                                // 隐藏所有页面内容
+                                if let Ok(mut about_title) = visibility_query.p2().single_mut() {
+                                    *about_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut about_content) = visibility_query.p3().single_mut() {
+                                    *about_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_title) = visibility_query.p4().single_mut() {
+                                    *help_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut help_content) = visibility_query.p5().single_mut() {
+                                    *help_content = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_title) = visibility_query.p6().single_mut() {
+                                    *settings_title = Visibility::Hidden;
+                                }
+                                if let Ok(mut settings_content) = visibility_query.p7().single_mut() {
+                                    *settings_content = Visibility::Hidden;
+                                }
+                            
                             },
                         }
                     },
