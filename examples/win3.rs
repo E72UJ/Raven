@@ -101,6 +101,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     
     // 创建游戏菜单叠加层（默认隐藏）
     commands.spawn((
+        Name::new("game_menu_overlay"),
         Sprite {
             image: asset_server.load("gui/overlay/game_menu.png"),
             custom_size: Some(Vec2::new(1920.0, 1080.0)),

@@ -6,6 +6,8 @@ use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop,stop_all_
 use crate::audio::{AudioManager}; 
 use crate::style::{UiStyleSheet, load_styles}; 
 use crate::config::MainConfig;
+use bevy::window::WindowResized;
+use bevy::window::{Window, PrimaryWindow};
 #[derive(Component)]
 pub struct BackButton;
 
@@ -16,13 +18,9 @@ struct SettingsEntity;
 struct MenuCamera;
 
 pub struct MenuPlugin;
-
-
-
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
         app
-           
             .init_resource::<InputFocus>()
             .init_resource::<UiStyleSheet>()
             // .init_state::<GameScene>()
@@ -32,11 +30,12 @@ impl Plugin for MenuPlugin {
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
+            .add_systems(Update, update_background_size_on_resize)
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             
             .add_systems(OnEnter(GameScene::LoadButton), setup_load_scene)     // 调用载入场景设置函数
             .add_systems(OnExit(GameScene::LoadButton), cleanup_load_scene)    // 调用载入场景清理函数
-            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene,my_system).chain())
+            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
             .add_systems(OnExit(GameScene::Menu), (cleanup_all_menu,on_exit_game_state,stop_all_audio_system))
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_settings_overlay)
@@ -130,7 +129,6 @@ fn button_system(
                 // 根据按钮类型处理场景切换
                 if start_game.is_some() {
                     next_state.set(GameScene::Game);
-                    println!("状态改变了");
                 } else if settings.is_some() {
                     next_state.set(GameScene::Settings);
                 } else if about.is_some() {
@@ -166,18 +164,69 @@ fn setup(mut commands: Commands) {
     
 }
 
-fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesheet: ResMut<UiStyleSheet>,config: Res<MainConfig>) {
+fn setup_menu_scene(
+    mut commands: Commands, 
+    assets: Res<AssetServer>,
+    mut stylesheet: ResMut<UiStyleSheet>,
+    config: Res<MainConfig>
+) {
     // 样式渲染
-
     let logo_font_size = stylesheet.get_font_size("menu", "logo");
     let logo_text_color = stylesheet.get_text_color("menu", "logo");
-    let logo_position = stylesheet.get_text_color("menu", "logo");
+    let logo_position = stylesheet.get_position("menu", "logo"); // 修正：应该是position而不是text_color
     let menu_game_main_size = stylesheet.get_size("menu", "menu_game_menu");
-    println!("测试内容{:?}", menu_game_main_size);  
-    // logo 内容赋值
     let logo_text = &config.settings.logo_text;
-    // stylesheet.debug_print_groups();
-    // 样式渲染结束
+
+    // ===== Sprite背景层 =====
+    // 主背景图片
+    commands.spawn((
+        Sprite {
+            image: assets.load("gui/main_menu.png"),
+            custom_size: Some(Vec2::new(1280.0, 720.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(-0.0, 0.0, 0.1)),
+        SceneEntity,
+    ));
+
+    // 游戏内容背景图片
+    commands.spawn((
+        Sprite {
+            image: assets.load("gui/game3.png"),
+            custom_size: Some(Vec2::new(1280.0, 720.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 0.2)),
+        SceneEntity,
+    ));
+
+    // 菜单覆盖层（可选显示/隐藏）
+    commands.spawn((
+        Name::new("menu_overlay"),
+        Sprite {
+            image: assets.load("gui/overlay_main_menu.png"),
+            custom_size: Some(Vec2::new(1280.0, 720.0)),
+            // color: Color::hsl(0.6, 2.0, 1.0), // 应用颜色滤镜
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 0.25)),
+        SceneEntity,
+    ));
+
+    // 游戏菜单叠加层（默认隐藏，用于游戏内菜单）
+    commands.spawn((
+        Name::new("game_menu_overlay"),
+        Sprite {
+            image: assets.load("gui/overlay/game_menu.png"),
+            custom_size: Some(Vec2::new(1920.0, 1080.0)),
+            ..default()
+        },
+        Transform::from_translation(Vec3::new(0.0, 0.0, 0.3)),
+        Visibility::Hidden,
+        SceneEntity,
+    ));
+
+    // ===== UI菜单层 =====
     commands.spawn((
         SceneEntity,
         Node {
@@ -186,6 +235,8 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
             flex_direction: FlexDirection::Row,
             ..default()
         },
+        // 使用高Z-index确保UI在Sprite之上
+        GlobalZIndex(100),
         children![
             // 左侧菜单区域
             (
@@ -205,9 +256,9 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                     ..default()
                 },
                 children![
+                    // Logo文本
                     (
-                        Text::new(logo_text),  // 或者 None),
-
+                        Text::new(logo_text),
                         TextFont {
                             font: assets.load("fonts/ark.ttf"),
                             font_size: logo_font_size,
@@ -215,71 +266,35 @@ fn setup_menu_scene(mut commands: Commands, assets: Res<AssetServer>,mut stylesh
                         },
                         TextColor(logo_text_color),
                         Node {
-                        margin: UiRect {
-                            left: Val::Px(-20.0),
-                            right: Val::Px(0.0),
-                            top: Val::Px(0.0),
-                            bottom: Val::Px(0.0),
-                        },
+                            margin: UiRect {
+                                left: Val::Px(-20.0),
+                                right: Val::Px(0.0),
+                                top: Val::Px(0.0),
+                                bottom: Val::Px(0.0),
+                            },
                             ..default()
                         },
-                        GlobalZIndex(99)
+                        GlobalZIndex(110), // 比菜单容器更高
                     ),
+                    // 菜单按钮
                     create_button(&assets, "开始游戏", StartGameButton),
-                    // create_button(&assets, "载入存档", LoadGameButton),
-                    // create_button(&assets, "设置", SettingsButton),
                     create_button(&assets, "关于", AboutButton),
                     create_button(&assets, "帮助", HelpButton),
                     create_button(&assets, "退出", ExitGameButton),
-                    // create_button(&assets, "Start Game", StartGameButton),
-                    // // create_button(&assets, "Load Game", LoadGameButton),
-                    // // create_button(&assets, "Settings", SettingsButton),
-                    // create_button(&assets, "About", AboutButton),
-                    // create_button(&assets, "Help", HelpButton),
-                    // create_button(&assets, "Exit", ExitGameButton),
                 ],
             ),
-            // 右侧图片区域
+            // 右侧透明区域（用于保持布局但不遮挡背景）
             (
                 Node {
-                    // height: Val::Percent(100.0),
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(1280.0),
-                    height: Val::Px(720.0),
-                    left: Val::Px(00.0), // 向左偏移50像素，可以调整数值
-                    top: Val::Px(-2.0), // 向左偏移50像素，可以调整数值    
-                    // justify_content: JustifyContent::Center,
-                    // align_items: AlignItems::Center,
+                    width: Val::Percent(50.0),
+                    height: Val::Percent(100.0),
+                    // 不设置背景，保持透明
                     ..default()
                 },
-    children![(
-        // 下层sprite，可以自定义位置和大小
-        ImageNode::new(assets.load("gui/game3.png")),
-        Node {
-            position_type: PositionType::Absolute,
-            // left: Val::Px(100.0),       // X位置
-            // top: Val::Px(50.0),         // Y位置
-            width: Val::Px(1400.0),      // 宽度
-            // height: menu_game_main_size[1],
-            // height: Val::Px(300.0),     // 高度
-            ..default()
-        },
-        GlobalZIndex(-1),
-    ), (
-        // 原有的overlay图片
-        ImageNode::new(assets.load("gui/overlay_main_menu.png")).with_color(Color::hsl(0.6, 2.0, 1.0)),
-        Node {
-            // width: Val::Px(1157.0),
-            // height: Val::Px(650.0),
-            ..default()
-        },
-        GlobalZIndex(0),
-    )],
             ),
         ],
     ));
 }
-
 fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Component) -> impl Bundle {
     
     (
@@ -385,9 +400,7 @@ fn cleanup_settings_overlay(
     }
 }
 fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
-    println!("{}","执行关于界面");
     if camera_query.is_empty() {
-        // 如果没有,则创建一个新的菜单摄像机
         commands.spawn((Camera2d, MenuCamera));
     }
 
@@ -1261,16 +1274,16 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
         });
 }
 // 音频系统
-fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // 播放一次性音效
-    // play_audio(&mut commands, &asset_server, "audio/two.ogg");
+// fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
+//     // 播放一次性音效
+//     // play_audio(&mut commands, &asset_server, "audio/two.ogg");
 
-    // // 播放音效并设置音量
-    // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
+//     // // 播放音效并设置音量
+//     // play_audio_with_volume(&mut commands, &asset_server, "audio/explosion.ogg", 0.7);
 
-    // // 循环播放背景音乐
-    play_audio_loop(&mut commands, &asset_server, "audio/5gzps-9i0ey.ogg", 1.0);
-}
+//     // // 循环播放背景音乐
+//     play_audio_loop(&mut commands, &asset_server, "audio/5gzps-9i0ey.ogg", 1.0);
+// }
 fn on_exit_game_state(
     mut commands: Commands,
     mut audio_manager: ResMut<AudioManager>,
@@ -1278,4 +1291,35 @@ fn on_exit_game_state(
     // 退出游戏状态时停止所有音频
     println!("{}","推出所有饮品");
     stop_all_audio(&mut commands, &mut audio_manager);
+}
+
+// 放大系统
+fn update_background_size_on_resize(
+    mut resize_events: EventReader<WindowResized>,
+    mut sprite_query: Query<&mut Sprite>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    // 只在窗口大小改变时执行
+    for _event in resize_events.read() {
+        if let Ok(window) = window_query.get_single() {
+            for mut sprite in sprite_query.iter_mut() {
+                let image_aspect = 2560.0 / 1440.0; // 原图比例
+                let window_aspect = window.width() / window.height(); // 窗口比例
+                
+                let (new_width, new_height) = if window_aspect > image_aspect {
+                    // 窗口更宽，以高度为准缩放
+                    let height = window.height();
+                    let width = height * image_aspect;
+                    (width, height)
+                } else {
+                    // 窗口更窄，以宽度为准缩放
+                    let width = window.width();
+                    let height = width / image_aspect;
+                    (width, height)
+                };
+                
+                sprite.custom_size = Some(Vec2::new(new_width, new_height));
+            }
+        }
+    }
 }
