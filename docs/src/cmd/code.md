@@ -14,3 +14,15 @@ click_area
 ```
 BackgroundColor(Color::NONE)
 ```
+
+# 函数
+
+### 载入页面布局函数
+```
+setup_about_scene()
+```
+
+### 卸载关于页面函数
+```
+cleanup_all_about()
+```

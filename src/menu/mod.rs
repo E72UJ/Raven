@@ -17,6 +17,13 @@ struct SettingsEntity;
 #[derive(Component)]
 struct MenuCamera;
 
+// 在你的组件定义中添加
+#[derive(Component)]
+struct GameMenuOverlay;
+
+#[derive(Component)]
+struct MainMenuBackground;
+
 pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
@@ -168,12 +175,19 @@ fn setup_menu_scene(
     mut commands: Commands, 
     assets: Res<AssetServer>,
     mut stylesheet: ResMut<UiStyleSheet>,
-    config: Res<MainConfig>
+    config: Res<MainConfig>,
+    scene_query: Query<Entity, With<SceneEntity>>,
 ) {
+    // 检查是否已经创建了场景实体
+    if !scene_query.is_empty() {
+        println!("场景实体已经存在，跳过创建");
+        return;
+    }
+
     // 样式渲染
     let logo_font_size = stylesheet.get_font_size("menu", "logo");
     let logo_text_color = stylesheet.get_text_color("menu", "logo");
-    let logo_position = stylesheet.get_position("menu", "logo"); // 修正：应该是position而不是text_color
+    let logo_position = stylesheet.get_position("menu", "logo");
     let menu_game_main_size = stylesheet.get_size("menu", "menu_game_menu");
     let logo_text = &config.settings.logo_text;
 
@@ -224,6 +238,7 @@ fn setup_menu_scene(
         Transform::from_translation(Vec3::new(0.0, 0.0, 0.3)),
         Visibility::Hidden,
         SceneEntity,
+        GameMenuOverlay
     ));
 
     // ===== UI菜单层 =====
@@ -361,23 +376,31 @@ fn cleanup_all_menu(
 ) {
     println!("进入游戏，清理所有菜单元素");
     
-    for entity in &scene_query {
-        commands.entity(entity).despawn();
-    }
-    for entity in &camera_query {
-        commands.entity(entity).despawn();
-    }
+    // for entity in &scene_query {
+    //     commands.entity(entity).despawn();
+    // }
+    // for entity in &camera_query {
+    //     commands.entity(entity).despawn();
+    // }
+
 }
 fn cleanup_all_about(
     mut commands: Commands,
     about_ui_query: Query<Entity, With<AboutUI>>,
+    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>,
 ) {
     println!("清理关于界面");
     
+    // 清理关于界面的UI实体
     for entity in &about_ui_query {
         commands.entity(entity).despawn_recursive();
     }
-
+    
+    // 隐藏游戏菜单覆盖层
+    if let Ok(mut visibility) = overlay_query.get_single_mut() {
+        *visibility = Visibility::Hidden;
+        println!("已隐藏游戏菜单覆盖层");
+    }
 }
 fn cleanup_load_scene(
     mut commands: Commands,
@@ -399,82 +422,175 @@ fn cleanup_settings_overlay(
         commands.entity(entity).despawn_recursive();
     }
 }
-fn setup_about_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
+fn setup_about_scene(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>,
+    camera_query: Query<Entity, With<MenuCamera>>,
+    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>,
+    mut main_menu_query: Query<&mut Visibility, (With<MainMenuBackground>, Without<GameMenuOverlay>)>,
+) {
+    println!("{}","执行关于界面");
+    // 确保摄像机存在
     if camera_query.is_empty() {
         commands.spawn((Camera2d, MenuCamera));
     }
 
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column,
+    // 显示游戏菜单遮罩层
+    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+        *overlay_visibility = Visibility::Visible;
+    }
+
+    // // 隐藏主菜单背景（可选，根据你的设计需求）
+    // if let Ok(mut main_menu_visibility) = main_menu_query.get_single_mut() {
+    //     *main_menu_visibility = Visibility::Hidden;
+    // }
+
+    // 创建关于页面标题（左上角）
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(20.0),
+            left: Val::Px(20.0),
+            ..default()
+        },
+        AboutUI, // 用于清理
+    )).with_children(|title_parent| {
+        title_parent.spawn((
+            Text::new("关于"),
+            TextFont {
+                font: asset_server.load("fonts/ark.ttf"),
+                font_size: 50.0,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-            AboutUI,
-        ))
-        .with_children(|parent| {
-            // 关于窗口
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(600.0),
-                        height: Val::Px(500.0),
-                        flex_direction: FlexDirection::Column,
-                        justify_content: JustifyContent::SpaceBetween,
-                        align_items: AlignItems::Center,
-                        padding: UiRect::all(Val::Px(30.0)),
-                        border: UiRect::all(Val::Px(2.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
-                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
-                ))
-                .with_children(|parent| {
-                    // 标题
-                    parent.spawn(Text::new("关于"));
+            TextColor(Color::WHITE),
+        ));
+    });
 
-                    // 游戏信息容器
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(15.0),
+    // 创建关于页面内容（右侧显示）
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(100.0),
+            right: Val::Px(200.0), // 右侧锚定
+            width: Val::Px(600.0),
+            height: Val::Px(500.0),
+            padding: UiRect::all(Val::Px(30.0)),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::Center,
+            border: UiRect::all(Val::Px(2.0)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.85)), // 半透明黑色背景
+        BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+        AboutUI, // 用于清理
+    )).with_children(|content_parent| {
+        // 游戏标题
+        content_parent.spawn((
+            Text::new("新，伪自由之书"),
+            TextFont {
+                font: asset_server.load("fonts/ark.ttf"),
+                font_size: 32.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 1.0, 0.8)),
+            Node {
+                margin: UiRect::bottom(Val::Px(20.0)),
+                ..default()
+            },
+        ));
+
+        // 游戏信息容器
+        content_parent.spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            row_gap: Val::Px(15.0),
+            flex_grow: 1.0,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }).with_children(|info_parent| {
+            let info_items = [
+                ("版本", "0.1.3"),
+                ("开发者", "Furau"),
+                ("剧本", "秋月寒"),
+                ("封面画师", "鸮笑笑"),
+                ("引擎", "Raven Engine"),
+            ];
+
+            for (label, value) in info_items {
+                info_parent.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(10.0),
+                    width: Val::Percent(100.0),
+                    justify_content: JustifyContent::SpaceBetween,
+                    ..default()
+                }).with_children(|row_parent| {
+                    row_parent.spawn((
+                        Text::new(format!("{}:", label)),
+                        TextFont {
+                            font: asset_server.load("fonts/ark.ttf"),
+                            font_size: 18.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn(Text::new("新，伪自由之书"));
-                            parent.spawn(Text::new("开发者：Furau"));
-                            parent.spawn(Text::new("剧本：秋月寒"));
-                            parent.spawn(Text::new("封面画师：鸮笑笑"));
-                            parent.spawn(Text::new("这是一个使用Raven开发的游戏。感谢您的游玩！"));
-                        });
-
-                    // 返回按钮
-                    parent
-                        .spawn((
-                            Button,
-                            Node {
-                                width: Val::Px(120.0),
-                                height: Val::Px(45.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                border: UiRect::all(Val::Px(2.0)),
-                                ..default()
-                            },
-                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
-                            BackButton,
-                        ))
-                        .with_children(|parent| {
-                            parent.spawn(Text::new("返回"));
-                        });
+                        },
+                        TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                    ));
+                    
+                    row_parent.spawn((
+                        Text::new(value),
+                        TextFont {
+                            font: asset_server.load("fonts/ark.ttf"),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
                 });
+            }
+
+            // 感谢信息
+            info_parent.spawn((
+                Text::new("感谢您的游玩！"),
+                TextFont {
+                    font: asset_server.load("fonts/ark.ttf"),
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.7, 0.7, 0.9)),
+                Node {
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
         });
+
+        // 返回按钮
+        content_parent.spawn((
+            Button,
+            Node {
+                width: Val::Px(120.0),
+                height: Val::Px(45.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                border: UiRect::all(Val::Px(2.0)),
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+            BackButton,
+        )).with_children(|button_parent| {
+            button_parent.spawn((
+                Text::new("返回"),
+                TextFont {
+                    font: asset_server.load("fonts/ark.ttf"),
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+    });
 }
 
 fn setup_help_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
