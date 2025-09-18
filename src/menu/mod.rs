@@ -8,6 +8,7 @@ use crate::style::{UiStyleSheet, load_styles};
 use crate::config::MainConfig;
 use bevy::window::WindowResized;
 use bevy::window::{Window, PrimaryWindow};
+use bevy::text::TextColor; 
 #[derive(Component)]
 pub struct BackButton;
 
@@ -23,6 +24,7 @@ struct GameMenuOverlay;
 
 #[derive(Component)]
 struct MainMenuBackground;
+
 
 pub struct MenuPlugin;
 impl Plugin for MenuPlugin {
@@ -43,13 +45,16 @@ impl Plugin for MenuPlugin {
             .add_systems(OnEnter(GameScene::LoadButton), setup_load_scene)     // 调用载入场景设置函数
             .add_systems(OnExit(GameScene::LoadButton), cleanup_load_scene)    // 调用载入场景清理函数
             .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
-            .add_systems(OnExit(GameScene::Menu), (cleanup_all_menu,on_exit_game_state,stop_all_audio_system))
+            .add_systems(OnExit(GameScene::Menu), (on_exit_game_state,stop_all_audio_system))
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_settings_overlay)
             .add_systems(OnEnter(GameScene::About), setup_about_scene)
             .add_systems(OnExit(GameScene::About), cleanup_all_about)
             .add_systems(OnEnter(GameScene::Help), setup_help_scene)
-            .add_systems(OnExit(GameScene::Help), cleanup_all_about);
+            .add_systems(OnExit(GameScene::Help), cleanup_all_about)
+
+        // 主游戏状态
+            .add_systems(OnEnter(GameScene::Game), cleanup_for_game);
 
     }
 }
@@ -98,9 +103,19 @@ pub struct BackToMenuButton;
 const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
 const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.2);
 const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.3);
+
+// 按钮交互颜色
+const NORMAL_BUTTON_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
+const HOVERED_BUTTON_COLOR: Color = Color::srgba(1.0, 1.0, 1.0, 0.2);
+const PRESSED_BUTTON_COLOR: Color = Color::srgba(1.0, 1.0, 1.0, 0.3);
+
+const NORMAL_BUTTON_FONT: &str = "fonts/SarasaFixedHC-Light.ttf";
+const HOVERED_BUTTON_FONT: &str = "fonts/SarasaFixedHC-Regular.ttf";
+
 fn button_system(
     mut input_focus: ResMut<InputFocus>,
     mut next_state: ResMut<NextState<GameScene>>,
+    asset_server: Res<AssetServer>, // 添加 AssetServer 资源
     mut interaction_query: Query<
         (
             Entity,
@@ -119,49 +134,59 @@ fn button_system(
         ),
         Changed<Interaction>,
     >,
-    mut text_query: Query<&mut Text>,
+    // mut text_query: Query<&mut Text>,
+    mut text_query: Query<&mut TextFont>,
+    
 ) {
     for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about,back,help,load) in
         &mut interaction_query
     {
         // let mut text = text_query.get_mut(children[0]).unwrap();
 
-        match *interaction {
-            Interaction::Pressed => {
-                input_focus.set(entity);
-                *border_color = BorderColor(Color::WHITE.with_alpha(0.8));
-                *color = PRESSED_BUTTON.into();
-                button.set_changed();
+       if let Ok(mut text_font) = text_query.get_mut(children[0]) { // ← if let 开始
+            match *interaction {
+                Interaction::Pressed => {
+                    input_focus.set(entity);
+                    // *border_color = BorderColor(Color::WHITE.with_alpha(0.8));
+                    // *color = PRESSED_BUTTON_COLOR.into();
+                    // *color = BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)); // 强制设置为透明
+                    // *color = BackgroundColor(Color::srgb(84.0/255.0, 186.0/255.0, 113.0/255.0)); // 按下时的绿色背景
+                    button.set_changed();
+                    text_font.font = asset_server.load(HOVERED_BUTTON_FONT);
 
-                // 根据按钮类型处理场景切换
-                if start_game.is_some() {
-                    next_state.set(GameScene::Game);
-                } else if settings.is_some() {
-                    next_state.set(GameScene::Settings);
-                } else if about.is_some() {
-                    next_state.set(GameScene::About);
-                } else if back.is_some() {  
-                    next_state.set(GameScene::Menu);
-                } else if help.is_some() {
-                    next_state.set(GameScene::Help);
-                } else if load.is_some() {  
-                    next_state.set(GameScene::LoadButton);
-                } else if exit_game.is_some() {
-                    std::process::exit(0);
+                    // 根据按钮类型处理场景切换
+                    if start_game.is_some() {
+                        next_state.set(GameScene::Game);
+                    } else if settings.is_some() {
+                        next_state.set(GameScene::Settings);
+                    } else if about.is_some() {
+                        next_state.set(GameScene::About);
+                    } else if back.is_some() {  
+                        next_state.set(GameScene::Menu);
+                    } else if help.is_some() {
+                        next_state.set(GameScene::Help);
+                    } else if load.is_some() {  
+                        next_state.set(GameScene::LoadButton);
+                    } else if exit_game.is_some() {
+                        std::process::exit(0);
+                    }
+                }
+                Interaction::Hovered => {
+                    input_focus.set(entity);
+                    *border_color = BorderColor(Color::WHITE.with_alpha(0.6));
+                    // *color = HOVERED_BUTTON_COLOR.into();
+                    button.set_changed();
+                    text_font.font = asset_server.load(HOVERED_BUTTON_FONT);
+                }
+                Interaction::None => {
+                    input_focus.clear();
+                    *border_color = BorderColor(Color::WHITE);
+                    // *text_color = TextColor(Color::BLACK); // 正常状态黑色文字
+                    // *color = NORMAL_BUTTON_COLOR.into();
+                    text_font.font = asset_server.load(NORMAL_BUTTON_FONT);
                 }
             }
-            Interaction::Hovered => {
-                input_focus.set(entity);
-                *border_color = BorderColor(Color::WHITE.with_alpha(0.6));
-                *color = HOVERED_BUTTON.into();
-                button.set_changed();
-            }
-            Interaction::None => {
-                input_focus.clear();
-                *border_color = BorderColor(Color::WHITE);
-                *color = NORMAL_BUTTON.into();
-            }
-        }
+        } // ← if let 结束花括号 (这里！)
     }
 }
 
@@ -275,14 +300,14 @@ fn setup_menu_scene(
                     (
                         Text::new(logo_text),
                         TextFont {
-                            font: assets.load("fonts/ark.ttf"),
+                            font: assets.load("fonts/SarasaFixedHC-Regular.ttf"),
                             font_size: logo_font_size,
                             ..default()
                         },
                         TextColor(logo_text_color),
                         Node {
                             margin: UiRect {
-                                left: Val::Px(-20.0),
+                                left: Val::Px(20.0),
                                 right: Val::Px(0.0),
                                 top: Val::Px(0.0),
                                 bottom: Val::Px(0.0),
@@ -316,8 +341,8 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
         button_type,
         Button,
         Node {
-            width: Val::Px(150.0),
-            height: Val::Px(20.0),
+            width: Val::Px(200.0),
+            height: Val::Px(35.0),
             // border: UiRect::all(Val::Px(2.0)),
             margin: UiRect {
                 left: Val::Px(14.0),
@@ -336,8 +361,8 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
         children![(
             Text::new(text),
             TextFont {
-                font: asset_server.load("fonts/ark.ttf"),
-                font_size: 20.0,
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 26.0,
                 ..default()
             },
             // TextColor(Color::srgb(0.9, 0.9, 0.9)),
@@ -369,20 +394,57 @@ fn cleanup_scene(
         println!("保留摄像机用于其他菜单场景");
     }
 }
-fn cleanup_all_menu(
+// fn cleanup_all_menu(
+//     mut commands: Commands,
+//     scene_query: Query<Entity, With<SceneEntity>>,
+//     camera_query: Query<Entity, With<MenuCamera>>,
+// ) {
+//     println!("进入游戏，清理所有菜单元素");
+    
+//     // for entity in &scene_query {
+//     //     commands.entity(entity).despawn();
+//     // }
+//     // for entity in &camera_query {
+//     //     commands.entity(entity).despawn();
+//     // }
+
+// }
+fn cleanup_for_game(
     mut commands: Commands,
     scene_query: Query<Entity, With<SceneEntity>>,
     camera_query: Query<Entity, With<MenuCamera>>,
 ) {
     println!("进入游戏，清理所有菜单元素");
     
-    // for entity in &scene_query {
-    //     commands.entity(entity).despawn();
-    // }
-    // for entity in &camera_query {
-    //     commands.entity(entity).despawn();
-    // }
-
+    for entity in &scene_query {
+        commands.entity(entity).insert(Visibility::Hidden);
+    }
+    
+    for entity in &camera_query {
+        commands.entity(entity).despawn();
+    }
+}
+fn cleanup_all_menu(
+    mut commands: Commands,
+    scene_query: Query<Entity, With<SceneEntity>>,
+    camera_query: Query<Entity, With<MenuCamera>>,
+    current_state: Res<State<GameScene>>,
+) {
+    println!("进入游戏，清理所有菜单元素");
+    
+    // 检查当前状态是否为Game
+    if *current_state.get() == GameScene::Game {
+        println!("进入游戏状态，清理菜单摄像机");
+        // 清理菜单摄像机
+        for entity in &camera_query {
+            commands.entity(entity).despawn();
+        }
+    }
+    
+    // 隐藏所有菜单UI实体
+    for entity in &scene_query {
+        commands.entity(entity).insert(Visibility::Hidden);
+    }
 }
 fn cleanup_all_about(
     mut commands: Commands,
@@ -449,8 +511,8 @@ fn setup_about_scene(
     commands.spawn((
         Node {
             position_type: PositionType::Absolute,
-            top: Val::Px(20.0),
-            left: Val::Px(20.0),
+            top: Val::Px(40.0),
+            left: Val::Px(50.0),
             ..default()
         },
         AboutUI, // 用于清理
@@ -458,8 +520,8 @@ fn setup_about_scene(
         title_parent.spawn((
             Text::new("关于"),
             TextFont {
-                font: asset_server.load("fonts/ark.ttf"),
-                font_size: 50.0,
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 45.0,
                 ..default()
             },
             TextColor(Color::WHITE),
@@ -471,26 +533,27 @@ fn setup_about_scene(
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(100.0),
-            right: Val::Px(200.0), // 右侧锚定
-            width: Val::Px(600.0),
-            height: Val::Px(500.0),
-            padding: UiRect::all(Val::Px(30.0)),
+            left: Val::Px(320.0),
+            width: Val::Px(500.0),
+            height: Val::Px(600.0),
+            padding: UiRect::all(Val::Px(20.0)),
             flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::SpaceBetween,
-            align_items: AlignItems::Center,
-            border: UiRect::all(Val::Px(2.0)),
+            justify_content: JustifyContent::FlexStart,
+            align_items: AlignItems::FlexStart,
+            // border: UiRect::all(Val::Px(2.0)),
             ..default()
         },
-        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.85)), // 半透明黑色背景
-        BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+        BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+        Visibility::Visible,
         AboutUI, // 用于清理
-    )).with_children(|content_parent| {
+    )).with_children(|about_parent| {
         // 游戏标题
-        content_parent.spawn((
-            Text::new("新，伪自由之书"),
+        about_parent.spawn((
+            Text::new("渡鸦引擎"),
             TextFont {
-                font: asset_server.load("fonts/ark.ttf"),
-                font_size: 32.0,
+                font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                font_size: 28.0,
                 ..default()
             },
             TextColor(Color::srgb(1.0, 1.0, 0.8)),
@@ -501,18 +564,17 @@ fn setup_about_scene(
         ));
 
         // 游戏信息容器
-        content_parent.spawn(Node {
+        about_parent.spawn(Node {
             flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
+            align_items: AlignItems::FlexStart,
             row_gap: Val::Px(15.0),
             flex_grow: 1.0,
-            justify_content: JustifyContent::Center,
+            width: Val::Percent(100.0),
             ..default()
         }).with_children(|info_parent| {
             let info_items = [
                 ("版本", "0.1.3"),
                 ("开发者", "Furau"),
-                ("剧本", "秋月寒"),
                 ("封面画师", "鸮笑笑"),
                 ("引擎", "Raven Engine"),
             ];
@@ -529,7 +591,7 @@ fn setup_about_scene(
                     row_parent.spawn((
                         Text::new(format!("{}:", label)),
                         TextFont {
-                            font: asset_server.load("fonts/ark.ttf"),
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                             font_size: 18.0,
                             ..default()
                         },
@@ -539,7 +601,7 @@ fn setup_about_scene(
                     row_parent.spawn((
                         Text::new(value),
                         TextFont {
-                            font: asset_server.load("fonts/ark.ttf"),
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                             font_size: 18.0,
                             ..default()
                         },
@@ -552,7 +614,7 @@ fn setup_about_scene(
             info_parent.spawn((
                 Text::new("感谢您的游玩！"),
                 TextFont {
-                    font: asset_server.load("fonts/ark.ttf"),
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                     font_size: 16.0,
                     ..default()
                 },
@@ -565,26 +627,29 @@ fn setup_about_scene(
         });
 
         // 返回按钮
-        content_parent.spawn((
+        about_parent.spawn((
             Button,
             Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(50.0),
+                left: Val::Px(-220.0),
                 width: Val::Px(120.0),
                 height: Val::Px(45.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                border: UiRect::all(Val::Px(2.0)),
+                // border: UiRect::all(Val::Px(2.0)),
                 margin: UiRect::top(Val::Px(20.0)),
                 ..default()
             },
-            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+            // BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
+            // BorderColor(Color::srgb(0.5, 0.5, 0.7)),
             BackButton,
         )).with_children(|button_parent| {
             button_parent.spawn((
                 Text::new("返回"),
                 TextFont {
-                    font: asset_server.load("fonts/ark.ttf"),
-                    font_size: 16.0,
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 30.0,
                     ..default()
                 },
                 TextColor(Color::WHITE),
