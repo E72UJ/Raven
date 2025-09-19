@@ -26,3 +26,8 @@ setup_about_scene()
 ```
 cleanup_all_about()
 ```
+
+## 载入帮助页面函数
+```
+setup_help_scene()
+```
