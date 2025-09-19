@@ -53,11 +53,11 @@ fn main() {
             primary_window: Some(Window {
                 title: main_config.title.clone(),
                 name: Some("raven.app".into()),
-                // resizable: false,
-                // enabled_buttons: bevy::window::EnabledButtons {
-                //     maximize: false,
-                //     ..Default::default()
-                // },
+                resizable: false,
+                enabled_buttons: bevy::window::EnabledButtons {
+                    maximize: false,
+                    ..Default::default()
+                },
                 resolution: (width, height).into(),
                 ..default()
             }),
