@@ -6,9 +6,12 @@ use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop,stop_all_
 use crate::audio::{AudioManager}; 
 use crate::style::{UiStyleSheet, load_styles}; 
 use crate::config::MainConfig;
+use crate::url::UrlButton;
 use bevy::window::WindowResized;
 use bevy::window::{Window, PrimaryWindow};
 use bevy::text::TextColor; 
+
+use crate::url::open_url;  
 #[derive(Component)]
 pub struct BackButton;
 
@@ -115,7 +118,7 @@ const HOVERED_BUTTON_FONT: &str = "fonts/SarasaFixedHC-Regular.ttf";
 fn button_system(
     mut input_focus: ResMut<InputFocus>,
     mut next_state: ResMut<NextState<GameScene>>,
-    asset_server: Res<AssetServer>, // 添加 AssetServer 资源
+    asset_server: Res<AssetServer>,
     mut interaction_query: Query<
         (
             Entity,
@@ -130,27 +133,20 @@ fn button_system(
             Option<&AboutButton>,  
             Option<&BackButton>,  
             Option<&HelpButton>,
-            Option<&LoadGameButton>
+            Option<&LoadGameButton>,
+            Option<&UrlButton>
         ),
         Changed<Interaction>,
     >,
-    // mut text_query: Query<&mut Text>,
     mut text_query: Query<&mut TextFont>,
-    
 ) {
-    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game,about,back,help,load) in
+    for (entity, interaction, mut color, mut border_color, mut button, children, start_game, settings, exit_game, about, back, help, load, url_button) in
         &mut interaction_query
     {
-        // let mut text = text_query.get_mut(children[0]).unwrap();
-
-       if let Ok(mut text_font) = text_query.get_mut(children[0]) { // ← if let 开始
+        if let Ok(mut text_font) = text_query.get_mut(children[0]) {
             match *interaction {
                 Interaction::Pressed => {
                     input_focus.set(entity);
-                    // *border_color = BorderColor(Color::WHITE.with_alpha(0.8));
-                    // *color = PRESSED_BUTTON_COLOR.into();
-                    // *color = BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)); // 强制设置为透明
-                    // *color = BackgroundColor(Color::srgb(84.0/255.0, 186.0/255.0, 113.0/255.0)); // 按下时的绿色背景
                     button.set_changed();
                     text_font.font = asset_server.load(HOVERED_BUTTON_FONT);
 
@@ -169,24 +165,26 @@ fn button_system(
                         next_state.set(GameScene::LoadButton);
                     } else if exit_game.is_some() {
                         std::process::exit(0);
+                    } else if let Some(url_btn) = url_button {
+                        println!("打开URL: {}", url_btn.url);
+                        if let Err(e) = open_url(&url_btn.url) {
+                            println!("打开链接时出错: {}", e);
+                        }
                     }
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);
                     *border_color = BorderColor(Color::WHITE.with_alpha(0.6));
-                    // *color = HOVERED_BUTTON_COLOR.into();
                     button.set_changed();
                     text_font.font = asset_server.load(HOVERED_BUTTON_FONT);
                 }
                 Interaction::None => {
                     input_focus.clear();
                     *border_color = BorderColor(Color::WHITE);
-                    // *text_color = TextColor(Color::BLACK); // 正常状态黑色文字
-                    // *color = NORMAL_BUTTON_COLOR.into();
                     text_font.font = asset_server.load(NORMAL_BUTTON_FONT);
                 }
             }
-        } // ← if let 结束花括号 (这里！)
+        }
     }
 }
 
@@ -612,7 +610,7 @@ fn setup_about_scene(
 
             // 感谢信息
             info_parent.spawn((
-                Text::new("感谢您的游玩！"),
+                Text::new("谢谢使用！任何问题可以电邮至Furau@qq.com"),
                 TextFont {
                     font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                     font_size: 16.0,
@@ -655,6 +653,34 @@ fn setup_about_scene(
                 TextColor(Color::WHITE),
             ));
         });
+
+about_parent.spawn((
+    Button,
+    Node {
+        position_type: PositionType::Absolute,
+        bottom: Val::Px(50.0),
+        left: Val::Px(200.0),  // 调整位置避免重叠
+        width: Val::Px(120.0),
+        height: Val::Px(45.0),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        margin: UiRect::top(Val::Px(20.0)),
+        ..default()
+    },
+    UrlButton {
+        url: "https://github.com/yourproject".to_string(),
+    },
+)).with_children(|button_parent| {
+    button_parent.spawn((
+        Text::new("GitHub"),
+        TextFont {
+            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+            font_size: 30.0,
+            ..default()
+        },
+        TextColor(Color::WHITE),
+    ));
+});
     });
 }
 
