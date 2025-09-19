@@ -610,7 +610,7 @@ fn setup_about_scene(
 
             // 感谢信息
             info_parent.spawn((
-                Text::new("谢谢使用！任何问题可以电邮至Furau@qq.com"),
+                Text::new("谢谢使用！任何问题可以随时联系Furau@qq.com, 如果您觉得这份程序不错，请去github 点个星星 这对我帮助很大"),
                 TextFont {
                     font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
                     font_size: 16.0,
@@ -658,8 +658,8 @@ about_parent.spawn((
     Button,
     Node {
         position_type: PositionType::Absolute,
-        bottom: Val::Px(50.0),
-        left: Val::Px(200.0),  // 调整位置避免重叠
+        top: Val::Px(300.0),
+        left: Val::Px(10.0),  // 调整位置避免重叠
         width: Val::Px(120.0),
         height: Val::Px(45.0),
         justify_content: JustifyContent::Center,
@@ -668,7 +668,7 @@ about_parent.spawn((
         ..default()
     },
     UrlButton {
-        url: "https://github.com/yourproject".to_string(),
+        url: "https://github.com/E72UJ/Raven".to_string(),
     },
 )).with_children(|button_parent| {
     button_parent.spawn((
@@ -684,84 +684,173 @@ about_parent.spawn((
     });
 }
 
-fn setup_help_scene(mut commands: Commands, asset_server: Res<AssetServer>,camera_query: Query<Entity, With<MenuCamera>>) {
+fn setup_help_scene(
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>,
+    camera_query: Query<Entity, With<MenuCamera>>,
+    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>,
+    mut main_menu_query: Query<&mut Visibility, (With<MainMenuBackground>, Without<GameMenuOverlay>)>,
+) {
     println!("{}","执行帮助界面");
+    
+    // 确保摄像机存在
     if camera_query.is_empty() {
-        // 如果没有,则创建一个新的菜单摄像机
         commands.spawn((Camera2d, MenuCamera));
     }
 
-    commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                flex_direction: FlexDirection::Column,
+    // 显示游戏菜单遮罩层
+    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+        *overlay_visibility = Visibility::Visible;
+    }
+
+    // 创建帮助页面标题（左上角）
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(40.0),
+            left: Val::Px(50.0),
+            ..default()
+        },
+        AboutUI, // 用于清理
+    )).with_children(|title_parent| {
+        title_parent.spawn((
+            Text::new("帮助"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 45.0,
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-            AboutUI,
-        ))
-        .with_children(|parent| {
-            // 关于窗口
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(600.0),
-                        height: Val::Px(500.0),
-                        flex_direction: FlexDirection::Column,
-                        justify_content: JustifyContent::SpaceBetween,
-                        align_items: AlignItems::Center,
-                        padding: UiRect::all(Val::Px(30.0)),
-                        border: UiRect::all(Val::Px(2.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
-                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
-                ))
-                .with_children(|parent| {
-                    // 标题
-                    parent.spawn(Text::new("帮助"));
+            TextColor(Color::WHITE),
+        ));
+    });
 
-                    // 游戏信息容器
-                    parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            row_gap: Val::Px(15.0),
+    // 创建帮助页面内容（右侧显示）
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(100.0),
+            left: Val::Px(320.0),
+            width: Val::Px(500.0),
+            height: Val::Px(600.0),
+            padding: UiRect::all(Val::Px(20.0)),
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::FlexStart,
+            align_items: AlignItems::FlexStart,
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
+        BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+        Visibility::Visible,
+        AboutUI, // 用于清理
+    )).with_children(|help_parent| {
+        // 游戏标题
+        help_parent.spawn((
+            Text::new("游戏操作"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                font_size: 28.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 1.0, 0.8)),
+            Node {
+                margin: UiRect::bottom(Val::Px(20.0)),
+                ..default()
+            },
+        ));
+
+        // 操作说明容器
+        help_parent.spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::FlexStart,
+            row_gap: Val::Px(15.0),
+            flex_grow: 1.0,
+            width: Val::Percent(100.0),
+            ..default()
+        }).with_children(|info_parent| {
+            let help_items = [
+                ("回退上一句", "←"),
+                ("进入下一句", "Enter"),
+                ("退出主界面", "ESC"),
+                ("快进", "Ctrl"),
+                ("自动播放", "Space"),
+            ];
+
+            for (label, key) in help_items {
+                info_parent.spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    column_gap: Val::Px(10.0),
+                    width: Val::Percent(100.0),
+                    justify_content: JustifyContent::SpaceBetween,
+                    ..default()
+                }).with_children(|row_parent| {
+                    row_parent.spawn((
+                        Text::new(format!("{}:", label)),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                            font_size: 18.0,
                             ..default()
-                        })
-                        .with_children(|parent| {
-                            parent.spawn(Text::new("回退上一句:   ←  "));
-                            parent.spawn(Text::new("进入下一句: Enter"));
-                            parent.spawn(Text::new("退出主界面:  ESC "));
-                            // parent.spawn(Text::new("感谢您使用本引擎，任何问题可以电邮至Furau@qq.com"));
-                        });
-
-                    // 返回按钮
-                    parent
-                        .spawn((
-                            Button,
-                            Node {
-                                width: Val::Px(120.0),
-                                height: Val::Px(45.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                border: UiRect::all(Val::Px(2.0)),
-                                ..default()
-                            },
-                            BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
-                            BackButton,
-                        ))
-                        .with_children(|parent| {
-                            parent.spawn(Text::new("返回"));
-                        });
+                        },
+                        TextColor(Color::srgb(0.8, 0.8, 1.0)),
+                    ));
+                    
+                    row_parent.spawn((
+                        Text::new(key),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
                 });
+            }
+
+            // 提示信息
+            info_parent.spawn((
+                Text::new("提示：游戏支持鼠标点击操作，你也可以使用键盘快捷键来提升游戏体验。按ESC键可以随时返回主菜单。"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 16.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(0.7, 0.7, 0.9)),
+                Node {
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                },
+            ));
         });
+
+        // 返回按钮
+        help_parent.spawn((
+            Button,
+            Node {
+                position_type: PositionType::Absolute,
+                bottom: Val::Px(50.0),
+                left: Val::Px(-220.0),
+                width: Val::Px(120.0),
+                height: Val::Px(45.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                margin: UiRect::top(Val::Px(20.0)),
+                ..default()
+            },
+            BackButton,
+        )).with_children(|button_parent| {
+            button_parent.spawn((
+                Text::new("返回"),
+                TextFont {
+                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                    font_size: 30.0,
+                    ..default()
+                },
+                TextColor(Color::WHITE),
+            ));
+        });
+    });
 }
+
 
 fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>, camera_query: Query<Entity, With<MenuCamera>>) {
     println!("执行设置界面");
