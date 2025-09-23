@@ -57,7 +57,8 @@ impl Plugin for MenuPlugin {
             .add_systems(OnExit(GameScene::Help), cleanup_all_about)
 
         // 主游戏状态
-            .add_systems(OnEnter(GameScene::Game), cleanup_for_game);
+            .add_systems(OnEnter(GameScene::Game), cleanup_for_game)
+            .add_systems(OnExit(GameScene::Game), ( cleanup_cameras).chain());
 
     }
 }
@@ -1616,5 +1617,15 @@ fn update_background_size_on_resize(
                 sprite.custom_size = Some(Vec2::new(new_width, new_height));
             }
         }
+    }
+}
+
+fn cleanup_cameras(
+    mut commands: Commands,
+    cameras: Query<Entity, With<Camera>>,
+) {
+    println!("相机清理函数");
+    for camera_entity in cameras.iter() {
+        commands.entity(camera_entity).despawn();
     }
 }

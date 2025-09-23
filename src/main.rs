@@ -5,6 +5,8 @@ mod audio;
 mod transition; // 添加模块
 mod style;
 mod url; 
+mod toolbar;  
+
 use bevy::prelude::*;
 use menu::MenuPlugin;
 use config::{MainConfig, load_main_config};
@@ -14,6 +16,7 @@ use crate::audio::AudioPlugin;
 use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
 use style::StylePlugin;
 use Raven::url::UrlPlugin;
+use toolbar::ToolbarPlugin;  
 // 定义游戏场景状态
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
@@ -72,6 +75,7 @@ fn main() {
         .add_plugins(GamePlugin)  
         .add_plugins(AudioPlugin)
         .add_plugins(UrlPlugin)  // 新增的url插件
+        .add_plugins(ToolbarPlugin) 
         .add_systems(OnEnter(GameScene::Game), (menu_exit_system,))
         .run();
 }
