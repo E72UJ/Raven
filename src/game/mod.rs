@@ -41,6 +41,9 @@ use Raven::{
 
 // 常量定义
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
+// 事件系统
+pub mod events;
+pub use events::*;
 // 包调用结束
 
 // 引用
@@ -102,6 +105,41 @@ struct Typewriter {
 //     current_length: usize,
 //     timer: Timer,
 // }
+
+#[derive(Component)]
+struct MenuOverlay;
+
+#[derive(Component)]
+struct MenuBox;
+
+
+// 添加菜单控制事件
+#[derive(Event)]
+pub struct ToggleGameMenuEvent;
+
+#[derive(Event)]
+pub struct CloseGameMenuEvent;
+
+
+pub enum SettingsMenuState {
+    Hidden,
+    Visible,
+}
+
+impl Default for SettingsMenuState {
+    fn default() -> Self {
+        Self::Hidden
+    }
+}
+
+#[derive(Component)]
+pub struct SettingsMenuContainer;
+
+#[derive(Component)]
+pub struct CloseMenuButton;
+
+#[derive(Event)]
+pub struct ToggleSettingsMenuEvent;
 
 impl Typewriter {
     fn new(text: String, chars_per_second: f32) -> Self {
@@ -475,7 +513,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
                 ..default()
             },
             // BackgroundColor(Color::NONE), // 完全透明
-            BackgroundColor(Color::WHITE),
+            // BackgroundColor(Color::WHITE),
             GlobalZIndex(9999),
             Interaction::default(), 
             // Button,
@@ -729,6 +767,339 @@ commands.spawn((
         GlobalZIndex(5),
         // Portrait,
     ));
+
+
+// 交互菜单UI
+// 创建设置菜单 - 开始
+let font_handle = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
+
+commands.spawn((
+    Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        position_type: PositionType::Absolute,
+        top: Val::Px(0.0),
+        left: Val::Px(0.0),
+        ..default()
+    },
+    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)), // 半透明背景
+    ZIndex(1000), // 设置高层级
+    Interaction::default(), // 添加交互组件来阻止点击穿透
+    // SettingsMenu,
+))
+.with_children(|parent| {
+    // 主要设置容器
+    parent.spawn((
+        Node {
+            width: Val::Percent(80.0),
+            height: Val::Percent(80.0),
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.9)), // 更明显的背景色
+        ZIndex(1001), // 更高层级
+        Interaction::default(), // 阻止点击穿透
+        Visibility::Hidden,
+    ))
+    .with_children(|main_container| {
+        // 左侧菜单栏
+        main_container.spawn((
+            Node {
+                width: Val::Percent(25.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                align_items: AlignItems::FlexStart,
+                padding: UiRect::all(Val::Px(20.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+            ZIndex(1002),
+            Interaction::default(),
+        ))
+        .with_children(|left_menu| {
+            // 设置标题
+            left_menu.spawn((
+                Text::new("设置"),
+                TextFont {
+                    font: font_handle.clone(),
+                    font_size: 32.0,
+                    ..default()
+                },
+                TextColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色
+                Node {
+                    margin: UiRect::bottom(Val::Px(30.0)),
+                    ..default()
+                },
+                ZIndex(1003),
+            ));
+
+            // 左侧菜单选项
+            let menu_items = vec!["历史", "保存", "读取游戏", "设置", "标题界面", "关于"];
+            for (index, item) in menu_items.iter().enumerate() {
+                let is_selected = index == 3; // "设置" 被选中
+                left_menu.spawn((
+                    Button,
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::FlexStart,
+                        align_items: AlignItems::Center,
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(if is_selected { 
+                        Color::srgba(1.0, 0.6, 0.2, 0.3) 
+                    } else { 
+                        Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
+                    }),
+                    ZIndex(1003),
+                ))
+                .with_children(|button| {
+                    button.spawn((
+                        Text::new(*item),
+                        TextFont {
+                            font: font_handle.clone(),
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                        ZIndex(1004),
+                    ));
+                });
+            }
+        });
+
+        // 分隔线
+        main_container.spawn((
+            Node {
+                width: Val::Px(2.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            BackgroundColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色分隔线
+            ZIndex(1002),
+        ));
+
+        // 右侧设置内容区域
+        main_container.spawn((
+            Node {
+                width: Val::Percent(75.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Row,
+                padding: UiRect::all(Val::Px(40.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)), // 透明背景
+            ZIndex(1002),
+            Interaction::default(),
+        ))
+        .with_children(|right_content| {
+            // 左栏 - 显示设置
+            right_content.spawn((
+                Node {
+                    width: Val::Percent(33.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    margin: UiRect::right(Val::Px(40.0)),
+                    ..default()
+                },
+                ZIndex(1003),
+            ))
+            .with_children(|display_column| {
+                // 显示标题
+                display_column.spawn((
+                    Text::new("显示"),
+                    TextFont {
+                        font: font_handle.clone(),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                    ZIndex(1004),
+                ));
+
+                // 显示选项
+                let display_options = vec!["窗口", "全屏"];
+                for option in display_options {
+                    display_column.spawn((
+                        Button,
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::FlexStart,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::bottom(Val::Px(10.0)),
+                            padding: UiRect::all(Val::Px(5.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                        ZIndex(1004),
+                    ))
+                    .with_children(|button| {
+                        button.spawn((
+                            Text::new(option),
+                            TextFont {
+                                font: font_handle.clone(),
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                            ZIndex(1005),
+                        ));
+                    });
+                }
+            });
+
+            // 中栏 - 快进设置
+            right_content.spawn((
+                Node {
+                    width: Val::Percent(33.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    margin: UiRect::right(Val::Px(40.0)),
+                    ..default()
+                },
+                ZIndex(1003),
+            ))
+            .with_children(|speed_column| {
+                // 快进标题
+                speed_column.spawn((
+                    Text::new("快进"),
+                    TextFont {
+                        font: font_handle.clone(),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                    ZIndex(1004),
+                ));
+
+                // 快进选项
+                let speed_options = vec!["未读文本", "选项后继续", "忽略转场"];
+                for option in speed_options {
+                    speed_column.spawn((
+                        Button,
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::FlexStart,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::bottom(Val::Px(10.0)),
+                            padding: UiRect::all(Val::Px(5.0)),
+                            ..default()
+                        },
+                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                        ZIndex(1004),
+                    ))
+                    .with_children(|button| {
+                        button.spawn((
+                            Text::new(option),
+                            TextFont {
+                                font: font_handle.clone(),
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                            ZIndex(1005),
+                        ));
+                    });
+                }
+            });
+
+            // 右栏 - 语言设置
+            right_content.spawn((
+                Node {
+                    width: Val::Percent(34.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    ..default()
+                },
+                ZIndex(1003),
+            ))
+            .with_children(|language_column| {
+                // 语言标题
+                language_column.spawn((
+                    Text::new("语言"),
+                    TextFont {
+                        font: font_handle.clone(),
+                        font_size: 24.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                    ZIndex(1004),
+                ));
+
+                // 语言选项
+                let languages = vec![
+                    ("English", false), ("Español", false), ("Česky", false), 
+                    ("Українська", false), ("Dansk", false), ("日本語", false), 
+                    ("Français", false), ("한국어", false), ("Italiano", false), 
+                    ("简体中文", true), ("Bahasa Melayu", false), ("繁體中文", false), 
+                    ("Русский", false)
+                ];
+
+                for (language, is_selected) in languages {
+                    language_column.spawn((
+                        Button,
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::FlexStart,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::bottom(Val::Px(5.0)),
+                            padding: UiRect::all(Val::Px(5.0)),
+                            ..default()
+                        },
+                        BackgroundColor(if is_selected { 
+                            Color::srgba(1.0, 0.6, 0.2, 0.3) 
+                        } else { 
+                            Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
+                        }),
+                        ZIndex(1004),
+                    ))
+                    .with_children(|button| {
+                        button.spawn((
+                            Text::new(language),
+                            TextFont {
+                                font: font_handle.clone(),
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::WHITE),
+                            ZIndex(1005),
+                        ));
+                    });
+                }
+            });
+        });
+    });
+});
+// 创建设置菜单 - 结束
+
+
+
+
+
+
+// 交互菜单UI 结束
 }
 
 // 更新对话文本

@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 use crate::GameScene;  // 导入 GameScene
 
+// 添加事件定义
+#[derive(Event)]
+pub struct ToggleMenuEvent;
+
 #[derive(Component)]
 pub struct ToolbarContainer;
 
@@ -20,11 +24,13 @@ pub struct ToolbarPlugin;
 impl Plugin for ToolbarPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_event::<ToggleMenuEvent>()  // 添加事件
             .add_systems(OnEnter(GameScene::Game), setup_toolbar)  // 只在进入游戏状态时创建
             .add_systems(OnExit(GameScene::Game), cleanup_toolbar)  // 离开游戏状态时清理
-            .add_systems(Update, 
-                handle_toolbar_buttons.run_if(in_state(GameScene::Game))  // 只在游戏状态下运行
-            );
+            .add_systems(Update, (
+                handle_toolbar_buttons,
+                toolbar_system,  // 添加新系统
+            ).run_if(in_state(GameScene::Game)));  // 只在游戏状态下运行
     }
 }
 
@@ -240,7 +246,7 @@ fn handle_toolbar_buttons(
                     }
                     ToolbarButton::Settings => {
                         println!("设置按钮被点击，切换到设置状态");
-                        next_state.set(GameScene::About);  // 切换到设置状态
+                        // next_state.set(GameScene::GameSettings);  // 切换到设置状态
                     }
                 }
             }
@@ -252,4 +258,27 @@ fn handle_toolbar_buttons(
             }
         }
     }
+}
+
+fn toolbar_system(
+    mut toggle_menu_event: EventWriter<ToggleMenuEvent>,
+    toolbar_buttons: Query<(&Interaction, &ToolbarButton), (Changed<Interaction>, With<Button>)>,
+) {
+    for (interaction, button_type) in toolbar_buttons.iter() {
+        if *interaction == Interaction::Pressed {
+            if matches!(button_type, ToolbarButton::Settings) {
+                toggle_menu_event.send(ToggleMenuEvent);
+            }
+        }
+    }
+}
+
+fn button_pressed(buttons: &Query<(&Interaction, &ToolbarButton)>, target_button: &ToolbarButton) -> bool {
+    for (interaction, button_type) in buttons.iter() {
+        if std::mem::discriminant(button_type) == std::mem::discriminant(target_button) 
+            && *interaction == Interaction::Pressed {
+            return true;
+        }
+    }
+    false
 }

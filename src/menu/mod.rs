@@ -42,6 +42,7 @@ impl Plugin for MenuPlugin {
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
+            .add_systems(Update, button_system.run_if(in_state(GameScene::GameSettings)))
             .add_systems(Update, update_background_size_on_resize)
             .insert_resource(ClearColor(Color::srgb(0.0, 0.0, 0.0)))
             
@@ -58,7 +59,10 @@ impl Plugin for MenuPlugin {
 
         // 主游戏状态
             .add_systems(OnEnter(GameScene::Game), cleanup_for_game)
-            .add_systems(OnExit(GameScene::Game), ( cleanup_cameras).chain());
+            .add_systems(OnExit(GameScene::Game), ( cleanup_cameras).chain())
+
+            .add_systems(OnEnter(GameScene::GameSettings), setup_game_settings_overlay)
+            .add_systems(OnExit(GameScene::GameSettings), cleanup_game_settings_overlay);
 
     }
 }
@@ -412,17 +416,25 @@ fn cleanup_for_game(
     mut commands: Commands,
     scene_query: Query<Entity, With<SceneEntity>>,
     camera_query: Query<Entity, With<MenuCamera>>,
+    current_state: Res<State<GameScene>>,
 ) {
-    println!("进入游戏，清理所有菜单元素");
-    
+    println!("离开游戏状态，清理所有菜单元素");
+
+    // 检查当前状态是否为 GameSettings
+    if *current_state.get() != GameScene::GameSettings {
+        // 清理菜单摄像机
+        for entity in &camera_query {
+            commands.entity(entity).despawn();
+        }
+    }
+
+    // 隐藏所有菜单UI实体
     for entity in &scene_query {
         commands.entity(entity).insert(Visibility::Hidden);
     }
-    
-    for entity in &camera_query {
-        commands.entity(entity).despawn();
-    }
 }
+
+
 fn cleanup_all_menu(
     mut commands: Commands,
     scene_query: Query<Entity, With<SceneEntity>>,
@@ -1628,4 +1640,351 @@ fn cleanup_cameras(
     for camera_entity in cameras.iter() {
         commands.entity(camera_entity).despawn();
     }
+}
+
+
+fn setup_game_settings_overlay(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    camera_query: Query<Entity, With<MenuCamera>>,
+    mut overlay_query: Query<&mut Visibility, With<GameMenuOverlay>>,
+) {
+    println!("游戏设置界面");
+    
+    // 确保摄像机存在
+    if camera_query.is_empty() {
+        commands.spawn((Camera2d, MenuCamera));
+    }
+
+    // 显示游戏菜单遮罩层
+    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+        *overlay_visibility = Visibility::Visible;
+    }
+
+    // 创建设置页面标题（左上角）
+    commands.spawn((
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(40.0),
+            left: Val::Px(50.0),
+            ..default()
+        },
+        SettingsEntity, // 用于清理
+    )).with_children(|title_parent| {
+        title_parent.spawn((
+            Text::new("设置"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
+                font_size: 45.0,
+                ..default()
+            },
+            TextColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色
+        ));
+    });
+
+    // 创建主设置界面容器
+    commands.spawn((
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Row,
+            ..default()
+        },
+        SettingsEntity,
+    )).with_children(|main_parent| {
+        // 左侧菜单栏
+        main_parent.spawn((
+            Node {
+                width: Val::Px(200.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                padding: UiRect {
+                    left: Val::Px(50.0),
+                    top: Val::Px(120.0),
+                    right: Val::Px(20.0),
+                    bottom: Val::Px(50.0),
+                },
+                row_gap: Val::Px(20.0),
+                ..default()
+            },
+        )).with_children(|menu_parent| {
+            let menu_items = [
+                "历史",
+                "保存",
+                "读取游戏",
+                "设置",
+                "标题界面", 
+                "关于",
+                "帮助",
+                "返出"
+            ];
+
+            for (index, item) in menu_items.iter().enumerate() {
+                let is_selected = index == 3; // "设置" 被选中
+                
+                menu_parent.spawn((
+                    Button,
+                    Node {
+                        width: Val::Percent(100.0),
+                        height: Val::Px(40.0),
+                        justify_content: JustifyContent::FlexStart,
+                        align_items: AlignItems::Center,
+                        padding: UiRect::left(Val::Px(10.0)),
+                        border: if is_selected { 
+                            UiRect::left(Val::Px(3.0)) 
+                        } else { 
+                            UiRect::ZERO 
+                        },
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                    BorderColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色边框
+                )).with_children(|button_parent| {
+                    button_parent.spawn((
+                        Text::new(*item),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                            font_size: if is_selected { 20.0 } else { 18.0 },
+                            ..default()
+                        },
+                        TextColor(if is_selected { 
+                            Color::srgb(1.0, 0.6, 0.2) // 橙色文字
+                        } else { 
+                            Color::WHITE 
+                        }),
+                    ));
+                });
+            }
+        });
+
+        // 右侧设置内容区域
+        main_parent.spawn((
+            Node {
+                flex_grow: 1.0,
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                padding: UiRect {
+                    left: Val::Px(50.0),
+                    top: Val::Px(120.0),
+                    right: Val::Px(100.0),
+                    bottom: Val::Px(50.0),
+                },
+                row_gap: Val::Px(50.0),
+                ..default()
+            },
+        )).with_children(|content_parent| {
+            // 显示设置区域
+            content_parent.spawn((
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    row_gap: Val::Px(30.0),
+                    ..default()
+                },
+            )).with_children(|settings_parent| {
+                // 显示设置组
+                settings_parent.spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(20.0),
+                        ..default()
+                    },
+                )).with_children(|display_parent| {
+                    // 显示标题
+                    display_parent.spawn((
+                        Text::new("显示"),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(15.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // 窗口/全屏设置
+                    display_parent.spawn((
+                        Node {
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::Center,
+                            column_gap: Val::Px(30.0),
+                            ..default()
+                        },
+                    )).with_children(|row_parent| {
+                        // 窗口按钮
+                        row_parent.spawn((
+                            Button,
+                            Node {
+                                padding: UiRect::all(Val::Px(12.0)),
+                                border: UiRect::all(Val::Px(2.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                            BorderColor(Color::srgb(1.0, 0.6, 0.2)),
+                        )).with_children(|button_parent| {
+                            button_parent.spawn((
+                                Text::new("窗口"),
+                                TextFont {
+                                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                            ));
+                        });
+
+                        // 全屏按钮
+                        row_parent.spawn((
+                            Button,
+                            Node {
+                                padding: UiRect::all(Val::Px(12.0)),
+                                border: UiRect::all(Val::Px(1.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                            BorderColor(Color::srgb(0.6, 0.6, 0.6)),
+                        )).with_children(|button_parent| {
+                            button_parent.spawn((
+                                Text::new("全屏"),
+                                TextFont {
+                                    font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                                    font_size: 18.0,
+                                    ..default()
+                                },
+                                TextColor(Color::WHITE),
+                            ));
+                        });
+                    });
+                });
+
+                // 语言设置组
+                settings_parent.spawn((
+                    Node {
+                        flex_direction: FlexDirection::Column,
+                        row_gap: Val::Px(20.0),
+                        ..default()
+                    },
+                )).with_children(|language_parent| {
+                    // 语言标题
+                    language_parent.spawn((
+                        Text::new("语言"),
+                        TextFont {
+                            font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                            font_size: 24.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                        Node {
+                            margin: UiRect::bottom(Val::Px(15.0)),
+                            ..default()
+                        },
+                    ));
+
+                    // 语言选择网格
+                    language_parent.spawn((
+                        Node {
+                            display: Display::Grid,
+                            grid_template_columns: vec![
+                                RepeatedGridTrack::auto(2)
+                            ],
+                            column_gap: Val::Px(40.0),
+                            row_gap: Val::Px(20.0),
+                            width: Val::Percent(80.0),
+                            ..default()
+                        },
+                    )).with_children(|grid_parent| {
+                        let languages = [
+                            ("English", false),
+                            ("Español", false),
+                            ("Česky", false),
+                            ("Українська", false),
+                            ("Dansk", false),
+                            ("日本語", false),
+                            ("Français", false),
+                            ("한국어", false),
+                            ("Italiano", false),
+                            ("简体中文", true), // 选中状态
+                            ("Bahasa Melayu", false),
+                            ("繁體中文", false),
+                            ("Русский", false),
+                        ];
+
+                        for (lang, is_selected) in languages {
+                            grid_parent.spawn((
+                                Button,
+                                Node {
+                                    padding: UiRect::all(Val::Px(10.0)),
+                                    border: if is_selected { 
+                                        UiRect::all(Val::Px(2.0)) 
+                                    } else { 
+                                        UiRect::ZERO 
+                                    },
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    ..default()
+                                },
+                                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                                BorderColor(Color::srgb(1.0, 0.6, 0.2)),
+                            )).with_children(|lang_parent| {
+                                lang_parent.spawn((
+                                    Text::new(lang),
+                                    TextFont {
+                                        font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                                        font_size: 16.0,
+                                        ..default()
+                                    },
+                                    TextColor(if is_selected { 
+                                        Color::srgb(1.0, 0.6, 0.2) 
+                                    } else { 
+                                        Color::WHITE 
+                                    }),
+                                ));
+                            });
+                        }
+                    });
+                });
+            });
+        });
+    });
+
+    // 返回按钮（左下角）
+    commands.spawn((
+        Button,
+        Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(50.0),
+            left: Val::Px(50.0),
+            width: Val::Px(120.0),
+            height: Val::Px(45.0),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+        BackButton,
+        SettingsEntity,
+    )).with_children(|button_parent| {
+        button_parent.spawn((
+            Text::new("返回"),
+            TextFont {
+                font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
+                font_size: 30.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+        ));
+    });
+}
+
+fn cleanup_game_settings_overlay(
+    mut commands: Commands,
+    cameras: Query<Entity, With<Camera>>,
+){
+    println!("游戏设置界面结束");
 }

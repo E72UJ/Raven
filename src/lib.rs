@@ -20,7 +20,8 @@ pub enum GameScene {
     About,
     Help,
     Load,
-    LoadButton
+    LoadButton,
+    GameSettings, 
 }
 
 // 如果你想要一个叫 AppState 的别名，可以这样做：
