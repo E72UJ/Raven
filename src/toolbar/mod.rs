@@ -29,7 +29,7 @@ impl Plugin for ToolbarPlugin {
             .add_systems(OnExit(GameScene::Game), cleanup_toolbar)  // 离开游戏状态时清理
             .add_systems(Update, (
                 handle_toolbar_buttons,
-                toolbar_system,  // 添加新系统
+                // toolbar_system,  // 添加新系统
             ).run_if(in_state(GameScene::Game)));  // 只在游戏状态下运行
     }
 }
@@ -46,7 +46,7 @@ fn setup_toolbar(
                 width: Val::Percent(100.0),
                 height: Val::Px(50.0),  // 稍微调小高度
                 position_type: PositionType::Absolute,
-                bottom: Val::Px(0.0),   // 确保在最底部
+                bottom: Val::Px(1.0),   // 确保在最底部
                 left: Val::Px(0.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::End,  // 对齐到底部
@@ -219,13 +219,17 @@ fn handle_toolbar_buttons(
         (&Interaction, &ToolbarButton, &mut BackgroundColor),
         (Changed<Interaction>, With<Button>),
     >,
-    mut next_state: ResMut<NextState<GameScene>>,  // 添加状态切换资源
+    mut toggle_menu_event: EventWriter<ToggleMenuEvent>,  // 添加事件发送器
 ) {
     for (interaction, button_type, mut color) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
                 *color = BackgroundColor(Color::srgba(0.4, 0.4, 0.4, 0.9));
                 match button_type {
+                    ToolbarButton::Settings => {
+                        println!("设置按钮被点击");
+                        toggle_menu_event.send(ToggleMenuEvent);  // 发送切换事件
+                    }
                     ToolbarButton::Rollback => {
                         println!("回退按钮被点击");
                     }
@@ -244,10 +248,6 @@ fn handle_toolbar_buttons(
                     ToolbarButton::Load => {
                         println!("读档按钮被点击");
                     }
-                    ToolbarButton::Settings => {
-                        println!("设置按钮被点击，切换到设置状态");
-                        // next_state.set(GameScene::GameSettings);  // 切换到设置状态
-                    }
                 }
             }
             Interaction::Hovered => {
@@ -260,18 +260,19 @@ fn handle_toolbar_buttons(
     }
 }
 
-fn toolbar_system(
-    mut toggle_menu_event: EventWriter<ToggleMenuEvent>,
-    toolbar_buttons: Query<(&Interaction, &ToolbarButton), (Changed<Interaction>, With<Button>)>,
-) {
-    for (interaction, button_type) in toolbar_buttons.iter() {
-        if *interaction == Interaction::Pressed {
-            if matches!(button_type, ToolbarButton::Settings) {
-                toggle_menu_event.send(ToggleMenuEvent);
-            }
-        }
-    }
-}
+
+// fn toolbar_system(
+//     mut toggle_menu_event: EventWriter<ToggleMenuEvent>,
+//     toolbar_buttons: Query<(&Interaction, &ToolbarButton), (Changed<Interaction>, With<Button>)>,
+// ) {
+//     for (interaction, button_type) in toolbar_buttons.iter() {
+//         if *interaction == Interaction::Pressed {
+//             if matches!(button_type, ToolbarButton::Settings) {
+//                 toggle_menu_event.send(ToggleMenuEvent);
+//             }
+//         }
+//     }
+// }
 
 fn button_pressed(buttons: &Query<(&Interaction, &ToolbarButton)>, target_button: &ToolbarButton) -> bool {
     for (interaction, button_type) in buttons.iter() {

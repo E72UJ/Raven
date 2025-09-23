@@ -44,6 +44,7 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 // 事件系统
 pub mod events;
 pub use events::*;
+use crate::toolbar::ToggleMenuEvent;
 // 包调用结束
 
 // 引用
@@ -140,6 +141,12 @@ pub struct CloseMenuButton;
 
 #[derive(Event)]
 pub struct ToggleSettingsMenuEvent;
+
+#[derive(Component)]
+pub struct SettingsMenu;
+
+#[derive(Component)]
+pub struct CloseSettingsButton;
 
 impl Typewriter {
     fn new(text: String, chars_per_second: f32) -> Self {
@@ -328,7 +335,8 @@ impl Plugin for GamePlugin {
                 (
                     handle_input,
                     // debug_flash_position,
-                    
+                    handle_toggle_menu_event,  // 处理显示/隐藏事件
+                    handle_close_settings_button,  // 处理关闭按钮                    
                     output_game_state,
                     update_dialogue, 
                     update_audio,
@@ -512,7 +520,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
  
                 ..default()
             },
-            // BackgroundColor(Color::NONE), // 完全透明
+            BackgroundColor(Color::NONE), // 完全透明
             // BackgroundColor(Color::WHITE),
             GlobalZIndex(9999),
             Interaction::default(), 
@@ -780,14 +788,16 @@ commands.spawn((
         justify_content: JustifyContent::Center,
         align_items: AlignItems::Center,
         position_type: PositionType::Absolute,
-        top: Val::Px(0.0),
+        top: Val::Px(-80.0),
         left: Val::Px(0.0),
+        
         ..default()
     },
     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)), // 半透明背景
     ZIndex(1000), // 设置高层级
+    Visibility::Hidden,
     Interaction::default(), // 添加交互组件来阻止点击穿透
-    // SettingsMenu,
+    SettingsMenu,
 ))
 .with_children(|parent| {
     // 主要设置容器
@@ -801,7 +811,7 @@ commands.spawn((
         BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.9)), // 更明显的背景色
         ZIndex(1001), // 更高层级
         Interaction::default(), // 阻止点击穿透
-        Visibility::Hidden,
+        // Visibility::Hidden,
     ))
     .with_children(|main_container| {
         // 左侧菜单栏
@@ -2198,6 +2208,45 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
             return;
         };
         sprite.color = color;
+    }
+}
+
+// 控制game 菜单
+fn handle_toggle_menu_event(
+    mut toggle_events: EventReader<ToggleMenuEvent>,
+    mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
+) {
+    for _event in toggle_events.read() {
+        if let Ok(mut visibility) = menu_query.get_single_mut() {
+            *visibility = match *visibility {
+                Visibility::Hidden => {
+                    println!("显示设置菜单");
+                    Visibility::Visible
+                }
+                Visibility::Visible => {
+                    println!("隐藏设置菜单");
+                    Visibility::Hidden
+                }
+                Visibility::Inherited => Visibility::Visible,
+            };
+        }
+    }
+}
+
+// 处理关闭按钮点击
+fn handle_close_settings_button(
+    mut interaction_query: Query<
+        &Interaction,
+        (Changed<Interaction>, With<CloseSettingsButton>)
+    >,
+    mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
+) {
+    for interaction in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Ok(mut visibility) = menu_query.get_single_mut() {
+                *visibility = Visibility::Hidden;
+            }
+        }
     }
 }
 
