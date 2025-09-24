@@ -1,6 +1,10 @@
 
 use bevy::prelude::*;
 
+
+// 重新导出 toolbar 的事件，让 game 模块可以使用
+pub use crate::toolbar::RollbackEvent;
+
 /// 切换游戏菜单的事件
 #[derive(Event)]
 pub struct ToggleGameMenuEvent;

@@ -39,12 +39,15 @@ use Raven::{
     typewriter::{TypewriterPlugin, TypewriterText, typewriter_system},
 };
 
+
+use crate::toolbar::RollbackEvent; // 直接导入
 // 常量定义
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 // 事件系统
 pub mod events;
 pub use events::*;
 use crate::toolbar::ToggleMenuEvent;
+use crate::toolbar::ToggleAutoPlayEvent; 
 // 包调用结束
 
 // 引用
@@ -269,6 +272,9 @@ struct GameState {
     jump_label: Option<String>, // 新增的跳转标签字段
     in_branch_selection: bool, // 新增：是否在分支选择状态
     is_blocked: bool, // 是否被阻塞
+    is_auto_playing: bool, // 新增字段
+    auto_play_timer: f32,         // 自动播放计时器
+    auto_play_interval: f32,      // 自动播放间隔时间（秒
 }
 // 立绘组件
 #[derive(Component)]
@@ -339,6 +345,8 @@ impl Plugin for GamePlugin {
                     handle_close_settings_button,  // 处理关闭按钮                    
                     output_game_state,
                     update_dialogue, 
+                    handle_rollback_event,
+                    handle_auto_play_event,
                     update_audio,
                     // typewriter_system.after(update_dialogue),
                     update_portrait,
@@ -394,7 +402,10 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
         can_go_back: false,
         jump_label: None,
         in_branch_selection: false,
-        is_blocked: false
+        is_blocked: false,
+        is_auto_playing: false, // 新增字段
+        auto_play_timer: 0.0,
+        auto_play_interval: 2.0, // 默认2秒间隔
     });
     
     commands.insert_resource(LabelMap(label_map));
@@ -467,7 +478,10 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         can_go_back: false, // 初始时不能返回
         jump_label: None,
         in_branch_selection: false,
-        is_blocked:false
+        is_blocked:false,
+        is_auto_playing: false, // 新增字段
+        auto_play_timer: 0.0,
+        auto_play_interval: 2.0, // 默认2秒间隔
     });
     // println!("label_map: {:?}", label_map[1].jump);
     commands.insert_resource(LabelMap(label_map));
@@ -803,6 +817,9 @@ commands.spawn((
     // 主要设置容器
     parent.spawn((
         Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(50.0),
+            left: Val::Px(0.0),
             width: Val::Percent(80.0),
             height: Val::Percent(80.0),
             flex_direction: FlexDirection::Row,
@@ -1119,16 +1136,45 @@ fn update_dialogue(
     stylesheet: Res<UiStyleSheet>,
     mut dialog_query: Query<(&Name, &mut Visibility, &mut Node), Without<Text>>, // 查询对话框容器
     mut query: Query<(&Name, &mut Text, &mut Visibility, Option<&mut TextColor>)>,
-    // mut typewriter_query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
-    
+    time: Res<Time>, // 添加时间资源
 ) {
+    // 处理自动播放计时器
+    if game_state.is_auto_playing {
+        game_state.auto_play_timer += time.delta_secs();
+        
+        // 如果计时器达到设定时间，自动进入下一行
+        if game_state.auto_play_timer >= game_state.auto_play_interval {
+            game_state.auto_play_timer = 0.0;
+            
+            // 先获取当前对话的跳转信息（如果有）
+            let jump_info = game_state.dialogues.get(game_state.current_line)
+                .and_then(|dialogue| dialogue.jump.as_ref())
+                .cloned(); // 克隆跳转标签以避免借用冲突
+            
+            // 检查是否还有下一行对话
+            if game_state.current_line + 1 < game_state.dialogues.len() {
+                // 处理跳转或正常前进
+                if let Some(jump_label) = jump_info {
+                    if let Some(&new_line) = label_map.0.get(&jump_label) {
+                        game_state.current_line = new_line;
+                        println!("自动播放跳转到标签 '{}', 行号: {}", jump_label, new_line);
+                    } else {
+                        println!("错误: 找不到标签 '{}' 的跳转目标", jump_label);
+                        game_state.current_line += 1;
+                    }
+                } else {
+                    game_state.current_line += 1;
+                }
+                println!("自动播放进入第 {} 行", game_state.current_line);
+            } else {
+                // 已经是最后一行，停止自动播放
+                game_state.is_auto_playing = false;
+                println!("对话结束，自动播放已停止");
+            }
+        }
+    }
 
-    // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
-
-    // println!("  menu 样式读取: {:?}", stylesheet.get_font_size("menu","menu_box"));
-    // stylesheet.debug_print();
     // 1. 获取当前对话行（如果存在）
-
     let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         dialogue
     } else {
@@ -1169,25 +1215,22 @@ fn update_dialogue(
         }
 
         if name.as_str() == "textbox" {
-            // if name.as_str() == "text" {
-
-            // }
-
-                text.0 = current_dialogue.text.to_string();
-                // println!("{}",current_dialogue.text.to_string());
+            text.0 = current_dialogue.text.to_string();
         }
     }
-     // 查找对话框容器
+    
+    // 查找对话框容器
     for (name, mut visibility, mut node) in dialog_query.iter_mut() {
         if name.as_str() == "text" {
             // 处理对话框显示/隐藏逻辑
-             if current_dialogue.text == "none" {
-                    *visibility = Visibility::Hidden; // 如果 character 为 "none", 隐藏 namebox
-                } else {
-                    *visibility = Visibility::Visible;
-                }
+            if current_dialogue.text == "none" {
+                *visibility = Visibility::Hidden; // 如果 text 为 "none", 隐藏对话框
+            } else {
+                *visibility = Visibility::Visible;
+            }
         }
     }
+    
     if let Some(jump_label) = &current_dialogue.jump {
         if let Some(&new_line) = label_map.0.get(jump_label) {
             println!(
@@ -1202,6 +1245,8 @@ fn update_dialogue(
         }
     }
 }
+
+
 
 
 fn handle_input(
@@ -2250,3 +2295,31 @@ fn handle_close_settings_button(
     }
 }
 
+// 回退系统
+fn handle_rollback_event(
+    mut rollback_events: EventReader<RollbackEvent>,
+    mut game_state: ResMut<GameState>, // 假设 GameState 在这里定义或导入
+) {
+    for _event in rollback_events.read() {
+        if game_state.current_line > 0 {
+            game_state.current_line -= 1;
+            println!("回退到第 {} 行", game_state.current_line);
+            
+        
+        } else {
+            println!("已经是第一行,无法回退");
+        }
+    }
+}
+
+// 自动播放系统
+fn handle_auto_play_event(
+    mut auto_play_events: EventReader<ToggleAutoPlayEvent>,
+    mut game_state: ResMut<GameState>,
+) {
+    for _event in auto_play_events.read() {
+        game_state.is_auto_playing = !game_state.is_auto_playing;
+        game_state.auto_play_timer = 0.0;
+        println!("自动播放已{}", if game_state.is_auto_playing { "开启" } else { "关闭" });
+    }
+}

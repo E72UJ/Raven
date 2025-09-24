@@ -5,8 +5,16 @@ use crate::GameScene;  // 导入 GameScene
 #[derive(Event)]
 pub struct ToggleMenuEvent;
 
+#[derive(Event)]
+pub struct RollbackEvent;  // 新增回退事件
+
+#[derive(Event)]
+pub struct ToggleAutoPlayEvent;  // 新增自动播放事件
+
 #[derive(Component)]
 pub struct ToolbarContainer;
+
+
 
 #[derive(Component)]
 pub enum ToolbarButton {
@@ -25,6 +33,8 @@ impl Plugin for ToolbarPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<ToggleMenuEvent>()  // 添加事件
+            .add_event::<RollbackEvent>()  // 注册回退事件
+            .add_event::<ToggleAutoPlayEvent>()  // 注册自动播放事件
             .add_systems(OnEnter(GameScene::Game), setup_toolbar)  // 只在进入游戏状态时创建
             .add_systems(OnExit(GameScene::Game), cleanup_toolbar)  // 离开游戏状态时清理
             .add_systems(Update, (
@@ -219,7 +229,9 @@ fn handle_toolbar_buttons(
         (&Interaction, &ToolbarButton, &mut BackgroundColor),
         (Changed<Interaction>, With<Button>),
     >,
-    mut toggle_menu_event: EventWriter<ToggleMenuEvent>,  // 添加事件发送器
+    mut toggle_menu_event: EventWriter<ToggleMenuEvent>,
+    mut rollback_event: EventWriter<RollbackEvent>,  // 添加回退事件发送器
+    mut toggle_auto_play_event: EventWriter<ToggleAutoPlayEvent>,  // 添加自动播放事件发送器
 ) {
     for (interaction, button_type, mut color) in &mut interaction_query {
         match *interaction {
@@ -228,10 +240,12 @@ fn handle_toolbar_buttons(
                 match button_type {
                     ToolbarButton::Settings => {
                         println!("设置按钮被点击");
-                        toggle_menu_event.send(ToggleMenuEvent);  // 发送切换事件
+                        toggle_menu_event.send(ToggleMenuEvent);
                     }
                     ToolbarButton::Rollback => {
                         println!("回退按钮被点击");
+                        println!("回退事件被发送");
+                        rollback_event.send(RollbackEvent);  // 发送回退事件
                     }
                     ToolbarButton::History => {
                         println!("历史按钮被点击");
@@ -241,6 +255,8 @@ fn handle_toolbar_buttons(
                     }
                     ToolbarButton::Auto => {
                         println!("自动按钮被点击");
+                        toggle_auto_play_event.send(ToggleAutoPlayEvent);  // 发送自动播放事件
+                        
                     }
                     ToolbarButton::Save => {
                         println!("存档按钮被点击");
