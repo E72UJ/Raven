@@ -248,14 +248,14 @@ fn handle_toolbar_buttons(
                         rollback_event.send(RollbackEvent);  // 发送回退事件
                     }
                     ToolbarButton::History => {
-                        println!("历史按钮被点击");
+                        println!("历史按钮正在开发中");
                     }
                     ToolbarButton::Skip => {
                         println!("快进按钮被点击");
                     }
                     ToolbarButton::Auto => {
                         println!("自动按钮被点击");
-                        toggle_auto_play_event.send(ToggleAutoPlayEvent);  // 发送自动播放事件
+                         toggle_auto_play_event.send(ToggleAutoPlayEvent);  // 发送自动播放事件
                         
                     }
                     ToolbarButton::Save => {
