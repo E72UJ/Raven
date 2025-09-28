@@ -1,4 +1,4 @@
-// game/mod.rs
+// 游戏引擎主程序
 use std::{
     collections::HashMap,
     env,
@@ -528,7 +528,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             Node {
                 width: Val::Px(1200.0),     // 固定宽度800像素
                 height: Val::Px(660.0),    // 固定高度600像素
-                bottom: Val::Px(200.0),
+                bottom: Val::Px(50.0),
                 left: Val::Px(0.0),  // 添加左边定位
                 position_type: PositionType::Absolute,
  
