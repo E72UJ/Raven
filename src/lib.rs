@@ -24,5 +24,4 @@ pub enum GameScene {
     GameSettings, 
 }
 
-// 如果你想要一个叫 AppState 的别名，可以这样做：
 pub use GameScene as AppState;
