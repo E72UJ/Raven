@@ -10,7 +10,7 @@ use bevy::{
     ui::FocusPolicy,
     winit::WinitSettings,
 };
-use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
+// use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
 use serde::Deserialize;
 
 // 当前 crate 模块导入
@@ -291,9 +291,9 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        if !app.is_plugin_added::<FlashPlugin>() {
-            app.add_plugins(FlashPlugin);
-        }
+        // if !app.is_plugin_added::<FlashPlugin>() {
+        //     app.add_plugins(FlashPlugin);
+        // }
         app
             // 只在启动时加载资源，不创建UI
             .add_systems(
@@ -338,10 +338,10 @@ impl Plugin for GamePlugin {
                     update_audio,
                     // typewriter_system.after(update_dialogue),
                     update_portrait,
-                    flash_animation.run_if(in_state(GameScene::Game)),
+                    // flash_animation.run_if(in_state(GameScene::Game)),
                     apply_jump,
                     update_background,
-                    update_swf.run_if(in_state(GameScene::Game)),
+                    // update_swf.run_if(in_state(GameScene::Game)),
                     keyboard_system,
                     handle_choice_buttons,
                     // create_dynamic_buttons
@@ -744,7 +744,7 @@ fn setup_ui(
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
         // Set the justification of the Text
-        TextLayout::new_with_justify(JustifyText::Center),
+        // TextLayout::new_with_justify(JustifyText::Center),
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
@@ -1468,22 +1468,22 @@ fn get_current_working_dir_absolute() -> String {
 //     ));
 // }
 // 动画控制
-fn flash_animation(
-    mut flashes: ResMut<Assets<FlashAnimationSwfData>>,
-    mut flash_swf_data_events: EventReader<AssetEvent<FlashAnimationSwfData>>,
-) -> Result {
-    for event in flash_swf_data_events.read() {
-        if let AssetEvent::LoadedWithDependencies { id } = event {
-            let flash = flashes.get_mut(*id).unwrap();
-            flash.player.set_on_completion(Box::new(|player| {
-                player.set_play_animation("default", false).unwrap();
-            }));
+// fn flash_animation(
+//     mut flashes: ResMut<Assets<FlashAnimationSwfData>>,
+//     mut flash_swf_data_events: EventReader<AssetEvent<FlashAnimationSwfData>>,
+// ) -> Result {
+//     for event in flash_swf_data_events.read() {
+//         if let AssetEvent::LoadedWithDependencies { id } = event {
+//             let flash = flashes.get_mut(*id).unwrap();
+//             flash.player.set_on_completion(Box::new(|player| {
+//                 player.set_play_animation("default", false).unwrap();
+//             }));
 
-            flash.player.set_play_animation("default", true)?;
-        }
-    }
-    Ok(())
-}
+//             flash.player.set_play_animation("default", true)?;
+//         }
+//     }
+//     Ok(())
+// }
 // 音效加载系统
 // 在初始化时加载音效
 fn load_audio_resources(
@@ -1569,92 +1569,92 @@ fn load_swf_assets(
     println!("=== 加载SWF资源 ===");
     println!("配置中的swf数量: {}", config.assets.swf.len());
 
-    for (swf_name, swf_path) in &config.assets.swf {
-        println!("正在加载SWF: {} -> {}", swf_name, swf_path);
+    // for (swf_name, swf_path) in &config.assets.swf {
+    //     println!("正在加载SWF: {} -> {}", swf_name, swf_path);
 
-        let swf_handle = asset_server.load(swf_path);
-        println!("SWF句柄创建成功: {:?}", swf_handle);
+    //     // let swf_handle = asset_server.load(swf_path);
+    //     println!("SWF句柄创建成功: {:?}", swf_handle);
 
-        commands.spawn((
-            Name::new(format!("swf_{}", swf_name)),
-            FlashAnimation { swf: swf_handle },
-            Transform::from_translation(Vec3::new(-199.0, 0.0, 0.0)).with_scale(Vec3::splat(1.0)),
-            Visibility::Hidden,
-        ));
+    //     // commands.spawn((
+    //     //     Name::new(format!("swf_{}", swf_name)),
+    //     //     FlashAnimation { swf: swf_handle },
+    //     //     Transform::from_translation(Vec3::new(-199.0, 0.0, 0.0)).with_scale(Vec3::splat(1.0)),
+    //     //     Visibility::Hidden,
+    //     // ));
 
-        println!("SWF实体已生成: swf_{}", swf_name);
-    }
+    //     println!("SWF实体已生成: swf_{}", swf_name);
+    // }
     println!("==================");
 }
 // 新增swf更新系统
 // 修改swf更新系统
 
-fn update_swf(
-    game_state: Res<GameState>,
-    mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
-    flashes: Res<Assets<FlashAnimationSwfData>>, // 添加资源检查
-    flash_query: Query<&FlashAnimation>,         // 添加Flash组件查询
-) {
-    //    println!("=== update_swf 调试信息 ===");
-    // println!("查询到的SWF实体数量: {}", query.iter().count());
+// fn update_swf(
+//     game_state: Res<GameState>,
+//     mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
+//     flashes: Res<Assets<FlashAnimationSwfData>>, // 添加资源检查
+//     flash_query: Query<&FlashAnimation>,         // 添加Flash组件查询
+// ) {
+//     //    println!("=== update_swf 调试信息 ===");
+//     // println!("查询到的SWF实体数量: {}", query.iter().count());
 
-    for (name, visibility) in query.iter() {
-        // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
-    }
+//     for (name, visibility) in query.iter() {
+//         // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
+//     }
 
-    for (_, mut visibility) in query.iter_mut() {
-        *visibility = Visibility::Hidden;
-    }
+//     for (_, mut visibility) in query.iter_mut() {
+//         *visibility = Visibility::Hidden;
+//     }
 
-    // 根据当前对话中的swf字段显示对应动画
-    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-        if let Some(swf_name) = &dialogue.swf {
-            let target_name = format!("swf_{}", swf_name);
-            // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
+//     // 根据当前对话中的swf字段显示对应动画
+//     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+//         if let Some(swf_name) = &dialogue.swf {
+//             let target_name = format!("swf_{}", swf_name);
+//             // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
 
-            let mut found = false;
+//             let mut found = false;
 
-            // 遍历所有Flash实体寻找匹配的名称
-            for (name, mut visibility) in query.iter_mut() {
-                if name.as_str() == target_name {
-                    // 检查对应的SWF资源是否已加载
-                    let mut resource_loaded = false;
+//             // 遍历所有Flash实体寻找匹配的名称
+//             for (name, mut visibility) in query.iter_mut() {
+//                 if name.as_str() == target_name {
+//                     // 检查对应的SWF资源是否已加载
+//                     let mut resource_loaded = false;
 
-                    // 检查资源加载状态
-                    for flash_animation in flash_query.iter() {
-                        if let Some(flash_data) = flashes.get(&flash_animation.swf) {
-                            resource_loaded = true;
-                            break;
-                        }
-                    }
+//                     // 检查资源加载状态
+//                     for flash_animation in flash_query.iter() {
+//                         if let Some(flash_data) = flashes.get(&flash_animation.swf) {
+//                             resource_loaded = true;
+//                             break;
+//                         }
+//                     }
 
-                    if resource_loaded {
-                        *visibility = Visibility::Visible;
-                        // println!("✓ 成功显示SWF: {}", target_name);
-                        found = true;
-                        break;
-                    } else {
-                        println!("⚠ SWF资源尚未加载完成: {}", target_name);
-                    }
-                }
-            }
+//                     if resource_loaded {
+//                         *visibility = Visibility::Visible;
+//                         // println!("✓ 成功显示SWF: {}", target_name);
+//                         found = true;
+//                         break;
+//                     } else {
+//                         println!("⚠ SWF资源尚未加载完成: {}", target_name);
+//                     }
+//                 }
+//             }
 
-            if !found {
-                println!("✗ 未找到SWF实体: {}", target_name);
-                println!("可用的Flash实体:");
-                for (name, _) in query.iter() {
-                    println!("  - {}", name.as_str());
-                }
-            }
-        } else {
-            // println!("当前对话没有SWF字段");
-        }
+//             if !found {
+//                 println!("✗ 未找到SWF实体: {}", target_name);
+//                 println!("可用的Flash实体:");
+//                 for (name, _) in query.iter() {
+//                     println!("  - {}", name.as_str());
+//                 }
+//             }
+//         } else {
+//             // println!("当前对话没有SWF字段");
+//         }
 
-        if game_state.is_changed() {
-            // println!("==================");
-        }
-    }
-}
+//         if game_state.is_changed() {
+//             // println!("==================");
+//         }
+//     }
+// }
 
 // 结束swf数据
 // 更新背景
@@ -1741,7 +1741,7 @@ fn button_interaction_system(
         // 透明点击区域特殊处理
         if name.as_str() == "click_area" {
             *color = Color::NONE.into();
-            border_color.0 = Color::NONE;
+            *border_color = BorderColor::all(Color::NONE);
             continue;
         }
 
@@ -1749,17 +1749,17 @@ fn button_interaction_system(
         match *interaction {
             Interaction::Pressed => {
                 *color = PRESSED_BUTTON.into();
-                border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
+                // border_color.0 = Color::srgba(0.1, 0.1, 0.1, 0.8);
                 println!("按下了按钮: {}", name.as_str());
             }
             Interaction::Hovered => {
                 *color = HOVERED_BUTTON.into();
-                border_color.0 = Color::WHITE;
+                // border_color.0 = Color::WHITE;
                 println!("悬停在按钮: {}", name.as_str());
             }
             Interaction::None => {
                 *color = NORMAL_BUTTON.into();
-                border_color.0 = Color::BLACK;
+                *border_color = BorderColor::all(Color::BLACK);
             }
         }
     }
@@ -1936,7 +1936,7 @@ fn cleanup_game(
             With<ClickArea>,
             With<ButtonContainer>,
             With<DynamicButton>,
-            With<FlashAnimation>,
+            // With<FlashAnimation>,
         )>,
     >,
     // 查询文本实体
@@ -2006,11 +2006,11 @@ fn output_game_state(time: Res<Time>) {
 // }
 
 // 条件检查函数
-fn any_swf_visible(query: Query<&Visibility, With<FlashAnimation>>) -> bool {
-    query
-        .iter()
-        .any(|visibility| *visibility == Visibility::Visible)
-}
+// fn any_swf_visible(query: Query<&Visibility, With<FlashAnimation>>) -> bool {
+//     query
+//         .iter()
+//         .any(|visibility| *visibility == Visibility::Visible)
+// }
 
 // 检查swf 的摄像机事业
 // 检查Flash实体的Transform
@@ -2219,11 +2219,11 @@ fn update_audio(
 
                 // 播放新BGM并获取实体
                 let audio_path = format!("audio/{}", bgm);
-                let new_entity = play_audio(&mut commands, &asset_server, &audio_path);
+                // let new_entity = play_audio(&mut commands, &asset_server, audio_path);
 
                 // 更新状态
                 current_audio.current_bgm = Some(target_bgm);
-                current_audio.current_entity = Some(new_entity);
+                // current_audio.current_entity = Some(new_entity);
             }
         } else {
             // 没有BGM时，停止当前播放
@@ -2237,23 +2237,23 @@ fn update_audio(
 }
 
 // 交互区域系统
-fn on_hover_enter(trigger: Trigger<Pointer<Over>>, mut sprites: Query<&mut Sprite>) {
-    if let Ok(mut sprite) = sprites.get_mut(trigger.target) {
-        // 使用 trigger.target
-        sprite.color = Color::srgb(0.0, 1.0, 1.0);
+// fn on_hover_enter(trigger: Trigger<Pointer<Over>>, mut sprites: Query<&mut Sprite>) {
+//     if let Ok(mut sprite) = sprites.get_mut(trigger.target) {
+//         // 使用 trigger.target
+//         sprite.color = Color::srgb(0.0, 1.0, 1.0);
 
-        println!("鼠标悬停进入！");
-    }
-}
+//         println!("鼠标悬停进入！");
+//     }
+// }
 
-fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
-    move |ev, mut sprites| {
-        let Ok(mut sprite) = sprites.get_mut(ev.target()) else {
-            return;
-        };
-        sprite.color = color;
-    }
-}
+// fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Query<&mut Sprite>) {
+//     move |ev, mut sprites| {
+//         let Ok(mut sprite) = sprites.get_mut(ev.target()) else {
+//             return;
+//         };
+//         sprite.color = color;
+//     }
+// }
 
 // 控制game 菜单
 fn handle_toggle_menu_event(
