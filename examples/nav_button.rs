@@ -51,7 +51,7 @@ fn toggle_button_system(
                 nav_visible.0 = !nav_visible.0;
                 
                 // 更新导航栏的高度
-                if let Ok(mut nav_node) = nav_query.get_single_mut() {
+                if let Ok(mut nav_node) = nav_query.single_mut() {
                     nav_node.height = if nav_visible.0 {
                         Val::Px(50.0) // 显示时的高度
                     } else {

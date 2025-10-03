@@ -320,8 +320,8 @@ fn close_dialog(
     swf_state: &mut ResMut<SwfPlayerState>,
     dialog_query: &Query<Entity, With<FileDialog>>,
 ) {
-    if let Ok(dialog_entity) = dialog_query.get_single() {
-        commands.entity(dialog_entity).despawn_recursive();
+    if let Ok(dialog_entity) = dialog_query.single() {
+        commands.entity(dialog_entity).despawn();
     }
     swf_state.show_dialog = false;
 }
@@ -332,11 +332,11 @@ fn update_file_display(
     mut display_area_query: Query<&mut BackgroundColor, With<SwfDisplayArea>>,
 ) {
     if swf_state.is_changed() {
-        if let Ok(mut text) = text_query.get_single_mut() {
+        if let Ok(mut text) = text_query.single_mut() {
             if let Some(file_path) = &swf_state.selected_file {
                 **text = format!("Selected: {}", file_path.display());
                 
-                if let Ok(mut bg_color) = display_area_query.get_single_mut() {
+                if let Ok(mut bg_color) = display_area_query.single_mut() {
                     bg_color.0 = Color::srgb(0.1, 0.2, 0.1);
                 }
             } else {

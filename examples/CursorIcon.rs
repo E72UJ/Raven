@@ -127,9 +127,9 @@ fn cursor_hover_system(
     shape_query: Query<(&Transform, &HoverShape)>,
     windows: Query<&Window>,
 ) {
-    let Ok(window_entity) = window_query.get_single() else { return; };
-    let Ok(window) = windows.get_single() else { return; };
-    let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
+    let Ok(window_entity) = window_query.single() else { return; };
+    let Ok(window) = windows.single() else { return; };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return; };
 
     if let Some(world_position) = window.cursor_position()
         .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
@@ -163,8 +163,8 @@ fn mouse_click_system(
     shape_query: Query<(&Transform, &HoverShape)>,
 ) {
     if mouse_input.just_pressed(MouseButton::Left) {
-        let Ok(window) = windows.get_single() else { return; };
-        let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
+        let Ok(window) = windows.single() else { return; };
+        let Ok((camera, camera_transform)) = camera_query.single() else { return; };
 
         if let Some(world_position) = window.cursor_position()
             .and_then(|cursor| camera.viewport_to_world(camera_transform, cursor).ok())
@@ -207,7 +207,7 @@ fn update_popups(
         popup.timer.tick(time.delta());
         
         if popup.timer.finished() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

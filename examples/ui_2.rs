@@ -96,8 +96,8 @@ fn hover_area_system(
     mut border_query: Query<(&mut Visibility, &mut Transform, &BorderOutline), Without<HoverArea>>,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
 ) {
-    let Ok(window) = windows.get_single() else { return; };
-    let Ok((camera, camera_transform)) = camera_query.get_single() else { return; };
+    let Ok(window) = windows.single() else { return; };
+    let Ok((camera, camera_transform)) = camera_query.single() else { return; };
     
     if let Some(cursor_position) = window.cursor_position() {
         if let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) {

@@ -432,7 +432,7 @@ fn cleanup_scene(
     query: Query<Entity, With<SceneCleanup>>,
 ) {
     for entity in query.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 

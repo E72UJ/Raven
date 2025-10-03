@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
 
@@ -26,7 +26,7 @@ struct UiStyle {
     border_radius: Option<f32>,
     // 位置和尺寸配置
     position: Option<[f32; 4]>, // [bottom, left, right, top]
-    size: Option<[f32; 2]>, // [width, height]
+    size: Option<[f32; 2]>,     // [width, height]
     // 新增边框相关属性
     border_color: Option<[f32; 4]>,
     border_width: Option<f32>,
@@ -100,7 +100,13 @@ impl UiStyleSheet {
                 );
             }
         }
-        (PositionType::Relative, Val::Auto, Val::Auto, Val::Auto, Val::Auto)
+        (
+            PositionType::Relative,
+            Val::Auto,
+            Val::Auto,
+            Val::Auto,
+            Val::Auto,
+        )
     }
 
     fn get_size(&self, style_name: &str) -> (Val, Val) {
@@ -153,11 +159,7 @@ fn load_styles(mut commands: Commands) {
     }
 }
 
-fn setup_ui(
-    mut commands: Commands, 
-    asset_server: Res<AssetServer>,
-    stylesheet: Res<UiStyleSheet>
-) {
+fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, stylesheet: Res<UiStyleSheet>) {
     // 创建摄像机
     commands.spawn(Camera2d);
 
@@ -196,26 +198,28 @@ fn setup_ui(
             ));
 
             // 关闭按钮
-            parent.spawn((
-                Button,
-                Node {
-                    padding: stylesheet.get_padding("button"),
-                    align_self: AlignSelf::FlexEnd,
-                    ..default()
-                },
-                BackgroundColor(stylesheet.get_background_color("button")),
-                CloseButton,
-            )).with_children(|button_parent| {
-                button_parent.spawn((
-                    Text::new("关闭"),
-                    TextFont {
-                        font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                        font_size: stylesheet.get_font_size("button"),
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        padding: stylesheet.get_padding("button"),
+                        align_self: AlignSelf::FlexEnd,
                         ..default()
                     },
-                    TextColor(stylesheet.get_text_color("button")),
-                ));
-            });
+                    BackgroundColor(stylesheet.get_background_color("button")),
+                    CloseButton,
+                ))
+                .with_children(|button_parent| {
+                    button_parent.spawn((
+                        Text::new("关闭"),
+                        TextFont {
+                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                            font_size: stylesheet.get_font_size("button"),
+                            ..default()
+                        },
+                        TextColor(stylesheet.get_text_color("button")),
+                    ));
+                });
         })
         .id();
 
@@ -249,7 +253,7 @@ fn setup_ui(
             ..default()
         },
         BackgroundColor(stylesheet.get_background_color("namebox")),
-        BorderColor(stylesheet.get_border_color("namebox")),
+        BorderColor::all(stylesheet.get_border_color("namebox")),
         GlobalZIndex(2),
         NameBox,
         DialogBox,
@@ -272,7 +276,7 @@ fn button_interaction(
             Interaction::Pressed => {
                 // 关闭对话框和名称框
                 for dialog_entity in &dialog_query {
-                    commands.entity(dialog_entity).despawn_recursive();
+                    commands.entity(dialog_entity).despawn();
                 }
                 println!("对话框已关闭！");
             }

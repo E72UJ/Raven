@@ -221,7 +221,7 @@ fn button_interaction(
             Interaction::Pressed => {
                 // 关闭对话框
                 for dialog_entity in &dialog_query {
-                    commands.entity(dialog_entity).despawn_recursive();
+                    commands.entity(dialog_entity).despawn();
                 }
                 println!("对话框已关闭！");
             }

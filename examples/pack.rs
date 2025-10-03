@@ -95,8 +95,8 @@ fn handle_mouse_movement(
     q_window: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform)>,
 ) {
-    let Ok(window) = q_window.get_single() else { return };
-    let Ok((camera, camera_transform)) = q_camera.get_single() else { return };
+    let Ok(window) = q_window.single() else { return };
+    let Ok((camera, camera_transform)) = q_camera.single() else { return };
     
     if let Some(cursor_position) = window.cursor_position() {
         if let Ok(world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) {

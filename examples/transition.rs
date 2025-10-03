@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use bevy::ecs::system::ParamSet;
+use bevy::prelude::*;
 
 // Transition State Enum
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash)]
@@ -50,25 +50,26 @@ fn main() {
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Bevy 0.16 Transition System Example".to_string(),
-                resolution: (1220.0, 680.0).into(),
+                resolution: (1220, 680).into(),
                 ..default()
             }),
             ..default()
         }))
         .init_state::<TransitionState>()
         .add_systems(Startup, setup_system)
-        .add_systems(Update, (
-            handle_input_system,
-            fade_out_system,
-            fade_in_system,
-            dissolve_system,
-        ))
+        .add_systems(
+            Update,
+            (
+                handle_input_system,
+                fade_out_system,
+                fade_in_system,
+                dissolve_system,
+            ),
+        )
         .run();
 }
 
-fn setup_system(
-    mut commands: Commands,
-) {
+fn setup_system(mut commands: Commands) {
     // Create 2D Camera
     commands.spawn(Camera2d);
 
@@ -146,14 +147,14 @@ fn handle_input_system(
     current_state: Res<State<TransitionState>>,
     mut game_state: ResMut<GameState>,
 ) {
-    let input_triggered = keys.just_pressed(KeyCode::Space) 
+    let input_triggered = keys.just_pressed(KeyCode::Space)
         || keys.just_pressed(KeyCode::Enter)
         || mouse.just_pressed(MouseButton::Left);
 
-    if input_triggered 
-        && *current_state.get() == TransitionState::None 
+    if input_triggered
+        && *current_state.get() == TransitionState::None
         && !game_state.is_transitioning
-        && game_state.current_line < game_state.texts.len() - 1 
+        && game_state.current_line < game_state.texts.len() - 1
     {
         game_state.is_transitioning = true;
         next_state.set(TransitionState::Dissolve);
@@ -206,7 +207,9 @@ fn fade_in_system(
     timer.0.tick(time.delta());
 
     // Update content during transition
-    if timer.0.elapsed_secs() / timer.0.duration().as_secs_f32() > 0.5 && game_state.current_line < game_state.texts.len() - 1 {
+    if timer.0.elapsed_secs() / timer.0.duration().as_secs_f32() > 0.5
+        && game_state.current_line < game_state.texts.len() - 1
+    {
         game_state.current_line += 1;
 
         // Update background color (example)
@@ -252,7 +255,8 @@ fn dissolve_system(
 
     // Dissolve effect for main sprite
     for mut sprite in sprite_queries.p1().iter_mut() {
-        sprite.color = game_state.colors[game_state.current_line % game_state.colors.len()].with_alpha(1.0 - progress.min(1.0));
+        sprite.color = game_state.colors[game_state.current_line % game_state.colors.len()]
+            .with_alpha(1.0 - progress.min(1.0));
     }
 
     // Dissolve effect for main text
@@ -276,7 +280,8 @@ fn dissolve_system(
 
         // Restore sprite visibility for fade-in
         for mut sprite in sprite_queries.p1().iter_mut() {
-            sprite.color = game_state.colors[game_state.current_line % game_state.colors.len()].with_alpha(progress - 0.5);
+            sprite.color = game_state.colors[game_state.current_line % game_state.colors.len()]
+                .with_alpha(progress - 0.5);
         }
     }
 

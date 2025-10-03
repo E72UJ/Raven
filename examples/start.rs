@@ -48,7 +48,7 @@ fn toggle_fullscreen(
     mut windows: Query<&mut Window>,
 ) {
     if input.just_pressed(KeyCode::F4) {
-        if let Ok(mut window) = windows.get_single_mut() {
+        if let Ok(mut window) = windows.single_mut() {
             window.mode = match window.mode {
                 WindowMode::Windowed => WindowMode::BorderlessFullscreen(MonitorSelection::Current),
                 _ => WindowMode::Windowed,

@@ -126,7 +126,7 @@ fn handle_popups(
     } else if !should_show_popup {
         // 删除所有弹窗
         for entity in popup_query.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }

@@ -1,12 +1,5 @@
 // 游戏引擎主程序
-use std::{
-    collections::HashMap,
-    env,
-    fmt::Debug,
-    fs,
-    path::PathBuf,
-    time::Duration,
-};
+use std::{collections::HashMap, env, fmt::Debug, fs, path::PathBuf, time::Duration};
 
 // 第三方 crate 导入
 use bevy::{
@@ -17,20 +10,16 @@ use bevy::{
     ui::FocusPolicy,
     winit::WinitSettings,
 };
-use bevy_flash::{
-    assets::FlashAnimationSwfData,
-    bundle::FlashAnimation,
-    FlashPlugin,
-};
+use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
 use serde::Deserialize;
 
 // 当前 crate 模块导入
 use crate::{
+    GameScene,
     audio::{play_audio, play_audio_loop, play_audio_with_volume},
-    config::{load_main_config, MainConfig},
+    config::{MainConfig, load_main_config},
     style::{StylePlugin, UiStyleSheet},
     transition::{fade_in, fade_out},
-    GameScene,
 };
 
 // 外部 crate 导入（使用项目名）
@@ -39,15 +28,14 @@ use Raven::{
     typewriter::{TypewriterPlugin, TypewriterText, typewriter_system},
 };
 
-
-use crate::toolbar::RollbackEvent; // 直接导入
+use crate::toolbar::RollbackEventMessage; // 直接导入
 // 常量定义
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 // 事件系统
 pub mod events;
+use crate::toolbar::ToggleAutoPlayEventMessage;
+use crate::toolbar::ToggleMenuEventMessage;
 pub use events::*;
-use crate::toolbar::ToggleMenuEvent;
-use crate::toolbar::ToggleAutoPlayEvent; 
 // 包调用结束
 
 // 引用
@@ -75,9 +63,9 @@ struct BlockState {
 
 #[derive(Debug)]
 enum UnblockCondition {
-    Click,          // 点击后解除阻塞
+    Click,             // 点击后解除阻塞
     KeyPress(KeyCode), // 按下特定键后解除
-    Timer(Duration), // 定时器到期后解除
+    Timer(Duration),   // 定时器到期后解除
 }
 
 // 阻塞系统结束
@@ -98,10 +86,10 @@ struct CurrentText;
 
 #[derive(Component)]
 struct Typewriter {
-    full_text: String,           // 完整文本
-    current_index: usize,        // 当前显示到第几个字符
-    timer: Timer,                // 控制打字速度的计时器
-    is_finished: bool,           // 是否完成打字
+    full_text: String,    // 完整文本
+    current_index: usize, // 当前显示到第几个字符
+    timer: Timer,         // 控制打字速度的计时器
+    is_finished: bool,    // 是否完成打字
 }
 // #[derive(Component)]
 // struct TypewriterText {
@@ -116,14 +104,12 @@ struct MenuOverlay;
 #[derive(Component)]
 struct MenuBox;
 
-
 // 添加菜单控制事件
 #[derive(Event)]
 pub struct ToggleGameMenuEvent;
 
 #[derive(Event)]
 pub struct CloseGameMenuEvent;
-
 
 pub enum SettingsMenuState {
     Hidden,
@@ -161,19 +147,19 @@ impl Typewriter {
             is_finished: false,
         }
     }
-    
+
     fn get_current_text(&self) -> String {
         if self.current_index >= self.full_text.len() {
             return self.full_text.clone();
         }
-        
+
         // 正确处理UTF-8字符
         self.full_text.chars().take(self.current_index).collect()
     }
 }
 // 结构体
 // / 位置常量
-const left_box:f32 = 80.0;
+const left_box: f32 = 80.0;
 
 // 点击组件
 #[derive(Component)]
@@ -182,13 +168,11 @@ struct ClickArea;
 #[derive(Component)]
 struct Background;
 
-
 #[derive(Component)]
 struct ButtonContainer;
 // 添加这些组件定义
 #[derive(Component)]
 struct DynamicButton;
-
 
 #[derive(Debug, Deserialize)]
 struct Choice {
@@ -243,7 +227,7 @@ struct GameSettings {
 // #[derive(Debug, Resource)]
 // struct LabelMap(HashMap<String, usize>);
 #[derive(Debug, Resource)]
-struct LabelMap(HashMap<String, usize>);  // 标签 -> 行索引的映射
+struct LabelMap(HashMap<String, usize>); // 标签 -> 行索引的映射
 
 // 对话数据结构（支持YAML反序列化）
 #[derive(Debug, Deserialize)]
@@ -253,8 +237,8 @@ struct Dialogue {
     portrait: String,
     #[serde(default)]
     bgm: Option<String>,
-    background: Option<String>,  // 新添加的背景字段
-    swf: Option<String>, // 新增swf字段
+    background: Option<String>, // 新添加的背景字段
+    swf: Option<String>,        // 新增swf字段
     #[serde(default)] // 如果没有label字段，则为None
     label: Option<String>,
     #[serde(default)] // 如果没有jump字段，则为None
@@ -268,13 +252,13 @@ struct Dialogue {
 struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
-    can_go_back: bool, // 添加标志位判断是否可以返回
+    can_go_back: bool,          // 添加标志位判断是否可以返回
     jump_label: Option<String>, // 新增的跳转标签字段
-    in_branch_selection: bool, // 新增：是否在分支选择状态
-    is_blocked: bool, // 是否被阻塞
-    is_auto_playing: bool, // 新增字段
-    auto_play_timer: f32,         // 自动播放计时器
-    auto_play_interval: f32,      // 自动播放间隔时间（秒
+    in_branch_selection: bool,  // 新增：是否在分支选择状态
+    is_blocked: bool,           // 是否被阻塞
+    is_auto_playing: bool,      // 新增字段
+    auto_play_timer: f32,       // 自动播放计时器
+    auto_play_interval: f32,    // 自动播放间隔时间（秒
 }
 // 立绘组件
 #[derive(Component)]
@@ -296,7 +280,6 @@ struct PortraitAssets {
 #[derive(Component)]
 struct MyMusic;
 
-
 // 主函数
 #[derive(Resource, Default)]
 pub struct CurrentAudio {
@@ -313,27 +296,32 @@ impl Plugin for GamePlugin {
         }
         app
             // 只在启动时加载资源，不创建UI
-            .add_systems(Startup, (
-                load_main_config_system,
-                setup_camera,
-                load_portraits,
-                load_audio_resources,
-                load_backgrounds,
-                // load_swf_assets,
-                // setup_ui,  // 移除这行！
-                
-
-            ).chain())
+            .add_systems(
+                Startup,
+                (
+                    load_main_config_system,
+                    setup_camera,
+                    load_portraits,
+                    load_audio_resources,
+                    load_backgrounds,
+                    // load_swf_assets,
+                    // setup_ui,  // 移除这行！
+                )
+                    .chain(),
+            )
             // 进入游戏场景时才创建UI和游戏状态
-            .add_systems(OnEnter(GameScene::Game), (
-                setup_game_state,
-                setup_ui,  // 移到这里
-                load_swf_assets,
-       
-            ).chain())
+            .add_systems(
+                OnEnter(GameScene::Game),
+                (
+                    setup_game_state,
+                    setup_ui, // 移到这里
+                    load_swf_assets,
+                )
+                    .chain(),
+            )
             .add_plugins(RenpyDissolvePlugin)
-            // .add_plugins(StylePlugin)  
-            .insert_resource(CurrentAudio::default()) 
+            // .add_plugins(StylePlugin)
+            .insert_resource(CurrentAudio::default())
             // .add_plugins(TypewriterPlugin)
             .add_systems(OnExit(GameScene::Game), cleanup_game)
             .add_systems(
@@ -341,10 +329,10 @@ impl Plugin for GamePlugin {
                 (
                     handle_input,
                     // debug_flash_position,
-                    handle_toggle_menu_event,  // 处理显示/隐藏事件
-                    handle_close_settings_button,  // 处理关闭按钮                    
+                    handle_toggle_menu_event,     // 处理显示/隐藏事件
+                    handle_close_settings_button, // 处理关闭按钮
                     output_game_state,
-                    update_dialogue, 
+                    update_dialogue,
                     handle_rollback_event,
                     handle_auto_play_event,
                     update_audio,
@@ -360,11 +348,10 @@ impl Plugin for GamePlugin {
                     //     .run_if(in_state(GameScene::Game))  // 先检查是否在游戏状态
                     //     .run_if(should_create_buttons),     // 再检查是否需要创建按钮
                     button_interaction_system,
-
                     button_image_system,
-                    update_typewriter
-                    // fade_animation_system
-                ).run_if(in_state(GameScene::Game))
+                    update_typewriter, // fade_animation_system
+                )
+                    .run_if(in_state(GameScene::Game)),
             );
     }
 }
@@ -380,14 +367,16 @@ fn load_main_config_system(mut commands: Commands) {
 }
 
 // 简化的游戏状态设置
-fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server: Res<AssetServer>) {
+fn setup_game_state(
+    mut commands: Commands,
+    config: Res<MainConfig>,
+    asset_server: Res<AssetServer>,
+) {
     // info!("进入游戏场景");
     commands.spawn(Camera2d);
 
-
-
     let dialogues: Vec<Dialogue> = load_dialogues(&config);
-    
+
     // 创建标签映射
     let mut label_map = HashMap::new();
     for (index, dialogue) in dialogues.iter().enumerate() {
@@ -395,7 +384,7 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
             label_map.insert(label.clone(), index);
         }
     }
-    
+
     commands.insert_resource(GameState {
         current_line: 0,
         dialogues,
@@ -407,7 +396,7 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
         auto_play_timer: 0.0,
         auto_play_interval: 2.0, // 默认2秒间隔
     });
-    
+
     commands.insert_resource(LabelMap(label_map));
 }
 
@@ -417,7 +406,10 @@ fn setup_game_state(mut commands: Commands, config: Res<MainConfig>,asset_server
 fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
     // let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let exe_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    println!("相对的对话路径有: {:?}", exe_dir.join("assets/dialogues.yaml"));
+    println!(
+        "相对的对话路径有: {:?}",
+        exe_dir.join("assets/dialogues.yaml")
+    );
     let yaml_path2 = exe_dir.join("assets/dialogues.yaml");
     let yaml_str = fs::read_to_string(yaml_path2).expect("找不到对话文件 assets/dialogues.yaml");
 
@@ -456,7 +448,6 @@ fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
 }
 // 初始化游戏的状态
 fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
-
     // commands.spawn((
     //     Camera2d,
     //     Transform::default(),
@@ -468,7 +459,8 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
     // 创建标签映射
     let mut label_map = HashMap::new();
     for (index, dialogue) in dialogues.iter().enumerate() {
-        if let Some(label) = dialogue.label.as_ref() {  // 使用 as_ref() 获取引用
+        if let Some(label) = dialogue.label.as_ref() {
+            // 使用 as_ref() 获取引用
             label_map.insert(label.clone(), index);
         }
     }
@@ -478,14 +470,14 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         can_go_back: false, // 初始时不能返回
         jump_label: None,
         in_branch_selection: false,
-        is_blocked:false,
+        is_blocked: false,
         is_auto_playing: false, // 新增字段
         auto_play_timer: 0.0,
         auto_play_interval: 2.0, // 默认2秒间隔
     });
     // println!("label_map: {:?}", label_map[1].jump);
     commands.insert_resource(LabelMap(label_map));
-        // 插入标签映射资源
+    // 插入标签映射资源
 }
 // 加载立绘资源 - 使用标准库的Path和PathBuf修改后的版本
 fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
@@ -519,34 +511,37 @@ fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config
     // println!("{}",portrait_assets);
     commands.insert_resource(portrait_assets);
 }
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,stylesheet: Res<UiStyleSheet>,) {
+fn setup_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    config: Res<MainConfig>,
+    stylesheet: Res<UiStyleSheet>,
+) {
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
             // Button, // 添加这行
             ClickArea,
             Node {
-                width: Val::Px(1200.0),     // 固定宽度800像素
-                height: Val::Px(660.0),    // 固定高度600像素
+                width: Val::Px(1200.0), // 固定宽度800像素
+                height: Val::Px(660.0), // 固定高度600像素
                 bottom: Val::Px(50.0),
-                left: Val::Px(0.0),  // 添加左边定位
+                left: Val::Px(0.0), // 添加左边定位
                 position_type: PositionType::Absolute,
- 
+
                 ..default()
             },
             BackgroundColor(Color::NONE), // 完全透明
             // BackgroundColor(Color::WHITE),
             GlobalZIndex(9999),
-            Interaction::default(), 
+            Interaction::default(),
             // Button,
             FocusPolicy::Pass, // 关键：让焦点穿透
             Visibility::Visible,
         ))
-        .with_children(|parent| {
-
-                });
-// 分支创建============
-commands.spawn((
+        .with_children(|parent| {});
+    // 分支创建============
+    commands.spawn((
         Name::new("choice_container"),
         ButtonContainer,
         Node {
@@ -564,38 +559,37 @@ commands.spawn((
         Visibility::Visible, // 初始隐藏
     ));
 
-// 分支创建结束===============
-// sidebox
-    commands.spawn((
-        Name::new("sidebox"),
-        ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
-        // Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0))
-        // .with_scale(Vec3::new(0.5, 0.5, 0.0)),                
-        Node {
-            position_type: PositionType::Absolute,
-            left: Val::Px(-10.0),    // 1450 * 0.2
-            top: Val::Px(166.0),     // (80 + 750) * 0.2
-            width: Val::Px(578.4),   // 2892 * 0.2
-            height: Val::Px(476.8),  // 2384 * 0.2
-            ..default()
-        },
-
-        Visibility::Hidden,
-        // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 0.4)),
-        GlobalZIndex(10000),
-        ZIndex(1200),
-    )).with_children(|parent| {
+    // 分支创建结束===============
+    // sidebox
+    commands
+        .spawn((
+            Name::new("sidebox"),
+            ImageNode::new(asset_server.load("characters/protagonist/02.png")),
+            // Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0))
+            // .with_scale(Vec3::new(0.5, 0.5, 0.0)),
+            Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(-10.0),   // 1450 * 0.2
+                top: Val::Px(166.0),    // (80 + 750) * 0.2
+                width: Val::Px(578.4),  // 2892 * 0.2
+                height: Val::Px(476.8), // 2384 * 0.2
+                ..default()
+            },
+            Visibility::Hidden,
+            // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 0.4)),
+            GlobalZIndex(10000),
+            ZIndex(1200),
+        ))
+        .with_children(|parent| {
             // 在这里创建子节点
             parent.spawn((
                 Name::new("textbox"),
-
                 Visibility::Visible,
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
-               
             ));
         });
     commands.spawn((
@@ -610,7 +604,7 @@ commands.spawn((
         // BackgroundColor(Color::srgba(0.4, 0.4, 0.1, 1.0)),
         Portrait,
     ));
-// 交互按钮2
+    // 交互按钮2
 
     commands.spawn((
         Name::new("spritebox"),
@@ -641,18 +635,18 @@ commands.spawn((
     //     Visibility::Visible,
     //     RenpyDissolve::fade_in(2.5), // 使用渐入效果
     // ));
-//     commands.spawn((
-//     Name::new("spritebox2"),
-//     Transform::from_xyz(0.0, -24.0, 0.0),
-//     Sprite {
-//         color: Color::srgba(1.0, 0.0, 0.0, 0.0), // 红色，初始完全透明
-//         custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
-//         ..default()
-//     },
-//     // 不需要 image 字段，就是纯色
-//     Visibility::Visible,
-//     RenpyDissolve::fade_in(2.0),
-// ));
+    //     commands.spawn((
+    //     Name::new("spritebox2"),
+    //     Transform::from_xyz(0.0, -24.0, 0.0),
+    //     Sprite {
+    //         color: Color::srgba(1.0, 0.0, 0.0, 0.0), // 红色，初始完全透明
+    //         custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
+    //         ..default()
+    //     },
+    //     // 不需要 image 字段，就是纯色
+    //     Visibility::Visible,
+    //     RenpyDissolve::fade_in(2.0),
+    // ));
     // commands.spawn((
     //     Name::new("background"),
     //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
@@ -665,13 +659,12 @@ commands.spawn((
     //     },
     //     // Visibility::Hidden,
     // ));
-    let dialog_padding = stylesheet.get_padding("styles","dialog_box");
-    let dialog_pos = stylesheet.get_position("styles","dialog_box");
+    let dialog_padding = stylesheet.get_padding("styles", "dialog_box");
+    let dialog_pos = stylesheet.get_position("styles", "dialog_box");
     let main_config = load_main_config();
     let menu_bg = stylesheet.get_background_color("menu", "menu_box");
     commands
         .spawn((
-            
             // Accepts a `String` or any type that converts into a `String`, such as `&str`
             // Name::new("textbox"),
             // Text::new("文本框!"),
@@ -692,7 +685,6 @@ commands.spawn((
                 left: dialog_pos.left,
                 right: dialog_pos.right,
                 // width: Val::Px(1080.0),
-                
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
@@ -703,7 +695,6 @@ commands.spawn((
                 },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
-                
             },
             // 对话框背景颜色
             ImageNode::new(asset_server.load("gui/textbox3.png")),
@@ -718,25 +709,23 @@ commands.spawn((
                 TextFont {
                     // font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
                     font: asset_server.load(main_config.settings.font.clone()),
-                    font_size: stylesheet.get_font_size("styles","textbox"),
-                    
+                    font_size: stylesheet.get_font_size("styles", "textbox"),
+
                     ..default()
                 },
-                TextColor(stylesheet.get_text_color("styles","textbox")),
-
+                TextColor(stylesheet.get_text_color("styles", "textbox")),
                 Node {
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
-                
                 // 其他你需要的组件
                 // CurrentText,
                 TypewriterText {
                     full_text: "".to_string(),
                     current_length: 0,
                     timer: Timer::from_seconds(0.02, TimerMode::Repeating), // 每50毫秒显示一个字符
-                    is_active: true,  // 添加这一行
+                    is_active: true,                                        // 添加这一行
                 },
             ));
         });
@@ -751,7 +740,6 @@ commands.spawn((
             line_height: bevy::text::LineHeight::Px(50.),
             ..default()
         },
-        
         TextColor(Color::srgb(0.85, 0.85, 0.85)),
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
@@ -772,7 +760,6 @@ commands.spawn((
         // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         GlobalZIndex(2),
         ImageNode::new(asset_server.load("gui/textbox2.png")),
-
         // AnimatedText,
     ));
     // 点击区域
@@ -790,343 +777,357 @@ commands.spawn((
         // Portrait,
     ));
 
+    // 交互菜单UI
+    // 创建设置菜单 - 开始
+    let font_handle = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
 
-// 交互菜单UI
-// 创建设置菜单 - 开始
-let font_handle = asset_server.load("fonts/SarasaFixedHC-Light.ttf");
-
-commands.spawn((
-    Node {
-        width: Val::Percent(100.0),
-        height: Val::Percent(100.0),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        position_type: PositionType::Absolute,
-        top: Val::Px(-80.0),
-        left: Val::Px(0.0),
-        
-        ..default()
-    },
-    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)), // 半透明背景
-    ZIndex(1000), // 设置高层级
-    Visibility::Hidden,
-    Interaction::default(), // 添加交互组件来阻止点击穿透
-    SettingsMenu,
-))
-.with_children(|parent| {
-    // 主要设置容器
-    parent.spawn((
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(50.0),
-            left: Val::Px(0.0),
-            width: Val::Percent(80.0),
-            height: Val::Percent(80.0),
-            flex_direction: FlexDirection::Row,
-            ..default()
-        },
-        BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.9)), // 更明显的背景色
-        ZIndex(1001), // 更高层级
-        Interaction::default(), // 阻止点击穿透
-        // Visibility::Hidden,
-    ))
-    .with_children(|main_container| {
-        // 左侧菜单栏
-        main_container.spawn((
+    commands
+        .spawn((
             Node {
-                width: Val::Percent(25.0),
+                width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                align_items: AlignItems::FlexStart,
-                padding: UiRect::all(Val::Px(20.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                top: Val::Px(-80.0),
+                left: Val::Px(0.0),
+
                 ..default()
             },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
-            ZIndex(1002),
-            Interaction::default(),
+            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)), // 半透明背景
+            ZIndex(1000),                                      // 设置高层级
+            Visibility::Hidden,
+            Interaction::default(), // 添加交互组件来阻止点击穿透
+            SettingsMenu,
         ))
-        .with_children(|left_menu| {
-            // 设置标题
-            left_menu.spawn((
-                Text::new("设置"),
-                TextFont {
-                    font: font_handle.clone(),
-                    font_size: 32.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色
-                Node {
-                    margin: UiRect::bottom(Val::Px(30.0)),
-                    ..default()
-                },
-                ZIndex(1003),
-            ));
-
-            // 左侧菜单选项
-            let menu_items = vec!["历史", "保存", "读取游戏", "设置", "标题界面", "关于"];
-            for (index, item) in menu_items.iter().enumerate() {
-                let is_selected = index == 3; // "设置" 被选中
-                left_menu.spawn((
-                    Button,
+        .with_children(|parent| {
+            // 主要设置容器
+            parent
+                .spawn((
                     Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(40.0),
-                        justify_content: JustifyContent::FlexStart,
-                        align_items: AlignItems::Center,
-                        margin: UiRect::bottom(Val::Px(10.0)),
-                        padding: UiRect::all(Val::Px(10.0)),
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(50.0),
+                        left: Val::Px(0.0),
+                        width: Val::Percent(80.0),
+                        height: Val::Percent(80.0),
+                        flex_direction: FlexDirection::Row,
                         ..default()
                     },
-                    BackgroundColor(if is_selected { 
-                        Color::srgba(1.0, 0.6, 0.2, 0.3) 
-                    } else { 
-                        Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
-                    }),
-                    ZIndex(1003),
+                    BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.9)), // 更明显的背景色
+                    ZIndex(1001),                                      // 更高层级
+                    Interaction::default(),                            // 阻止点击穿透
+                                                                       // Visibility::Hidden,
                 ))
-                .with_children(|button| {
-                    button.spawn((
-                        Text::new(*item),
-                        TextFont {
-                            font: font_handle.clone(),
-                            font_size: 18.0,
+                .with_children(|main_container| {
+                    // 左侧菜单栏
+                    main_container
+                        .spawn((
+                            Node {
+                                width: Val::Percent(25.0),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Column,
+                                align_items: AlignItems::FlexStart,
+                                padding: UiRect::all(Val::Px(20.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+                            ZIndex(1002),
+                            Interaction::default(),
+                        ))
+                        .with_children(|left_menu| {
+                            // 设置标题
+                            left_menu.spawn((
+                                Text::new("设置"),
+                                TextFont {
+                                    font: font_handle.clone(),
+                                    font_size: 32.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色
+                                Node {
+                                    margin: UiRect::bottom(Val::Px(30.0)),
+                                    ..default()
+                                },
+                                ZIndex(1003),
+                            ));
+
+                            // 左侧菜单选项
+                            let menu_items =
+                                vec!["历史", "保存", "读取游戏", "设置", "标题界面", "关于"];
+                            for (index, item) in menu_items.iter().enumerate() {
+                                let is_selected = index == 3; // "设置" 被选中
+                                left_menu
+                                    .spawn((
+                                        Button,
+                                        Node {
+                                            width: Val::Percent(100.0),
+                                            height: Val::Px(40.0),
+                                            justify_content: JustifyContent::FlexStart,
+                                            align_items: AlignItems::Center,
+                                            margin: UiRect::bottom(Val::Px(10.0)),
+                                            padding: UiRect::all(Val::Px(10.0)),
+                                            ..default()
+                                        },
+                                        BackgroundColor(if is_selected {
+                                            Color::srgba(1.0, 0.6, 0.2, 0.3)
+                                        } else {
+                                            Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
+                                        }),
+                                        ZIndex(1003),
+                                    ))
+                                    .with_children(|button| {
+                                        button.spawn((
+                                            Text::new(*item),
+                                            TextFont {
+                                                font: font_handle.clone(),
+                                                font_size: 18.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                            ZIndex(1004),
+                                        ));
+                                    });
+                            }
+                        });
+
+                    // 分隔线
+                    main_container.spawn((
+                        Node {
+                            width: Val::Px(2.0),
+                            height: Val::Percent(100.0),
                             ..default()
                         },
-                        TextColor(Color::WHITE),
-                        ZIndex(1004),
+                        BackgroundColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色分隔线
+                        ZIndex(1002),
                     ));
+
+                    // 右侧设置内容区域
+                    main_container
+                        .spawn((
+                            Node {
+                                width: Val::Percent(75.0),
+                                height: Val::Percent(100.0),
+                                flex_direction: FlexDirection::Row,
+                                padding: UiRect::all(Val::Px(40.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)), // 透明背景
+                            ZIndex(1002),
+                            Interaction::default(),
+                        ))
+                        .with_children(|right_content| {
+                            // 左栏 - 显示设置
+                            right_content
+                                .spawn((
+                                    Node {
+                                        width: Val::Percent(33.0),
+                                        height: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Column,
+                                        align_items: AlignItems::FlexStart,
+                                        margin: UiRect::right(Val::Px(40.0)),
+                                        ..default()
+                                    },
+                                    ZIndex(1003),
+                                ))
+                                .with_children(|display_column| {
+                                    // 显示标题
+                                    display_column.spawn((
+                                        Text::new("显示"),
+                                        TextFont {
+                                            font: font_handle.clone(),
+                                            font_size: 24.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                                        Node {
+                                            margin: UiRect::bottom(Val::Px(20.0)),
+                                            ..default()
+                                        },
+                                        ZIndex(1004),
+                                    ));
+
+                                    // 显示选项
+                                    let display_options = vec!["窗口", "全屏"];
+                                    for option in display_options {
+                                        display_column
+                                            .spawn((
+                                                Button,
+                                                Node {
+                                                    width: Val::Percent(100.0),
+                                                    height: Val::Px(30.0),
+                                                    justify_content: JustifyContent::FlexStart,
+                                                    align_items: AlignItems::Center,
+                                                    margin: UiRect::bottom(Val::Px(10.0)),
+                                                    padding: UiRect::all(Val::Px(5.0)),
+                                                    ..default()
+                                                },
+                                                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                                                ZIndex(1004),
+                                            ))
+                                            .with_children(|button| {
+                                                button.spawn((
+                                                    Text::new(option),
+                                                    TextFont {
+                                                        font: font_handle.clone(),
+                                                        font_size: 16.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(Color::WHITE),
+                                                    ZIndex(1005),
+                                                ));
+                                            });
+                                    }
+                                });
+
+                            // 中栏 - 快进设置
+                            right_content
+                                .spawn((
+                                    Node {
+                                        width: Val::Percent(33.0),
+                                        height: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Column,
+                                        align_items: AlignItems::FlexStart,
+                                        margin: UiRect::right(Val::Px(40.0)),
+                                        ..default()
+                                    },
+                                    ZIndex(1003),
+                                ))
+                                .with_children(|speed_column| {
+                                    // 快进标题
+                                    speed_column.spawn((
+                                        Text::new("快进"),
+                                        TextFont {
+                                            font: font_handle.clone(),
+                                            font_size: 24.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                                        Node {
+                                            margin: UiRect::bottom(Val::Px(20.0)),
+                                            ..default()
+                                        },
+                                        ZIndex(1004),
+                                    ));
+
+                                    // 快进选项
+                                    let speed_options = vec!["未读文本", "选项后继续", "忽略转场"];
+                                    for option in speed_options {
+                                        speed_column
+                                            .spawn((
+                                                Button,
+                                                Node {
+                                                    width: Val::Percent(100.0),
+                                                    height: Val::Px(30.0),
+                                                    justify_content: JustifyContent::FlexStart,
+                                                    align_items: AlignItems::Center,
+                                                    margin: UiRect::bottom(Val::Px(10.0)),
+                                                    padding: UiRect::all(Val::Px(5.0)),
+                                                    ..default()
+                                                },
+                                                BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
+                                                ZIndex(1004),
+                                            ))
+                                            .with_children(|button| {
+                                                button.spawn((
+                                                    Text::new(option),
+                                                    TextFont {
+                                                        font: font_handle.clone(),
+                                                        font_size: 16.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(Color::WHITE),
+                                                    ZIndex(1005),
+                                                ));
+                                            });
+                                    }
+                                });
+
+                            // 右栏 - 语言设置
+                            right_content
+                                .spawn((
+                                    Node {
+                                        width: Val::Percent(34.0),
+                                        height: Val::Percent(100.0),
+                                        flex_direction: FlexDirection::Column,
+                                        align_items: AlignItems::FlexStart,
+                                        ..default()
+                                    },
+                                    ZIndex(1003),
+                                ))
+                                .with_children(|language_column| {
+                                    // 语言标题
+                                    language_column.spawn((
+                                        Text::new("语言"),
+                                        TextFont {
+                                            font: font_handle.clone(),
+                                            font_size: 24.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(1.0, 0.6, 0.2)),
+                                        Node {
+                                            margin: UiRect::bottom(Val::Px(20.0)),
+                                            ..default()
+                                        },
+                                        ZIndex(1004),
+                                    ));
+
+                                    // 语言选项
+                                    let languages = vec![
+                                        ("English", false),
+                                        ("Español", false),
+                                        ("Česky", false),
+                                        ("Українська", false),
+                                        ("Dansk", false),
+                                        ("日本語", false),
+                                        ("Français", false),
+                                        ("한국어", false),
+                                        ("Italiano", false),
+                                        ("简体中文", true),
+                                        ("Bahasa Melayu", false),
+                                        ("繁體中文", false),
+                                        ("Русский", false),
+                                    ];
+
+                                    for (language, is_selected) in languages {
+                                        language_column
+                                            .spawn((
+                                                Button,
+                                                Node {
+                                                    width: Val::Percent(100.0),
+                                                    height: Val::Px(30.0),
+                                                    justify_content: JustifyContent::FlexStart,
+                                                    align_items: AlignItems::Center,
+                                                    margin: UiRect::bottom(Val::Px(5.0)),
+                                                    padding: UiRect::all(Val::Px(5.0)),
+                                                    ..default()
+                                                },
+                                                BackgroundColor(if is_selected {
+                                                    Color::srgba(1.0, 0.6, 0.2, 0.3)
+                                                } else {
+                                                    Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
+                                                }),
+                                                ZIndex(1004),
+                                            ))
+                                            .with_children(|button| {
+                                                button.spawn((
+                                                    Text::new(language),
+                                                    TextFont {
+                                                        font: font_handle.clone(),
+                                                        font_size: 16.0,
+                                                        ..default()
+                                                    },
+                                                    TextColor(Color::WHITE),
+                                                    ZIndex(1005),
+                                                ));
+                                            });
+                                    }
+                                });
+                        });
                 });
-            }
         });
+    // 创建设置菜单 - 结束
 
-        // 分隔线
-        main_container.spawn((
-            Node {
-                width: Val::Px(2.0),
-                height: Val::Percent(100.0),
-                ..default()
-            },
-            BackgroundColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色分隔线
-            ZIndex(1002),
-        ));
-
-        // 右侧设置内容区域
-        main_container.spawn((
-            Node {
-                width: Val::Percent(75.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Row,
-                padding: UiRect::all(Val::Px(40.0)),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)), // 透明背景
-            ZIndex(1002),
-            Interaction::default(),
-        ))
-        .with_children(|right_content| {
-            // 左栏 - 显示设置
-            right_content.spawn((
-                Node {
-                    width: Val::Percent(33.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    margin: UiRect::right(Val::Px(40.0)),
-                    ..default()
-                },
-                ZIndex(1003),
-            ))
-            .with_children(|display_column| {
-                // 显示标题
-                display_column.spawn((
-                    Text::new("显示"),
-                    TextFont {
-                        font: font_handle.clone(),
-                        font_size: 24.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(20.0)),
-                        ..default()
-                    },
-                    ZIndex(1004),
-                ));
-
-                // 显示选项
-                let display_options = vec!["窗口", "全屏"];
-                for option in display_options {
-                    display_column.spawn((
-                        Button,
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Px(30.0),
-                            justify_content: JustifyContent::FlexStart,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::bottom(Val::Px(10.0)),
-                            padding: UiRect::all(Val::Px(5.0)),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                        ZIndex(1004),
-                    ))
-                    .with_children(|button| {
-                        button.spawn((
-                            Text::new(option),
-                            TextFont {
-                                font: font_handle.clone(),
-                                font_size: 16.0,
-                                ..default()
-                            },
-                            TextColor(Color::WHITE),
-                            ZIndex(1005),
-                        ));
-                    });
-                }
-            });
-
-            // 中栏 - 快进设置
-            right_content.spawn((
-                Node {
-                    width: Val::Percent(33.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    margin: UiRect::right(Val::Px(40.0)),
-                    ..default()
-                },
-                ZIndex(1003),
-            ))
-            .with_children(|speed_column| {
-                // 快进标题
-                speed_column.spawn((
-                    Text::new("快进"),
-                    TextFont {
-                        font: font_handle.clone(),
-                        font_size: 24.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(20.0)),
-                        ..default()
-                    },
-                    ZIndex(1004),
-                ));
-
-                // 快进选项
-                let speed_options = vec!["未读文本", "选项后继续", "忽略转场"];
-                for option in speed_options {
-                    speed_column.spawn((
-                        Button,
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Px(30.0),
-                            justify_content: JustifyContent::FlexStart,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::bottom(Val::Px(10.0)),
-                            padding: UiRect::all(Val::Px(5.0)),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                        ZIndex(1004),
-                    ))
-                    .with_children(|button| {
-                        button.spawn((
-                            Text::new(option),
-                            TextFont {
-                                font: font_handle.clone(),
-                                font_size: 16.0,
-                                ..default()
-                            },
-                            TextColor(Color::WHITE),
-                            ZIndex(1005),
-                        ));
-                    });
-                }
-            });
-
-            // 右栏 - 语言设置
-            right_content.spawn((
-                Node {
-                    width: Val::Percent(34.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::FlexStart,
-                    ..default()
-                },
-                ZIndex(1003),
-            ))
-            .with_children(|language_column| {
-                // 语言标题
-                language_column.spawn((
-                    Text::new("语言"),
-                    TextFont {
-                        font: font_handle.clone(),
-                        font_size: 24.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(1.0, 0.6, 0.2)),
-                    Node {
-                        margin: UiRect::bottom(Val::Px(20.0)),
-                        ..default()
-                    },
-                    ZIndex(1004),
-                ));
-
-                // 语言选项
-                let languages = vec![
-                    ("English", false), ("Español", false), ("Česky", false), 
-                    ("Українська", false), ("Dansk", false), ("日本語", false), 
-                    ("Français", false), ("한국어", false), ("Italiano", false), 
-                    ("简体中文", true), ("Bahasa Melayu", false), ("繁體中文", false), 
-                    ("Русский", false)
-                ];
-
-                for (language, is_selected) in languages {
-                    language_column.spawn((
-                        Button,
-                        Node {
-                            width: Val::Percent(100.0),
-                            height: Val::Px(30.0),
-                            justify_content: JustifyContent::FlexStart,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::bottom(Val::Px(5.0)),
-                            padding: UiRect::all(Val::Px(5.0)),
-                            ..default()
-                        },
-                        BackgroundColor(if is_selected { 
-                            Color::srgba(1.0, 0.6, 0.2, 0.3) 
-                        } else { 
-                            Color::srgba(0.0, 0.0, 0.0, 0.0) // 透明背景
-                        }),
-                        ZIndex(1004),
-                    ))
-                    .with_children(|button| {
-                        button.spawn((
-                            Text::new(language),
-                            TextFont {
-                                font: font_handle.clone(),
-                                font_size: 16.0,
-                                ..default()
-                            },
-                            TextColor(Color::WHITE),
-                            ZIndex(1005),
-                        ));
-                    });
-                }
-            });
-        });
-    });
-});
-// 创建设置菜单 - 结束
-
-
-
-
-
-
-// 交互菜单UI 结束
+    // 交互菜单UI 结束
 }
 
 // 更新对话文本
@@ -1141,16 +1142,18 @@ fn update_dialogue(
     // 处理自动播放计时器
     if game_state.is_auto_playing {
         game_state.auto_play_timer += time.delta_secs();
-        
+
         // 如果计时器达到设定时间，自动进入下一行
         if game_state.auto_play_timer >= game_state.auto_play_interval {
             game_state.auto_play_timer = 0.0;
-            
+
             // 先获取当前对话的跳转信息（如果有）
-            let jump_info = game_state.dialogues.get(game_state.current_line)
+            let jump_info = game_state
+                .dialogues
+                .get(game_state.current_line)
                 .and_then(|dialogue| dialogue.jump.as_ref())
                 .cloned(); // 克隆跳转标签以避免借用冲突
-            
+
             // 检查是否还有下一行对话
             if game_state.current_line + 1 < game_state.dialogues.len() {
                 // 处理跳转或正常前进
@@ -1175,7 +1178,8 @@ fn update_dialogue(
     }
 
     // 1. 获取当前对话行（如果存在）
-    let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+    let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line)
+    {
         dialogue
     } else {
         // 处理结束游戏状态
@@ -1191,7 +1195,7 @@ fn update_dialogue(
         println!("对话结束，当前行超出范围");
         return;
     };
-    
+
     // 2. 显示当前对话内容
     for (name, mut text, mut visibility, text_color) in &mut query {
         if name.as_str() == "namebox" {
@@ -1200,15 +1204,15 @@ fn update_dialogue(
             } else {
                 *visibility = Visibility::Visible;
                 text.0 = current_dialogue.character.to_string();
-                
+
                 // 根据角色名称设置不同颜色
                 if let Some(mut color) = text_color {
                     match current_dialogue.character.as_str() {
                         "希尔薇" => color.0 = Color::srgb(0.761, 1.0, 0.8), // 粉红色
-                        "我" => color.0 = Color::srgb(0.3, 0.7, 1.0),     // 蓝色
-                        "艾莉娅" => color.0 = Color::srgb(0.8, 0.6, 1.0), // 紫色
-                        "莉莉" => color.0 = Color::srgb(1.0, 0.8, 0.3),   // 金色
-                        _ => color.0 = Color::WHITE,                      // 默认白色
+                        "我" => color.0 = Color::srgb(0.3, 0.7, 1.0),       // 蓝色
+                        "艾莉娅" => color.0 = Color::srgb(0.8, 0.6, 1.0),   // 紫色
+                        "莉莉" => color.0 = Color::srgb(1.0, 0.8, 0.3),     // 金色
+                        _ => color.0 = Color::WHITE,                        // 默认白色
                     }
                 }
             }
@@ -1218,7 +1222,7 @@ fn update_dialogue(
             text.0 = current_dialogue.text.to_string();
         }
     }
-    
+
     // 查找对话框容器
     for (name, mut visibility, mut node) in dialog_query.iter_mut() {
         if name.as_str() == "text" {
@@ -1230,7 +1234,7 @@ fn update_dialogue(
             }
         }
     }
-    
+
     if let Some(jump_label) = &current_dialogue.jump {
         if let Some(&new_line) = label_map.0.get(jump_label) {
             println!(
@@ -1246,9 +1250,6 @@ fn update_dialogue(
     }
 }
 
-
-
-
 fn handle_input(
     mut interaction_query: Query<(&Interaction, &Name), (Changed<Interaction>, With<Node>)>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -1258,33 +1259,31 @@ fn handle_input(
     back_sound: Res<BackClickSound>,
     label_map: Res<LabelMap>,
     music_controller: Query<&AudioSink, With<MyMusic>>,
-    mut commands: Commands, 
+    mut commands: Commands,
     config: Res<MainConfig>,
-
 ) {
-
     // println!("===============");
-if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-    match dialogue.pause {
-        Some(true) => {
-            // 处理暂停逻辑
-            // println!("交互已经被阻塞");
-            game_state.is_blocked = true;
-            return;
-        }
-        Some(false) => {
-            // 不需要暂停
-            // println!("这一行不需要暂停");
-        }
-        None => {
-            // pause 字段不存在或为 None，按不暂停处理
-            // println!("pause 字段为 None");
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        match dialogue.pause {
+            Some(true) => {
+                // 处理暂停逻辑
+                // println!("交互已经被阻塞");
+                game_state.is_blocked = true;
+                return;
+            }
+            Some(false) => {
+                // 不需要暂停
+                // println!("这一行不需要暂停");
+            }
+            None => {
+                // pause 字段不存在或为 None，按不暂停处理
+                // println!("pause 字段为 None");
+            }
         }
     }
-}
 
     // println!("============");
-    
+
     // ESC键始终可用
     if keys.just_pressed(KeyCode::Escape) {
         std::process::exit(0);
@@ -1301,26 +1300,30 @@ if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
     }
 
     // println!("数据测试 {}",config.settings.rewind);
-// 返回上一页（根据配置决定是否可用）
-let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
+    // 返回上一页（根据配置决定是否可用）
+    let back_pressed =
+        keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
 
     for key in keys.get_just_pressed() {
         println!("handle_input 检测到按键: {:?}", key);
     }
-if back_pressed && config.settings.rewind && game_state.can_go_back && game_state.current_line > 0 {
+    if back_pressed
+        && config.settings.rewind
+        && game_state.can_go_back
+        && game_state.current_line > 0
+    {
+        game_state.current_line -= 1;
+        play_sound(&back_sound.0, commands.reborrow());
 
-    game_state.current_line -= 1;
-    play_sound(&back_sound.0, commands.reborrow());
-    
-    // 只有在到达第一行时才禁用回退
-    if game_state.current_line == 0 {
-        game_state.can_go_back = false;
+        // 只有在到达第一行时才禁用回退
+        if game_state.current_line == 0 {
+            game_state.can_go_back = false;
+        }
+    } else {
+        if config.settings.rewind == false {
+            game_state.can_go_back = false;
+        }
     }
-}else{
-    if config.settings.rewind == false {
-        game_state.can_go_back = false;
-    }
-}
 
     // 如果在分支选择状态，禁用前进操作
     if game_state.in_branch_selection {
@@ -1330,7 +1333,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
     // 检测前进输入（键盘 + 鼠标 + 点击区域）
     let keyboard_click = keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter);
     let mouse_click = mouse.just_pressed(MouseButton::Left);
-    
+
     // 检查点击区域
     let mut click_area_pressed = false;
     for (interaction, name) in &interaction_query {
@@ -1343,10 +1346,10 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
 
     // 统一处理前进逻辑
     let should_advance = keyboard_click || mouse_click || click_area_pressed;
-    let should_advance = keyboard_click  || click_area_pressed;
+    let should_advance = keyboard_click || click_area_pressed;
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
-        
+
         // 检查是否有跳转指令
         if let Some(jump_label) = &current_dialogue.jump {
             game_state.jump_label = Some(jump_label.clone());
@@ -1354,7 +1357,7 @@ if back_pressed && config.settings.rewind && game_state.can_go_back && game_stat
             // 没有跳转指令则前进到下一行
             game_state.current_line += 1;
         }
-        
+
         game_state.can_go_back = true;
         play_sound(&back_sound.0, commands.reborrow());
     }
@@ -1488,15 +1491,17 @@ fn load_audio_resources(
     asset_server: Res<AssetServer>,
     config: Res<MainConfig>,
 ) {
-    let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
-    let backclick_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+    let click_sound_handle: Handle<AudioSource> =
+        asset_server.load(&config.assets.audio.click_sound);
+    let backclick_sound_handle: Handle<AudioSource> =
+        asset_server.load(&config.assets.audio.click_sound);
     // let click_sound_handle = asset_server.load("button.ogg");
     // 将向下页面的音效启动
     commands.insert_resource(ClickSound(click_sound_handle));
     commands.insert_resource(BackClickSound(backclick_sound_handle));
 }
 // fn play_background_audio(
-//     asset_server: Res<AssetServer>, 
+//     asset_server: Res<AssetServer>,
 //     mut commands: Commands
 // ) {
 //     commands.spawn((
@@ -1505,16 +1510,13 @@ fn load_audio_resources(
 //     ));
 // }
 // 播放音效的函数
-fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
+fn play_sound(audio_handle: &Handle<AudioSource>, mut commands: Commands) {
     commands.spawn((
         AudioPlayer::new(audio_handle.clone()),
         PlaybackSettings::ONCE,
     ));
 }
-fn apply_jump(
-    label_map: Res<LabelMap>,
-    mut game_state: ResMut<GameState>,
-) {
+fn apply_jump(label_map: Res<LabelMap>, mut game_state: ResMut<GameState>) {
     if let Some(jump_label) = game_state.jump_label.take() {
         if let Some(&target_line) = label_map.0.get(&jump_label) {
             println!("执行跳转: {} → {}", game_state.current_line, target_line);
@@ -1543,16 +1545,14 @@ fn load_backgrounds(
             Background, // 添加背景组件标识
             Sprite {
                 image: asset_server.load(bg_path),
-                custom_size: Some(Vec2::new(1400.0, 770.0)), 
+                custom_size: Some(Vec2::new(1400.0, 770.0)),
                 ..default()
-
-                
             },
             Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
-            Visibility::Hidden, // 默认隐藏，需要时显示
+            Visibility::Hidden,                   // 默认隐藏，需要时显示
         ));
     }
-    
+
     println!("=== 已加载背景 ===");
     for bg_name in config.assets.backgrounds.keys() {
         println!("背景: {}", bg_name);
@@ -1568,22 +1568,20 @@ fn load_swf_assets(
 ) {
     println!("=== 加载SWF资源 ===");
     println!("配置中的swf数量: {}", config.assets.swf.len());
-    
+
     for (swf_name, swf_path) in &config.assets.swf {
         println!("正在加载SWF: {} -> {}", swf_name, swf_path);
-        
+
         let swf_handle = asset_server.load(swf_path);
         println!("SWF句柄创建成功: {:?}", swf_handle);
-        
+
         commands.spawn((
             Name::new(format!("swf_{}", swf_name)),
-            FlashAnimation {
-                swf: swf_handle
-            },
-            Transform::from_translation(Vec3::new(-199.0,0.0, 0.0)).with_scale(Vec3::splat(1.0)),
+            FlashAnimation { swf: swf_handle },
+            Transform::from_translation(Vec3::new(-199.0, 0.0, 0.0)).with_scale(Vec3::splat(1.0)),
             Visibility::Hidden,
         ));
-        
+
         println!("SWF实体已生成: swf_{}", swf_name);
     }
     println!("==================");
@@ -1595,34 +1593,33 @@ fn update_swf(
     game_state: Res<GameState>,
     mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
     flashes: Res<Assets<FlashAnimationSwfData>>, // 添加资源检查
-    flash_query: Query<&FlashAnimation>, // 添加Flash组件查询
+    flash_query: Query<&FlashAnimation>,         // 添加Flash组件查询
 ) {
     //    println!("=== update_swf 调试信息 ===");
     // println!("查询到的SWF实体数量: {}", query.iter().count());
-    
+
     for (name, visibility) in query.iter() {
         // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
     }
 
-
     for (_, mut visibility) in query.iter_mut() {
         *visibility = Visibility::Hidden;
     }
-    
+
     // 根据当前对话中的swf字段显示对应动画
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         if let Some(swf_name) = &dialogue.swf {
             let target_name = format!("swf_{}", swf_name);
             // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
-            
+
             let mut found = false;
-            
+
             // 遍历所有Flash实体寻找匹配的名称
             for (name, mut visibility) in query.iter_mut() {
                 if name.as_str() == target_name {
                     // 检查对应的SWF资源是否已加载
                     let mut resource_loaded = false;
-                    
+
                     // 检查资源加载状态
                     for flash_animation in flash_query.iter() {
                         if let Some(flash_data) = flashes.get(&flash_animation.swf) {
@@ -1630,7 +1627,7 @@ fn update_swf(
                             break;
                         }
                     }
-                    
+
                     if resource_loaded {
                         *visibility = Visibility::Visible;
                         // println!("✓ 成功显示SWF: {}", target_name);
@@ -1641,7 +1638,7 @@ fn update_swf(
                     }
                 }
             }
-            
+
             if !found {
                 println!("✗ 未找到SWF实体: {}", target_name);
                 println!("可用的Flash实体:");
@@ -1652,7 +1649,7 @@ fn update_swf(
         } else {
             // println!("当前对话没有SWF字段");
         }
-        
+
         if game_state.is_changed() {
             // println!("==================");
         }
@@ -1689,7 +1686,7 @@ fn update_background(
 
                 // 直接调用你的渐变函数
                 fade_in(&mut commands, 0.8);
-                
+
                 // 更新背景可见性
                 for (name, mut visibility) in query.iter_mut() {
                     if name.as_str() == target_bg {
@@ -1718,29 +1715,25 @@ fn keyboard_system(
         if game_state.can_go_back && game_state.current_line > 0 {
             game_state.current_line -= 1;
             // play_sound(&back_click_sound.0, commands);
-            
+
             if game_state.current_line == 0 {
                 game_state.can_go_back = false;
             }
-            
+
             // 如果回退导致离开了分支选择的位置，退出分支选择状态
             // 这里你可以根据具体逻辑调整
-            if game_state.in_branch_selection && game_state.current_line < 5 { // 假设第5行是分支选择
+            if game_state.in_branch_selection && game_state.current_line < 5 {
+                // 假设第5行是分支选择
                 game_state.in_branch_selection = false;
             }
-            
+
             println!("回退到第 {} 行", game_state.current_line);
         }
     }
 }
 fn button_interaction_system(
     mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Name,
-        ),
+        (&Interaction, &mut BackgroundColor, &mut BorderColor, &Name),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
@@ -1781,86 +1774,94 @@ fn create_dynamic_buttons(
     mut click_area_query: Query<&mut Visibility, With<ClickArea>>,
 ) {
     let current_line = game_state.current_line;
-    
+
     // 先检查是否有对话和选择，但不借用
     let has_dialogue = game_state.dialogues.get(current_line).is_some();
-    let has_choices = game_state.dialogues.get(current_line)
+    let has_choices = game_state
+        .dialogues
+        .get(current_line)
         .and_then(|d| d.choices.as_ref())
         .map(|choices| choices.len() > 0)
         .unwrap_or(false);
-    
+
     if has_dialogue {
         if has_choices {
             // 现在可以安全修改 game_state
             game_state.in_branch_selection = true;
             // println!("{}",game_state.in_branch_selection);
-            
+
             // 隐藏点击区域
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Hidden;
             }
-            
+
             // 清除现有按钮
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
-            
-    
+
             if let Some(dialogue) = game_state.dialogues.get(current_line) {
                 if let Some(choices) = &dialogue.choices {
                     println!("发现 {} 个选择分支", choices.len());
-                    
-                    if let Ok(container) = button_container.get_single() {
+
+                    if let Ok(container) = button_container.single() {
                         for (index, choice) in choices.iter().enumerate() {
                             // 创建按钮的代码...
                             commands.entity(container).with_children(|parent| {
-                                parent.spawn((
-                                    Button,
-                                    DynamicButton,
-                                    ClickHandler(choice.goto.to_string()),
-                                    Interaction::default(),
-                                    Name::new(format!("choice_{}", index)),
-                                    // 你的按钮样式代码...
-                                    Node {
-                                        position_type: PositionType::Relative,
-                                        bottom: Val::Px(100.0),
-                                        top: Val::Px(-220.0),
-                                        left: Val::Px(320.0),
-                                        width: Val::Px(700.0),
-                                        height: Val::Px(40.0),
-                                        border: UiRect::all(Val::Px(2.0)),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        padding: UiRect {
-                                            left: Val::Px(2.0),
-                                            right: Val::Px(2.0),
-                                            top: Val::Px(5.0),
-                                            bottom: Val::Px(5.0),
-                                        },
-                                        ..default()
-                                    },
-                                     ImageNode::new(asset_server.load("gui/choice_idle_background2.png")),
-                                    ButtonImages {
-                                        normal: asset_server.load("gui/choice_idle_background2.png"),
-                                        hovered: asset_server.load("gui/choice_hover_background2.png"),
-                                        pressed: asset_server.load("gui/choice_hover_background2.png"),
-                                    },
-                                    // BackgroundColor(NORMAL_BUTTON),
-                                    // BorderColor(Color::BLACK),
-                                    // BorderRadius::all(Val::Px(5.0)),
-                                    
-                                    Visibility::Visible,
-                                )).with_children(|button| {
-                                    button.spawn((
-                                        Text::new(choice.text.clone()),
-                                        TextFont {
-                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                                            font_size: 17.0,
+                                parent
+                                    .spawn((
+                                        Button,
+                                        DynamicButton,
+                                        ClickHandler(choice.goto.to_string()),
+                                        Interaction::default(),
+                                        Name::new(format!("choice_{}", index)),
+                                        // 你的按钮样式代码...
+                                        Node {
+                                            position_type: PositionType::Relative,
+                                            bottom: Val::Px(100.0),
+                                            top: Val::Px(-220.0),
+                                            left: Val::Px(320.0),
+                                            width: Val::Px(700.0),
+                                            height: Val::Px(40.0),
+                                            border: UiRect::all(Val::Px(2.0)),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            padding: UiRect {
+                                                left: Val::Px(2.0),
+                                                right: Val::Px(2.0),
+                                                top: Val::Px(5.0),
+                                                bottom: Val::Px(5.0),
+                                            },
                                             ..default()
                                         },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                });
+                                        ImageNode::new(
+                                            asset_server.load("gui/choice_idle_background2.png"),
+                                        ),
+                                        ButtonImages {
+                                            normal: asset_server
+                                                .load("gui/choice_idle_background2.png"),
+                                            hovered: asset_server
+                                                .load("gui/choice_hover_background2.png"),
+                                            pressed: asset_server
+                                                .load("gui/choice_hover_background2.png"),
+                                        },
+                                        // BackgroundColor(NORMAL_BUTTON),
+                                        // BorderColor(Color::BLACK),
+                                        // BorderRadius::all(Val::Px(5.0)),
+                                        Visibility::Visible,
+                                    ))
+                                    .with_children(|button| {
+                                        button.spawn((
+                                            Text::new(choice.text.clone()),
+                                            TextFont {
+                                                font: asset_server
+                                                    .load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                font_size: 17.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                    });
                             });
                         }
                     }
@@ -1869,13 +1870,13 @@ fn create_dynamic_buttons(
         } else {
             // 没有选择分支
             game_state.in_branch_selection = false;
-            
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Visible;
             }
-            
+
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }
@@ -1885,22 +1886,25 @@ fn create_dynamic_buttons(
 //     existing_buttons: Query<(), With<DynamicButton>>,
 // ) -> bool {
 //     let current_line = game_state.current_line;
-    
+
 //     // 检查当前行是否有选择分支
 //     let has_choices = game_state.dialogues.get(current_line)
 //         .and_then(|d| d.choices.as_ref())
 //         .map(|choices| !choices.is_empty())
 //         .unwrap_or(false);
-    
+
 //     // 检查是否已经有按钮存在
 //     let buttons_exist = !existing_buttons.is_empty();
-    
+
 //     // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
 //     (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
 // }
 
 fn handle_choice_buttons(
-    mut interaction_query: Query<(&Interaction, &ClickHandler), (Changed<Interaction>, With<DynamicButton>)>,
+    mut interaction_query: Query<
+        (&Interaction, &ClickHandler),
+        (Changed<Interaction>, With<DynamicButton>),
+    >,
     mut game_state: ResMut<GameState>,
     click_sound: Res<ClickSound>,
     mut commands: Commands,
@@ -1908,7 +1912,7 @@ fn handle_choice_buttons(
     for (interaction, click_handler) in &interaction_query {
         if *interaction == Interaction::Pressed {
             // play_sound(&click_sound.0, commands);
-            
+
             // 解析跳转目标
             if let Ok(goto_line) = click_handler.0.parse::<usize>() {
                 game_state.current_line = goto_line;
@@ -1924,61 +1928,61 @@ fn handle_choice_buttons(
 fn cleanup_game(
     mut commands: Commands,
     // 查询所有需要清理的实体
-    game_entities: Query<Entity, Or<(
-        With<Portrait>,
-        With<Background>, 
-        With<ClickArea>,
-        With<ButtonContainer>,
-        With<DynamicButton>,
-        With<FlashAnimation>,
-    )>>,
+    game_entities: Query<
+        Entity,
+        Or<(
+            With<Portrait>,
+            With<Background>,
+            With<ClickArea>,
+            With<ButtonContainer>,
+            With<DynamicButton>,
+            With<FlashAnimation>,
+        )>,
+    >,
     // 查询文本实体
     text_entities: Query<Entity, (With<Text>, With<Name>)>,
     // 查询所有带有特定名称的实体
     named_entities: Query<(Entity, &Name)>,
 ) {
     info!("清理游戏场景");
-    
+
     // 清理游戏相关的实体
     for entity in game_entities.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
-    
+
     // 清理特定名称的实体
     for (entity, name) in named_entities.iter() {
         match name.as_str() {
-            "textbox" | "namebox" | "sidebox" | "spritebox" | 
-            "click_area" | "choice_container" | "svgload" => {
-                commands.entity(entity).despawn_recursive();
+            "textbox" | "namebox" | "sidebox" | "spritebox" | "click_area" | "choice_container"
+            | "svgload" => {
+                commands.entity(entity).despawn();
             }
             _ if name.as_str().starts_with("background_") => {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
             _ if name.as_str().starts_with("swf_") => {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
             _ if name.as_str().starts_with("choice_") => {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
             _ => {}
         }
     }
-    
+
     // 移除游戏状态资源
     commands.remove_resource::<GameState>();
     commands.remove_resource::<LabelMap>();
     commands.remove_resource::<PortraitAssets>();
-    
+
     info!("游戏场景清理完成");
 }
 
 // 处理输入
 
-
 // 输出游戏状态
-fn output_game_state(
-    time: Res<Time>,
-) {
+fn output_game_state(time: Res<Time>) {
     // println!("成功进入数据")
 }
 
@@ -1987,25 +1991,25 @@ fn output_game_state(
 //     existing_buttons: Query<(), With<DynamicButton>>,
 // ) -> bool {
 //     let current_line = game_state.current_line;
-    
+
 //     // 检查当前行是否有选择分支
 //     let has_choices = game_state.dialogues.get(current_line)
 //         .and_then(|d| d.choices.as_ref())
 //         .map(|choices| !choices.is_empty())
 //         .unwrap_or(false);
-    
+
 //     // 检查是否已经有按钮存在
 //     let buttons_exist = !existing_buttons.is_empty();
-    
+
 //     // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
 //     (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
 // }
 
 // 条件检查函数
-fn any_swf_visible(
-    query: Query<&Visibility, With<FlashAnimation>>,
-) -> bool {
-    query.iter().any(|visibility| *visibility == Visibility::Visible)
+fn any_swf_visible(query: Query<&Visibility, With<FlashAnimation>>) -> bool {
+    query
+        .iter()
+        .any(|visibility| *visibility == Visibility::Visible)
 }
 
 // 检查swf 的摄像机事业
@@ -2014,7 +2018,7 @@ fn any_swf_visible(
 //     query: Query<(&Name, &Transform, &Visibility), With<FlashAnimation>>,
 // ) {
 //     for (name, transform, visibility) in query.iter() {
-//         println!("Flash {}: pos={:?}, visible={:?}", 
+//         println!("Flash {}: pos={:?}, visible={:?}",
 //                 name, transform.translation, visibility);
 //     }
 // }
@@ -2025,7 +2029,7 @@ fn any_swf_visible(
 //     asset_server: Res<AssetServer>,
 // ) {
 //     println!("=== 创建最小SWF系统 ===");
-    
+
 //     // 硬编码创建一个SWF实体
 //     commands.spawn((
 //         Name::new("test_swf"),
@@ -2035,7 +2039,7 @@ fn any_swf_visible(
 //         Transform::from_translation(Vec3::new(-400.0, 0.0, 0.0)).with_scale(Vec3::splat(2.0)),
 //         Visibility::Visible,  // 直接设置为可见
 //     ));
-    
+
 //     println!("SWF实体已创建: test_swf");
 //     println!("路径: swf/66.swf");
 //     println!("位置: (0, 0, 0)");
@@ -2044,8 +2048,8 @@ fn any_swf_visible(
 // }
 fn button_image_system(
     mut query: Query<
-        (&Interaction, &mut ImageNode, &ButtonImages), 
-        (Changed<Interaction>, With<Button>)
+        (&Interaction, &mut ImageNode, &ButtonImages),
+        (Changed<Interaction>, With<Button>),
     >,
 ) {
     for (interaction, mut image_node, button_images) in &mut query {
@@ -2067,15 +2071,15 @@ fn menu_exit_system(mut commands: Commands) {
 // ) {
 //     for (entity, mut fade_anim, mut sprite) in query.iter_mut() {
 //         fade_anim.timer.tick(time.delta());
-        
+
 //         if !fade_anim.timer.finished() {
 //             let progress = fade_anim.timer.elapsed_secs() / fade_anim.timer.duration().as_secs_f32();
-            
+
 //             // 使用 Ren'Py 风格的缓动
 //             let eased_progress = ren_py_dissolve(progress);
-            
+
 //             let current_alpha = fade_anim.start_alpha + (fade_anim.end_alpha - fade_anim.start_alpha) * eased_progress;
-            
+
 //             // 增加一些平滑处理
 //             let smoothed_alpha = (current_alpha * 255.0).round() / 255.0;
 //             sprite.color.set_alpha(smoothed_alpha);
@@ -2126,15 +2130,14 @@ fn ease_in_out_cubic(t: f32) -> f32 {
 
 // 函数测试
 fn update_typewriter(
-     mut query: Query<(&mut Text, &mut TypewriterText)>,  // 查询同时拥有Text和TypewriterText组件的实体
+    mut query: Query<(&mut Text, &mut TypewriterText)>, // 查询同时拥有Text和TypewriterText组件的实体
 ) {
-for (mut text, mut typewriter) in query.iter_mut() {
-    if typewriter.is_active {  // 这里 typewriter 是 Mut<TypewriterText> 而不是 TypewriterText
-        // println!("{}",typewriter.is_active);
+    for (mut text, mut typewriter) in query.iter_mut() {
+        if typewriter.is_active { // 这里 typewriter 是 Mut<TypewriterText> 而不是 TypewriterText
+            // println!("{}",typewriter.is_active);
+        }
     }
 }
-}
-
 
 // fn update_sidebox(
 //     game_state: Res<GameState>,
@@ -2146,14 +2149,14 @@ for (mut text, mut typewriter) in query.iter_mut() {
 //                 // 根据对话数据决定是否显示
 //                 if dialogue.show_character {
 //                     *visibility = Visibility::Visible;
-                    
+
 //                     // 动态调整位置
 //                     if dialogue.character_position == "left" {
 //                         node.left = Val::Px(-10.0);
 //                     } else if dialogue.character_position == "right" {
 //                         node.left = Val::Px(1200.0);
 //                     }
-                    
+
 //                     // 动态调整大小
 //                     match dialogue.character_size {
 //                         "small" => {
@@ -2192,14 +2195,13 @@ for (mut text, mut typewriter) in query.iter_mut() {
 
 //         }
 //     }
-    
-    
+
 // }
 fn update_audio(
     game_state: Res<GameState>,
     mut current_audio: ResMut<CurrentAudio>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
 ) {
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         if let Some(bgm) = &dialogue.bgm {
@@ -2218,7 +2220,7 @@ fn update_audio(
                 // 播放新BGM并获取实体
                 let audio_path = format!("audio/{}", bgm);
                 let new_entity = play_audio(&mut commands, &asset_server, &audio_path);
-                
+
                 // 更新状态
                 current_audio.current_bgm = Some(target_bgm);
                 current_audio.current_entity = Some(new_entity);
@@ -2235,15 +2237,12 @@ fn update_audio(
 }
 
 // 交互区域系统
-fn on_hover_enter(
-    trigger: Trigger<Pointer<Over>>, 
-    mut sprites: Query<&mut Sprite>,
-) {
-    if let Ok(mut sprite) = sprites.get_mut(trigger.target) { // 使用 trigger.target
+fn on_hover_enter(trigger: Trigger<Pointer<Over>>, mut sprites: Query<&mut Sprite>) {
+    if let Ok(mut sprite) = sprites.get_mut(trigger.target) {
+        // 使用 trigger.target
         sprite.color = Color::srgb(0.0, 1.0, 1.0);
-        
+
         println!("鼠标悬停进入！");
-        
     }
 }
 
@@ -2258,11 +2257,11 @@ fn recolor_on<E: Debug + Clone + Reflect>(color: Color) -> impl Fn(Trigger<E>, Q
 
 // 控制game 菜单
 fn handle_toggle_menu_event(
-    mut toggle_events: EventReader<ToggleMenuEvent>,
+    mut toggle_events: EventReader<ToggleMenuEventMessage>,
     mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
 ) {
     for _event in toggle_events.read() {
-        if let Ok(mut visibility) = menu_query.get_single_mut() {
+        if let Ok(mut visibility) = menu_query.single_mut() {
             *visibility = match *visibility {
                 Visibility::Hidden => {
                     println!("显示设置菜单");
@@ -2280,15 +2279,12 @@ fn handle_toggle_menu_event(
 
 // 处理关闭按钮点击
 fn handle_close_settings_button(
-    mut interaction_query: Query<
-        &Interaction,
-        (Changed<Interaction>, With<CloseSettingsButton>)
-    >,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<CloseSettingsButton>)>,
     mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
 ) {
     for interaction in &mut interaction_query {
         if *interaction == Interaction::Pressed {
-            if let Ok(mut visibility) = menu_query.get_single_mut() {
+            if let Ok(mut visibility) = menu_query.single_mut() {
                 *visibility = Visibility::Hidden;
             }
         }
@@ -2297,15 +2293,13 @@ fn handle_close_settings_button(
 
 // 回退系统
 fn handle_rollback_event(
-    mut rollback_events: EventReader<RollbackEvent>,
+    mut rollback_events: EventReader<RollbackEventMessage>,
     mut game_state: ResMut<GameState>, // 假设 GameState 在这里定义或导入
 ) {
     for _event in rollback_events.read() {
         if game_state.current_line > 0 {
             game_state.current_line -= 1;
             println!("回退到第 {} 行", game_state.current_line);
-            
-        
         } else {
             println!("已经是第一行,无法回退");
         }
@@ -2314,12 +2308,19 @@ fn handle_rollback_event(
 
 // 自动播放系统
 fn handle_auto_play_event(
-    mut auto_play_events: EventReader<ToggleAutoPlayEvent>,
+    mut auto_play_events: EventReader<ToggleAutoPlayEventMessage>,
     mut game_state: ResMut<GameState>,
 ) {
     for _event in auto_play_events.read() {
         game_state.is_auto_playing = !game_state.is_auto_playing;
         game_state.auto_play_timer = 0.0;
-        println!("自动播放已{}", if game_state.is_auto_playing { "开启" } else { "关闭" });
+        println!(
+            "自动播放已{}",
+            if game_state.is_auto_playing {
+                "开启"
+            } else {
+                "关闭"
+            }
+        );
     }
 }

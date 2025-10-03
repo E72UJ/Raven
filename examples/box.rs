@@ -949,13 +949,13 @@ fn create_dynamic_buttons(
             println!("{}",game_state.in_branch_selection);
             
             // 隐藏点击区域
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Hidden;
             }
             
             // 清除现有按钮
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
             
             // 重新获取对话数据来创建按钮
@@ -963,7 +963,7 @@ fn create_dynamic_buttons(
                 if let Some(choices) = &dialogue.choices {
                     println!("发现 {} 个选择分支", choices.len());
                     
-                    if let Ok(container) = button_container.get_single() {
+                    if let Ok(container) = button_container.single() {
                         for (index, choice) in choices.iter().enumerate() {
                             // 创建按钮的代码...
                             commands.entity(container).with_children(|parent| {
@@ -1016,12 +1016,12 @@ fn create_dynamic_buttons(
             // 没有选择分支
             game_state.in_branch_selection = false;
             
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Visible;
             }
             
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }

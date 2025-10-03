@@ -1,17 +1,12 @@
-use bevy::log;
-use bevy::{input_focus::InputFocus, prelude::*, winit::WinitSettings};
+use bevy::{input_focus::InputFocus, prelude::*,window::{WindowResized,Window,PrimaryWindow},text::TextColor};
+
 use crate::GameScene;
-use crate::audio::AudioPlugin;
-use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop,stop_all_audio,stop_all_audio_system};
-use crate::audio::{AudioManager}; 
+use crate::audio::{AudioManager,stop_all_audio,stop_all_audio_system};
 use crate::style::{UiStyleSheet, load_styles}; 
 use crate::config::MainConfig;
-use crate::url::UrlButton;
-use bevy::window::WindowResized;
-use bevy::window::{Window, PrimaryWindow};
-use bevy::text::TextColor; 
+use crate::url::{UrlButton,open_url};
 
-use crate::url::open_url;  
+
 #[derive(Component)]
 pub struct BackButton;
 
@@ -179,13 +174,13 @@ fn button_system(
                 }
                 Interaction::Hovered => {
                     input_focus.set(entity);
-                    *border_color = BorderColor(Color::WHITE.with_alpha(0.6));
+                    *border_color = BorderColor::from(Color::WHITE.with_alpha(0.6));
                     button.set_changed();
                     text_font.font = asset_server.load(HOVERED_BUTTON_FONT);
                 }
                 Interaction::None => {
                     input_focus.clear();
-                    *border_color = BorderColor(Color::WHITE);
+                    *border_color = BorderColor::from(Color::WHITE);
                     text_font.font = asset_server.load(NORMAL_BUTTON_FONT);
                 }
             }
@@ -202,7 +197,7 @@ fn setup(mut commands: Commands) {
 fn setup_menu_scene(
     mut commands: Commands, 
     assets: Res<AssetServer>,
-    mut stylesheet: ResMut<UiStyleSheet>,
+    style_sheet: Res<UiStyleSheet>,
     config: Res<MainConfig>,
     scene_query: Query<Entity, With<SceneEntity>>,
 ) {
@@ -213,10 +208,10 @@ fn setup_menu_scene(
     }
 
     // 样式渲染
-    let logo_font_size = stylesheet.get_font_size("menu", "logo");
-    let logo_text_color = stylesheet.get_text_color("menu", "logo");
-    let logo_position = stylesheet.get_position("menu", "logo");
-    let menu_game_main_size = stylesheet.get_size("menu", "menu_game_menu");
+    let logo_font_size = style_sheet.get_font_size("menu", "logo");
+    let logo_text_color = style_sheet.get_text_color("menu", "logo");
+    let logo_position = style_sheet.get_position("menu", "logo");
+    let menu_game_main_size: Option<(Val, Val)> = style_sheet.get_size("menu", "menu_game_menu");
     let logo_text = &config.settings.logo_text;
 
     // ===== Sprite背景层 =====
@@ -357,7 +352,7 @@ fn create_button(asset_server: &AssetServer, text: &str, button_type: impl Compo
             align_items: AlignItems::Center,
             ..default()
         },
-        // BorderColor(Color::WHITE),
+        // BorderColor::all(Color::WHITE),
         // BackgroundColor(None),
         BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)), // 完全透明
         GlobalZIndex(55),
@@ -466,11 +461,11 @@ fn cleanup_all_about(
     
     // 清理关于界面的UI实体
     for entity in &about_ui_query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
     
     // 隐藏游戏菜单覆盖层
-    if let Ok(mut visibility) = overlay_query.get_single_mut() {
+    if let Ok(mut visibility) = overlay_query.single_mut() {
         *visibility = Visibility::Hidden;
         println!("已隐藏游戏菜单覆盖层");
     }
@@ -482,7 +477,7 @@ fn cleanup_load_scene(
     println!("清理载入界面");
     
     for entity in &load_query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 fn cleanup_settings_overlay(
@@ -492,7 +487,7 @@ fn cleanup_settings_overlay(
     println!("清理设置界面");
     
     for entity in &settings_query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 fn setup_about_scene(
@@ -509,12 +504,12 @@ fn setup_about_scene(
     }
 
     // 显示游戏菜单遮罩层
-    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+    if let Ok(mut overlay_visibility) = overlay_query.single_mut() {
         *overlay_visibility = Visibility::Visible;
     }
 
     // // 隐藏主菜单背景（可选，根据你的设计需求）
-    // if let Ok(mut main_menu_visibility) = main_menu_query.get_single_mut() {
+    // if let Ok(mut main_menu_visibility) = main_menu_query.single_mut() {
     //     *main_menu_visibility = Visibility::Hidden;
     // }
 
@@ -555,7 +550,7 @@ fn setup_about_scene(
             ..default()
         },
         BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+        BorderColor::all(Color::srgb(0.5, 0.5, 0.5)),
         Visibility::Visible,
         AboutUI, // 用于清理
     )).with_children(|about_parent| {
@@ -653,7 +648,7 @@ fn setup_about_scene(
                 ..default()
             },
             // BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-            // BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+            // BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
             BackButton,
         )).with_children(|button_parent| {
             button_parent.spawn((
@@ -712,7 +707,7 @@ fn setup_help_scene(
     }
 
     // 显示游戏菜单遮罩层
-    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+    if let Ok(mut overlay_visibility) = overlay_query.single_mut() {
         *overlay_visibility = Visibility::Visible;
     }
 
@@ -752,7 +747,7 @@ fn setup_help_scene(
             ..default()
         },
         BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-        BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+        BorderColor::all(Color::srgb(0.5, 0.5, 0.5)),
         Visibility::Visible,
         AboutUI, // 用于清理
     )).with_children(|help_parent| {
@@ -899,7 +894,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                         ..default()
                     },
                     BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
-                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                    BorderColor::all(Color::srgb(0.6, 0.6, 0.8)),
                 ))
                 .with_children(|parent| {
                     // 标题
@@ -1054,7 +1049,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                                         ..default()
                                                     },
                                                     BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                                                    BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                                    BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
                                                 ))
                                                 .with_children(|parent| {
                                                     parent.spawn((
@@ -1081,7 +1076,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                                         ..default()
                                                     },
                                                     BackgroundColor(Color::srgb(0.4, 0.4, 0.6)),
-                                                    BorderColor(Color::srgb(0.8, 0.8, 1.0)),
+                                                    BorderColor::all(Color::srgb(0.8, 0.8, 1.0)),
                                                 ))
                                                 .with_children(|parent| {
                                                     parent.spawn((
@@ -1108,7 +1103,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                                         ..default()
                                                     },
                                                     BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                                                    BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                                    BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
                                                 ))
                                                 .with_children(|parent| {
                                                     parent.spawn((
@@ -1202,7 +1197,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                                 ..default()
                                             },
                                             BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                                            BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
                                         ))
                                         .with_children(|parent| {
                                             parent.spawn((
@@ -1251,7 +1246,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                                 ..default()
                                             },
                                             BackgroundColor(Color::srgb(0.4, 0.4, 0.6)),
-                                            BorderColor(Color::srgb(0.8, 0.8, 1.0)),
+                                            BorderColor::all(Color::srgb(0.8, 0.8, 1.0)),
                                         ))
                                         .with_children(|parent| {
                                             parent.spawn((
@@ -1280,7 +1275,7 @@ fn setup_settings_overlay(mut commands: Commands, asset_server: Res<AssetServer>
                                 ..default()
                             },
                             BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
                             BackButton,
                         ))
                         .with_children(|parent| {
@@ -1332,7 +1327,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                         ..default()
                     },
                     BackgroundColor(Color::srgb(0.2, 0.2, 0.3)),
-                    BorderColor(Color::srgb(0.6, 0.6, 0.8)),
+                    BorderColor::all(Color::srgb(0.6, 0.6, 0.8)),
                 ))
                 .with_children(|parent| {
                     // 标题
@@ -1373,7 +1368,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                         ..default()
                                     },
                                     BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
-                                    BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                    BorderColor::all(Color::srgb(0.5, 0.5, 0.6)),
                                 ))
                                 .with_children(|parent| {
                                     // 存档信息
@@ -1425,7 +1420,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                             ..default()
                                         },
                                         BackgroundColor(Color::srgb(0.4, 0.4, 0.5)),
-                                        BorderColor(Color::srgb(0.6, 0.6, 0.7)),
+                                        BorderColor::all(Color::srgb(0.6, 0.6, 0.7)),
                                     ));
                                 });
 
@@ -1444,7 +1439,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                         ..default()
                                     },
                                     BackgroundColor(Color::srgb(0.3, 0.3, 0.4)),
-                                    BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                    BorderColor::all(Color::srgb(0.5, 0.5, 0.6)),
                                 ))
                                 .with_children(|parent| {
                                     parent
@@ -1494,7 +1489,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                             ..default()
                                         },
                                         BackgroundColor(Color::srgb(0.4, 0.4, 0.5)),
-                                        BorderColor(Color::srgb(0.6, 0.6, 0.7)),
+                                        BorderColor::all(Color::srgb(0.6, 0.6, 0.7)),
                                     ));
                                 });
 
@@ -1513,7 +1508,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                             ..default()
                                         },
                                         BackgroundColor(Color::srgb(0.25, 0.25, 0.3)),
-                                        BorderColor(Color::srgb(0.4, 0.4, 0.5)),
+                                        BorderColor::all(Color::srgb(0.4, 0.4, 0.5)),
                                     ))
                                     .with_children(|parent| {
                                         parent
@@ -1545,7 +1540,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                                 ..default()
                                             },
                                             BackgroundColor(Color::srgb(0.3, 0.3, 0.35)),
-                                            BorderColor(Color::srgb(0.5, 0.5, 0.6)),
+                                            BorderColor::all(Color::srgb(0.5, 0.5, 0.6)),
                                         ));
                                     });
                             }
@@ -1564,7 +1559,7 @@ fn setup_load_scene(mut commands: Commands, asset_server: Res<AssetServer>, came
                                 ..default()
                             },
                             BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
-                            BorderColor(Color::srgb(0.5, 0.5, 0.7)),
+                            BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
                             BackButton,
                         ))
                         .with_children(|parent| {
@@ -1603,13 +1598,13 @@ fn on_exit_game_state(
 
 // 放大系统
 fn update_background_size_on_resize(
-    mut resize_events: EventReader<WindowResized>,
+    mut resize_events: MessageReader<WindowResized>,
     mut sprite_query: Query<&mut Sprite>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     // 只在窗口大小改变时执行
     for _event in resize_events.read() {
-        if let Ok(window) = window_query.get_single() {
+        if let Ok(window) = window_query.single() {
             for mut sprite in sprite_query.iter_mut() {
                 let image_aspect = 2560.0 / 1440.0; // 原图比例
                 let window_aspect = window.width() / window.height(); // 窗口比例
@@ -1657,7 +1652,7 @@ fn setup_game_settings_overlay(
     }
 
     // 显示游戏菜单遮罩层
-    if let Ok(mut overlay_visibility) = overlay_query.get_single_mut() {
+    if let Ok(mut overlay_visibility) = overlay_query.single_mut() {
         *overlay_visibility = Visibility::Visible;
     }
 
@@ -1738,7 +1733,7 @@ fn setup_game_settings_overlay(
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                    BorderColor(Color::srgb(1.0, 0.6, 0.2)), // 橙色边框
+                    BorderColor::all(Color::srgb(1.0, 0.6, 0.2)), // 橙色边框
                 )).with_children(|button_parent| {
                     button_parent.spawn((
                         Text::new(*item),
@@ -1824,7 +1819,7 @@ fn setup_game_settings_overlay(
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                            BorderColor(Color::srgb(1.0, 0.6, 0.2)),
+                            BorderColor::all(Color::srgb(1.0, 0.6, 0.2)),
                         )).with_children(|button_parent| {
                             button_parent.spawn((
                                 Text::new("窗口"),
@@ -1848,7 +1843,7 @@ fn setup_game_settings_overlay(
                                 ..default()
                             },
                             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                            BorderColor(Color::srgb(0.6, 0.6, 0.6)),
+                            BorderColor::all(Color::srgb(0.6, 0.6, 0.6)),
                         )).with_children(|button_parent| {
                             button_parent.spawn((
                                 Text::new("全屏"),
@@ -1930,7 +1925,7 @@ fn setup_game_settings_overlay(
                                     ..default()
                                 },
                                 BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.0)),
-                                BorderColor(Color::srgb(1.0, 0.6, 0.2)),
+                                BorderColor::all(Color::srgb(1.0, 0.6, 0.2)),
                             )).with_children(|lang_parent| {
                                 lang_parent.spawn((
                                     Text::new(lang),

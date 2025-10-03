@@ -124,7 +124,7 @@ fn dissolve_system(
     montage_query: Query<&MontageImage>,
 ) {
     // 获取当前蒙太奇的切换进度来同步粒子效果
-    let montage_progress = if let Ok(montage) = montage_query.get_single() {
+    let montage_progress = if let Ok(montage) = montage_query.single() {
         montage.timer.elapsed_secs() / montage.timer.duration().as_secs_f32()
     } else {
         0.0

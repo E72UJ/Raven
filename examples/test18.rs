@@ -14,7 +14,7 @@ fn update_background_size(
     mut sprite_query: Query<&mut Sprite>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok(window) = window_query.get_single() {
+    if let Ok(window) = window_query.single() {
         for mut sprite in sprite_query.iter_mut() {
             let image_aspect = 2560.0 / 1440.0; // 原图比例
             let window_aspect = window.width() / window.height(); // 窗口比例
@@ -41,7 +41,7 @@ fn setup_background(
     asset_server: Res<AssetServer>,
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
-    if let Ok(window) = window_query.get_single() {
+    if let Ok(window) = window_query.single() {
         let aspect_ratio = 2560.0 / 1440.0;
         let scaled_height = window.width() / aspect_ratio;
         println!("Scaled height: {}", aspect_ratio);
@@ -62,7 +62,7 @@ fn setup_background2(
     window_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     commands.spawn(Camera2d);
-    if let Ok(window) = window_query.get_single() {
+    if let Ok(window) = window_query.single() {
         let aspect_ratio = 2560.0 / 1440.0;
         let scaled_height = window.width() / aspect_ratio;
         commands.spawn((

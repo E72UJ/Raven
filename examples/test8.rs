@@ -49,7 +49,7 @@ fn handle_sprite_clicks(
     sprites: Query<(&Transform, &ClickableSprite), With<Sprite>>,
 ) {
     if mouse_button.just_pressed(MouseButton::Left) {
-        if let Ok(window) = windows.get_single() {
+        if let Ok(window) = windows.single() {
             if let Some(cursor_pos) = window.cursor_position() {
                 for (camera, camera_transform) in &cameras {
                     if let Ok(world_pos) = camera.viewport_to_world_2d(camera_transform, cursor_pos) {

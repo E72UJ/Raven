@@ -1,6 +1,6 @@
 // examples/test4.rs
-use bevy::prelude::*;
 use Raven::{AppState, MenuPlugin};
+use bevy::prelude::*;
 
 fn main() {
     App::new()
@@ -17,10 +17,7 @@ fn setup_camera(mut commands: Commands) {
     println!("Camera spawned!");
 }
 
-fn handle_escape_key(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut exit: EventWriter<AppExit>,
-) {
+fn handle_escape_key(keyboard_input: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
     if keyboard_input.just_pressed(KeyCode::Escape) {
         exit.send(AppExit::Success);
     }
@@ -37,10 +34,7 @@ fn debug_state(
     }
 }
 
-fn check_entities(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    query: Query<Entity, With<Node>>,
-) {
+fn check_entities(keyboard_input: Res<ButtonInput<KeyCode>>, query: Query<Entity, With<Node>>) {
     if keyboard_input.just_pressed(KeyCode::KeyC) {
         println!("UI entities count: {}", query.iter().count());
     }

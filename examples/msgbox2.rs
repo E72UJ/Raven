@@ -84,7 +84,7 @@ pub fn spawn_msgbox_with_font(
     if let Some(existing_entity) = msgbox_manager.current_msgbox {
         if let Ok(mut entity_commands) = commands.get_entity(existing_entity) {
             println!("销毁现有的MsgBox，实体ID: {:?}", existing_entity);
-            entity_commands.despawn_recursive(); // 使用递归删除，确保子实体也被删除
+            entity_commands.despawn(); // 使用递归删除，确保子实体也被删除
         }
         msgbox_manager.current_msgbox = None;
     }
@@ -190,7 +190,7 @@ pub fn close_current_msgbox(
     if let Some(existing_entity) = msgbox_manager.current_msgbox {
         if let Ok(mut entity_commands) = commands.get_entity(existing_entity) {
             println!("手动关闭当前MsgBox，实体ID: {:?}", existing_entity);
-            entity_commands.despawn_recursive();
+            entity_commands.despawn();
         }
         msgbox_manager.current_msgbox = None;
     }
@@ -281,7 +281,7 @@ pub fn msgbox_lifecycle_system(
                         msgbox_manager.current_msgbox = None;
                     }
                     
-                    commands.entity(entity).despawn_recursive();
+                    commands.entity(entity).despawn();
                 }
             }
         }

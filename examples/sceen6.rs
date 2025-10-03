@@ -261,7 +261,7 @@ fn cleanup_splash_screen(
     query: Query<Entity, With<SplashScreenEntity>>,
 ) {
     for entity in query.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
     println!("开屏动画资源已清理");
 }

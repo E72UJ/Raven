@@ -1,34 +1,34 @@
+mod audio;
+mod config;
 mod game;
 mod menu;
-mod config;
-mod audio;  
-mod transition; // 添加模块
 mod style;
-mod url; 
-mod toolbar;  
+mod toolbar;
+mod transition; // 添加模块
+mod url;
 
-use bevy::prelude::*;
-use menu::MenuPlugin;
-use config::{MainConfig, load_main_config};
-use crate::game::GamePlugin;
 use crate::audio::AudioPlugin;
+use crate::game::GamePlugin;
+use bevy::prelude::*;
+use config::{MainConfig, load_main_config};
+use menu::MenuPlugin;
 // use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
-use style::StylePlugin;
 use Raven::url::UrlPlugin;
-use toolbar::ToolbarPlugin;  
+use style::StylePlugin;
+use toolbar::ToolbarPlugin;
 // 定义游戏场景状态
 #[derive(States, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum GameScene {
     #[default]
-    Menu,     
+    Menu,
     Game,
     Settings,
     About,
     Help,
     Logo,
     LoadButton,
-    GameSettings, 
+    GameSettings,
 }
 // fn my_system(mut commands: Commands, asset_server: Res<AssetServer>) {
 //     // 播放一次性音效
@@ -44,13 +44,12 @@ fn menu_exit_system(mut commands: Commands) {
     fade_in(&mut commands, 1.6); // 1.0渐入
 }
 fn main() {
-    
     let main_config = load_main_config();
     let (width, height) = (
         main_config.settings.resolution[0] as f32,
         main_config.settings.resolution[1] as f32,
     );
-    
+
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -62,24 +61,21 @@ fn main() {
                     maximize: false,
                     ..Default::default()
                 },
-                resolution: (width, height).into(),
+                resolution: (width as u32, height as u32).into(),
                 ..default()
             }),
             ..default()
         }))
         .insert_resource(main_config)
-        .add_plugins(menu::MenuPlugin)    // 主菜单界面
+        .add_plugins(menu::MenuPlugin) // 主菜单界面
         .init_state::<GameScene>()
-        // .add_systems(Startup, my_system)  
+        // .add_systems(Startup, my_system)
         .add_plugins(StylePlugin)
         .add_plugins(TransitionPlugin)
-        .add_plugins(GamePlugin)  
+        .add_plugins(GamePlugin)
         .add_plugins(AudioPlugin)
-        .add_plugins(UrlPlugin)  // 新增的url插件
-        .add_plugins(ToolbarPlugin) 
+        .add_plugins(UrlPlugin) // 新增的url插件
+        .add_plugins(ToolbarPlugin)
         .add_systems(OnEnter(GameScene::Game), (menu_exit_system,))
         .run();
 }
-
-
-

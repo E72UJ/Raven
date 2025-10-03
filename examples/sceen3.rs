@@ -95,7 +95,7 @@ fn handle_save_popup(
         AppState::Normal => {
             // 如果弹窗存在，删除弹窗
             for entity in popup_query.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }

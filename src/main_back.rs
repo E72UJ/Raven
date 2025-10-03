@@ -1,24 +1,24 @@
-
 use bevy::prelude::*;
 // 更新时间
 use bevy::text::cosmic_text::ttf_parser::Style;
 // use bevy_svg::prelude::*;
+use bevy::audio::{AudioPlugin, PlaybackSettings};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
-use bevy::audio::{ AudioPlugin, PlaybackSettings};
 use std::path::PathBuf;
 // 正确的导入方式
+use bevy::{audio::Volume, math::ops, prelude::*};
 use bevy::{
-    color::palettes::basic::*, ecs::relationship::RelatedSpawnerCommands, prelude::*,
-    winit::WinitSettings,
+    color::palettes::basic::*,
+    ecs::relationship::RelatedSpawnerCommands,
+    prelude::*,
     ui::FocusPolicy, // 添加这行
+    winit::WinitSettings,
 };
 use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
-use bevy::{audio::Volume, math::ops, prelude::*};
 pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
-
 
 // 按钮组颜色表格
 const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
@@ -26,7 +26,7 @@ const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
 
 // 位置常量
-const left_box:f32 = 50.0;
+const left_box: f32 = 50.0;
 
 // 点击组件
 #[derive(Component)]
@@ -35,13 +35,11 @@ struct ClickArea;
 #[derive(Component)]
 struct Background;
 
-
 #[derive(Component)]
 struct ButtonContainer;
 // 添加这些组件定义
 #[derive(Component)]
 struct DynamicButton;
-
 
 #[derive(Debug, Deserialize)]
 struct Choice {
@@ -89,7 +87,7 @@ struct GameSettings {
 // #[derive(Debug, Resource)]
 // struct LabelMap(HashMap<String, usize>);
 #[derive(Debug, Resource)]
-struct LabelMap(HashMap<String, usize>);  // 标签 -> 行索引的映射
+struct LabelMap(HashMap<String, usize>); // 标签 -> 行索引的映射
 
 // 对话数据结构（支持YAML反序列化）
 #[derive(Debug, Deserialize)]
@@ -97,8 +95,8 @@ struct Dialogue {
     character: String,
     text: String,
     portrait: String,
-    background: Option<String>,  // 新添加的背景字段
-    swf: Option<String>, // 新增swf字段
+    background: Option<String>, // 新添加的背景字段
+    swf: Option<String>,        // 新增swf字段
     #[serde(default)] // 如果没有label字段，则为None
     label: Option<String>,
     #[serde(default)] // 如果没有jump字段，则为None
@@ -110,9 +108,9 @@ struct Dialogue {
 struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
-    can_go_back: bool, // 添加标志位判断是否可以返回
+    can_go_back: bool,          // 添加标志位判断是否可以返回
     jump_label: Option<String>, // 新增的跳转标签字段
-    in_branch_selection: bool, // 新增：是否在分支选择状态
+    in_branch_selection: bool,  // 新增：是否在分支选择状态
 }
 // 立绘组件
 #[derive(Component)]
@@ -160,39 +158,49 @@ fn main() {
             ..default()
         }))
         // 插入插件
-        .add_plugins((
-            FlashPlugin,
-        ))
+        .add_plugins((FlashPlugin,))
         .insert_resource(main_config) // 将配置作为资源插入
         // .add_plugins(bevy_svg::prelude::SvgPlugin)
         // 设置背景清除颜色
         // 等效十六进制表示（深蓝紫色）
         // Color::srgb_u8(51, 51, 102)
         .insert_resource(ClearColor(Color::srgb(0.2, 0.2, 0.4)))
-        .add_systems(Startup, (setup_camera, load_portraits, setup_ui,load_audio_resources,load_backgrounds,load_swf_assets))
-        .add_systems(Update, (
-            handle_input, 
-            update_dialogue, 
-            update_portrait,
-            flash_animation,
-            apply_jump,
-            update_background,
-            update_swf,
-            keyboard_system,
-            handle_choice_buttons,
-            create_dynamic_buttons.run_if(should_create_buttons),
-            button_interaction_system))
+        .add_systems(
+            Startup,
+            (
+                setup_camera,
+                load_portraits,
+                setup_ui,
+                load_audio_resources,
+                load_backgrounds,
+                load_swf_assets,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                handle_input,
+                update_dialogue,
+                update_portrait,
+                flash_animation,
+                apply_jump,
+                update_background,
+                update_swf,
+                keyboard_system,
+                handle_choice_buttons,
+                create_dynamic_buttons.run_if(should_create_buttons),
+                button_interaction_system,
+            ),
+        )
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>,) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
     commands.spawn(Camera2d);
 
     // commands.spawn(Sprite::from_image(
     //     asset_server.load("background/main.png"),
     // ));
-    
-    
 }
 
 // 加载主配置文件
@@ -210,7 +218,10 @@ fn load_main_config() -> MainConfig {
 fn load_dialogues(config: &MainConfig) -> Vec<Dialogue> {
     // let base_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let exe_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    println!("相对的对话路径有: {:?}", exe_dir.join("assets/dialogues.yaml"));
+    println!(
+        "相对的对话路径有: {:?}",
+        exe_dir.join("assets/dialogues.yaml")
+    );
     let yaml_path2 = exe_dir.join("assets/dialogues.yaml");
     let yaml_str = fs::read_to_string(yaml_path2).expect("找不到对话文件 assets/dialogues.yaml");
 
@@ -255,7 +266,8 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
     // 创建标签映射
     let mut label_map = HashMap::new();
     for (index, dialogue) in dialogues.iter().enumerate() {
-        if let Some(label) = dialogue.label.as_ref() {  // 使用 as_ref() 获取引用
+        if let Some(label) = dialogue.label.as_ref() {
+            // 使用 as_ref() 获取引用
             label_map.insert(label.clone(), index);
         }
     }
@@ -264,11 +276,11 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
         dialogues: load_dialogues(&config),
         can_go_back: false, // 初始时不能返回
         jump_label: None,
-        in_branch_selection: false
+        in_branch_selection: false,
     });
     // println!("label_map: {:?}", label_map[1].jump);
     commands.insert_resource(LabelMap(label_map));
-        // 插入标签映射资源
+    // 插入标签映射资源
 }
 // 加载立绘资源 - 使用标准库的Path和PathBuf修改后的版本
 fn load_portraits(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<MainConfig>) {
@@ -311,26 +323,24 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, config: Res<
             // Button, // 添加这行
             ClickArea,
             Node {
-                width: Val::Px(1200.0),     // 固定宽度800像素
-                height: Val::Px(660.0),    // 固定高度600像素
+                width: Val::Px(1200.0), // 固定宽度800像素
+                height: Val::Px(660.0), // 固定高度600像素
                 bottom: Val::Px(50.0),
-                left: Val::Px(0.0),  // 添加左边定位
+                left: Val::Px(0.0), // 添加左边定位
                 position_type: PositionType::Absolute,
- 
+
                 ..default()
             },
             BackgroundColor(Color::NONE), // 完全透明
             GlobalZIndex(9999),
-            Interaction::default(), 
+            Interaction::default(),
             // Button,
             FocusPolicy::Pass, // 关键：让焦点穿透
             Visibility::Visible,
         ))
-        .with_children(|parent| {
-
-                });
-// 分支创建============
-commands.spawn((
+        .with_children(|parent| {});
+    // 分支创建============
+    commands.spawn((
         Name::new("choice_container"),
         ButtonContainer,
         Node {
@@ -348,42 +358,43 @@ commands.spawn((
         Visibility::Visible, // 初始隐藏
     ));
 
-// 分支创建结束===============
-    commands.spawn((
-        Name::new("sidebox"),
-        
-        // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-        // Transform::from_xyz(2.0, 1.0, 0.0),
-        // Sprite::sized(Vec2::new(75., 75.)),
-        // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
-        // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
-        // Sprite {
-        //     image: asset_server.load("characters/protagonist/02.png"),
-        //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
-        //     ..default()
-        // },
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            left: Val::Px(0.0),
-            top: Val::Px(80.0),
-            position_type: PositionType::Absolute,
-            
-            // align_items: AlignItems::Center,
-            // justify_content: JustifyContent::Center,
-            ..default()
-        },
-        // Visibility::Hidden,
-        GlobalZIndex(10000),
-        ZIndex(1200),
-    )).with_children(|parent| {
+    // 分支创建结束===============
+    commands
+        .spawn((
+            Name::new("sidebox"),
+            // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
+            // Transform::from_xyz(2.0, 1.0, 0.0),
+            // Sprite::sized(Vec2::new(75., 75.)),
+            // Transform::from_translation(Vec3::new(-340.0, -100.0, 0.0)),
+            // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.4)),
+            // Sprite {
+            //     image: asset_server.load("characters/protagonist/02.png"),
+            //     custom_size: Some(Vec2 { x: 478.4, y: 376.8 }),
+            //     ..default()
+            // },
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                left: Val::Px(0.0),
+                top: Val::Px(80.0),
+                position_type: PositionType::Absolute,
+
+                // align_items: AlignItems::Center,
+                // justify_content: JustifyContent::Center,
+                ..default()
+            },
+            // Visibility::Hidden,
+            GlobalZIndex(10000),
+            ZIndex(1200),
+        ))
+        .with_children(|parent| {
             // 在这里创建子节点
             parent.spawn((
                 Name::new("textbox"),
-                ImageNode::new(asset_server.load("characters/protagonist/02.png"),),
+                ImageNode::new(asset_server.load("characters/protagonist/02.png")),
                 Visibility::Hidden, // 设置为可见
-                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0)).with_scale(Vec3::new(0.5, 0.5, 0.0)),
-                
+                Transform::from_translation(Vec3::new(1450.0, -750.0, 0.0))
+                    .with_scale(Vec3::new(0.5, 0.5, 0.0)),
                 // Name::new("child_element"),
                 // Text::new("子节点文本"),
                 // TextFont {
@@ -415,12 +426,11 @@ commands.spawn((
         Name::new("svgload"),
         FlashAnimation {
             // name:"a1",
-            swf: asset_server.load("swf/345_c7.swf")
+            swf: asset_server.load("swf/345_c7.swf"),
         },
         // Transform::default().with_scale(Vec3::ZERO),
         Visibility::Hidden,
         Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
-
     ));
 
     commands.spawn((
@@ -467,11 +477,11 @@ commands.spawn((
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
-    left: Val::Px(30.0),
-    right: Val::Px(30.0),
-    top: Val::Px(30.0),
-    bottom: Val::Px(30.0),
-},
+                    left: Val::Px(30.0),
+                    right: Val::Px(30.0),
+                    top: Val::Px(30.0),
+                    bottom: Val::Px(30.0),
+                },
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
@@ -496,7 +506,6 @@ commands.spawn((
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
-                
                 // 其他你需要的组件
             ));
         });
@@ -553,9 +562,10 @@ fn update_dialogue(
     mut query: Query<(&Name, &mut Text)>,
 ) {
     // println!("进入 update_dialogue, 当前行: {}", game_state.current_line);
-    
+
     // 1. 获取当前对话行（如果存在）
-    let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+    let current_dialogue = if let Some(dialogue) = game_state.dialogues.get(game_state.current_line)
+    {
         dialogue
     } else {
         // 处理结束游戏状态
@@ -570,7 +580,7 @@ fn update_dialogue(
         println!("对话结束，当前行超出范围");
         return;
     };
-    
+
     // 2. 显示当前对话内容
     for (name, mut text) in &mut query {
         if name.as_str() == "namebox" {
@@ -580,7 +590,7 @@ fn update_dialogue(
             text.0 = current_dialogue.text.to_string();
         }
     }
-    
+
     // 3. 打印调试信息（在显示之后）
     // println!(
     //     "显示行 {}: 角色='{}', 标签={:?}, 跳转={:?}",
@@ -589,12 +599,12 @@ fn update_dialogue(
     //     current_dialogue.label,
     //     current_dialogue.jump
     // );
-    
+
     // 4. 处理跳转逻辑（在显示当前内容之后）
     if let Some(jump_label) = &current_dialogue.jump {
         // std::thread::sleep(std::time::Duration::from_millis(500));
         // println!("检测到跳转指令: {} → '{}'", game_state.current_line, jump_label);
-        
+
         if let Some(&new_line) = label_map.0.get(jump_label) {
             // println!("执行跳转: {} → {}", game_state.current_line, new_line);
             println!(
@@ -606,7 +616,7 @@ fn update_dialogue(
             );
             // game_state.current_line = new_line;
             // game_state.can_go_back = true;
-            
+
             // 递归处理跳转（确保跳转后的内容也能显示）
             // update_dialogue(game_state, label_map, query);
         } else {
@@ -641,7 +651,7 @@ fn update_dialogue(
 
 //     if click && game_state.current_line < game_state.dialogues.len() {
 //         let current_dialogue = &game_state.dialogues[game_state.current_line];
-        
+
 //         // 检查是否有跳转指令
 //         if let Some(jump_label) = &current_dialogue.jump {
 //             game_state.jump_label = Some(jump_label.clone());
@@ -649,7 +659,7 @@ fn update_dialogue(
 //             // 没有跳转指令则前进到下一行
 //             game_state.current_line += 1;
 //         }
-        
+
 //         game_state.can_go_back = true;
 //         // 播放点击音效
 //         // play_background_audio("button.ogg")
@@ -657,10 +667,9 @@ fn update_dialogue(
 //         // println!("下一个音效触发: {:?}", click_sound.0.id());
 //             // let sink = music_controller.single();
 //             // sink.toggle_playback();
-        
 
 //         // 结束
-        
+
 //     }
 //     let back_pressed =
 //         keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
@@ -709,7 +718,8 @@ fn handle_input(
     }
 
     // 返回上一页（始终可用）
-    let back_pressed = keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
+    let back_pressed =
+        keys.just_pressed(KeyCode::Backspace) || keys.just_pressed(KeyCode::ArrowLeft);
     if back_pressed && game_state.can_go_back && game_state.current_line > 0 {
         game_state.current_line -= 1;
         play_sound(&back_sound.0, commands.reborrow());
@@ -726,7 +736,7 @@ fn handle_input(
     // 检测前进输入（键盘 + 鼠标 + 点击区域）
     let keyboard_click = keys.just_pressed(KeyCode::Space) || keys.just_pressed(KeyCode::Enter);
     let mouse_click = mouse.just_pressed(MouseButton::Left);
-    
+
     // 检查点击区域
     let mut click_area_pressed = false;
     for (interaction, name) in &interaction_query {
@@ -739,10 +749,10 @@ fn handle_input(
 
     // 统一处理前进逻辑
     let should_advance = keyboard_click || mouse_click || click_area_pressed;
-    
+
     if should_advance && game_state.current_line < game_state.dialogues.len() {
         let current_dialogue = &game_state.dialogues[game_state.current_line];
-        
+
         // 检查是否有跳转指令
         if let Some(jump_label) = &current_dialogue.jump {
             game_state.jump_label = Some(jump_label.clone());
@@ -750,7 +760,7 @@ fn handle_input(
             // 没有跳转指令则前进到下一行
             game_state.current_line += 1;
         }
-        
+
         game_state.can_go_back = true;
         play_sound(&back_sound.0, commands.reborrow());
     }
@@ -884,15 +894,17 @@ fn load_audio_resources(
     asset_server: Res<AssetServer>,
     config: Res<MainConfig>,
 ) {
-    let click_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
-    let backclick_sound_handle: Handle<AudioSource> = asset_server.load(&config.assets.audio.click_sound);
+    let click_sound_handle: Handle<AudioSource> =
+        asset_server.load(&config.assets.audio.click_sound);
+    let backclick_sound_handle: Handle<AudioSource> =
+        asset_server.load(&config.assets.audio.click_sound);
     // let click_sound_handle = asset_server.load("button.ogg");
     // 将向下页面的音效启动
     commands.insert_resource(ClickSound(click_sound_handle));
     commands.insert_resource(BackClickSound(backclick_sound_handle));
 }
 // fn play_background_audio(
-//     asset_server: Res<AssetServer>, 
+//     asset_server: Res<AssetServer>,
 //     mut commands: Commands
 // ) {
 //     commands.spawn((
@@ -901,7 +913,7 @@ fn load_audio_resources(
 //     ));
 // }
 // 播放音效的函数
-fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
+fn play_sound(audio_handle: &Handle<AudioSource>, mut commands: Commands) {
     // 这里可以根据需要创建一个新的 AudioPlayer 实例并播放音频
     // 你可以在这里设置 PlaybackSettings，也可以选择一次性播放或循环播放
     // 在这里创建音频播放器
@@ -910,10 +922,7 @@ fn play_sound(audio_handle: &Handle<AudioSource>,mut commands: Commands) {
         PlaybackSettings::ONCE,
     ));
 }
-fn apply_jump(
-    label_map: Res<LabelMap>,
-    mut game_state: ResMut<GameState>,
-) {
+fn apply_jump(label_map: Res<LabelMap>, mut game_state: ResMut<GameState>) {
     if let Some(jump_label) = game_state.jump_label.take() {
         if let Some(&target_line) = label_map.0.get(&jump_label) {
             println!("执行跳转: {} → {}", game_state.current_line, target_line);
@@ -943,13 +952,12 @@ fn load_backgrounds(
             Sprite {
                 image: asset_server.load(bg_path),
                 ..default()
-                
             },
             Transform::from_xyz(0.0, 0.0, -10.0), // 设置在较低的z层
-            Visibility::Hidden, // 默认隐藏，需要时显示
+            Visibility::Hidden,                   // 默认隐藏，需要时显示
         ));
     }
-    
+
     println!("=== 已加载背景 ===");
     for bg_name in config.assets.backgrounds.keys() {
         println!("背景: {}", bg_name);
@@ -965,22 +973,20 @@ fn load_swf_assets(
 ) {
     println!("=== 加载SWF资源 ===");
     println!("配置中的swf数量: {}", config.assets.swf.len());
-    
+
     for (swf_name, swf_path) in &config.assets.swf {
         println!("正在加载SWF: {} -> {}", swf_name, swf_path);
-        
+
         let swf_handle = asset_server.load(swf_path);
         println!("SWF句柄创建成功: {:?}", swf_handle);
-        
+
         commands.spawn((
             Name::new(format!("swf_{}", swf_name)),
-            FlashAnimation {
-                swf: swf_handle
-            },
+            FlashAnimation { swf: swf_handle },
             Transform::from_translation(Vec3::new(-400.0, 240.0, 0.0)).with_scale(Vec3::splat(2.0)),
             Visibility::Hidden,
         ));
-        
+
         println!("SWF实体已生成: swf_{}", swf_name);
     }
     println!("==================");
@@ -995,7 +1001,7 @@ fn update_swf(
     for (_, mut visibility) in query.iter_mut() {
         *visibility = Visibility::Hidden;
     }
-    
+
     // 根据当前对话中的swf字段显示对应动画
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         if let Some(swf_name) = &dialogue.swf {
@@ -1022,7 +1028,7 @@ fn update_background(
         for (_, mut visibility) in query.iter_mut() {
             *visibility = Visibility::Hidden;
         }
-        
+
         // 只有当 dialogue.background 有值时才显示对应背景
         if let Some(bg_name) = &dialogue.background {
             for (name, mut visibility) in query.iter_mut() {
@@ -1046,29 +1052,25 @@ fn keyboard_system(
         if game_state.can_go_back && game_state.current_line > 0 {
             game_state.current_line -= 1;
             // play_sound(&back_click_sound.0, commands);
-            
+
             if game_state.current_line == 0 {
                 game_state.can_go_back = false;
             }
-            
+
             // 如果回退导致离开了分支选择的位置，退出分支选择状态
             // 这里你可以根据具体逻辑调整
-            if game_state.in_branch_selection && game_state.current_line < 5 { // 假设第5行是分支选择
+            if game_state.in_branch_selection && game_state.current_line < 5 {
+                // 假设第5行是分支选择
                 game_state.in_branch_selection = false;
             }
-            
+
             println!("回退到第 {} 行", game_state.current_line);
         }
     }
 }
 fn button_interaction_system(
     mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Name,
-        ),
+        (&Interaction, &mut BackgroundColor, &mut BorderColor, &Name),
         (Changed<Interaction>, With<Button>),
     >,
 ) {
@@ -1109,79 +1111,84 @@ fn create_dynamic_buttons(
     mut click_area_query: Query<&mut Visibility, With<ClickArea>>,
 ) {
     let current_line = game_state.current_line;
-    
+
     // 先检查是否有对话和选择，但不借用
     let has_dialogue = game_state.dialogues.get(current_line).is_some();
-    let has_choices = game_state.dialogues.get(current_line)
+    let has_choices = game_state
+        .dialogues
+        .get(current_line)
         .and_then(|d| d.choices.as_ref())
         .map(|choices| choices.len() > 0)
         .unwrap_or(false);
-    
+
     if has_dialogue {
         if has_choices {
             // 现在可以安全修改 game_state
             game_state.in_branch_selection = true;
-            println!("{}",game_state.in_branch_selection);
-            
+            println!("{}", game_state.in_branch_selection);
+
             // 隐藏点击区域
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Hidden;
             }
-            
+
             // 清除现有按钮
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
-            
+
             // 重新获取对话数据来创建按钮
             if let Some(dialogue) = game_state.dialogues.get(current_line) {
                 if let Some(choices) = &dialogue.choices {
                     println!("发现 {} 个选择分支", choices.len());
-                    
-                    if let Ok(container) = button_container.get_single() {
+
+                    if let Ok(container) = button_container.single() {
                         for (index, choice) in choices.iter().enumerate() {
                             // 创建按钮的代码...
                             commands.entity(container).with_children(|parent| {
-                                parent.spawn((
-                                    Button,
-                                    DynamicButton,
-                                    ClickHandler(choice.goto.to_string()),
-                                    Interaction::default(),
-                                    Name::new(format!("choice_{}", index)),
-                                    // 你的按钮样式代码...
-                                    Node {
-                                        position_type: PositionType::Relative,
-                                        bottom: Val::Px(100.0),
-                                        top: Val::Px(-220.0),
-                                        left: Val::Px(410.0),
-                                        width: Val::Px(400.0),
-                                        height: Val::Px(40.0),
-                                        border: UiRect::all(Val::Px(2.0)),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        padding: UiRect {
-                                            left: Val::Px(2.0),
-                                            right: Val::Px(2.0),
-                                            top: Val::Px(5.0),
-                                            bottom: Val::Px(5.0),
-                                        },
-                                        ..default()
-                                    },
-                                    BackgroundColor(NORMAL_BUTTON),
-                                    BorderColor(Color::BLACK),
-                                    BorderRadius::all(Val::Px(5.0)),
-                                    Visibility::Visible,
-                                )).with_children(|button| {
-                                    button.spawn((
-                                        Text::new(choice.text.clone()),
-                                        TextFont {
-                                            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-                                            font_size: 17.0,
+                                parent
+                                    .spawn((
+                                        Button,
+                                        DynamicButton,
+                                        ClickHandler(choice.goto.to_string()),
+                                        Interaction::default(),
+                                        Name::new(format!("choice_{}", index)),
+                                        // 你的按钮样式代码...
+                                        Node {
+                                            position_type: PositionType::Relative,
+                                            bottom: Val::Px(100.0),
+                                            top: Val::Px(-220.0),
+                                            left: Val::Px(410.0),
+                                            width: Val::Px(400.0),
+                                            height: Val::Px(40.0),
+                                            border: UiRect::all(Val::Px(2.0)),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            padding: UiRect {
+                                                left: Val::Px(2.0),
+                                                right: Val::Px(2.0),
+                                                top: Val::Px(5.0),
+                                                bottom: Val::Px(5.0),
+                                            },
                                             ..default()
                                         },
-                                        TextColor(Color::WHITE),
-                                    ));
-                                });
+                                        BackgroundColor(NORMAL_BUTTON),
+                                        BorderColor(Color::BLACK),
+                                        BorderRadius::all(Val::Px(5.0)),
+                                        Visibility::Visible,
+                                    ))
+                                    .with_children(|button| {
+                                        button.spawn((
+                                            Text::new(choice.text.clone()),
+                                            TextFont {
+                                                font: asset_server
+                                                    .load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+                                                font_size: 17.0,
+                                                ..default()
+                                            },
+                                            TextColor(Color::WHITE),
+                                        ));
+                                    });
                             });
                         }
                     }
@@ -1190,13 +1197,13 @@ fn create_dynamic_buttons(
         } else {
             // 没有选择分支
             game_state.in_branch_selection = false;
-            
-            if let Ok(mut visibility) = click_area_query.get_single_mut() {
+
+            if let Ok(mut visibility) = click_area_query.single_mut() {
                 *visibility = Visibility::Visible;
             }
-            
+
             for entity in existing_buttons.iter() {
-                commands.entity(entity).despawn_recursive();
+                commands.entity(entity).despawn();
             }
         }
     }
@@ -1206,22 +1213,27 @@ fn should_create_buttons(
     existing_buttons: Query<(), With<DynamicButton>>,
 ) -> bool {
     let current_line = game_state.current_line;
-    
+
     // 检查当前行是否有选择分支
-    let has_choices = game_state.dialogues.get(current_line)
+    let has_choices = game_state
+        .dialogues
+        .get(current_line)
         .and_then(|d| d.choices.as_ref())
         .map(|choices| !choices.is_empty())
         .unwrap_or(false);
-    
+
     // 检查是否已经有按钮存在
     let buttons_exist = !existing_buttons.is_empty();
-    
+
     // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
     (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
 }
 
 fn handle_choice_buttons(
-    mut interaction_query: Query<(&Interaction, &ClickHandler), (Changed<Interaction>, With<DynamicButton>)>,
+    mut interaction_query: Query<
+        (&Interaction, &ClickHandler),
+        (Changed<Interaction>, With<DynamicButton>),
+    >,
     mut game_state: ResMut<GameState>,
     click_sound: Res<ClickSound>,
     mut commands: Commands,
@@ -1229,7 +1241,7 @@ fn handle_choice_buttons(
     for (interaction, click_handler) in &interaction_query {
         if *interaction == Interaction::Pressed {
             // play_sound(&click_sound.0, commands);
-            
+
             // 解析跳转目标
             if let Ok(goto_line) = click_handler.0.parse::<usize>() {
                 game_state.current_line = goto_line;

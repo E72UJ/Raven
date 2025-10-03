@@ -67,7 +67,7 @@ fn main() {
 // 加载字体
 fn load_fonts(mut commands: Commands, asset_server: Res<AssetServer>) {
     let regular_font = asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf");
-    
+
     commands.insert_resource(DialogueFonts {
         regular: regular_font,
     });
@@ -222,23 +222,23 @@ fn update_dialogue_display(
     // 获取当前对话条目
     if let Some(entry) = dialogue_data.entries.get(current_dialogue.index) {
         // 更新角色名字
-        if let Ok(mut character_text) = character_query.get_single_mut() {
+        if let Ok(mut character_text) = character_query.single_mut() {
             character_text.0 = entry.character.clone();
         }
 
         // 更新对话文本
-        if let Ok(mut dialogue_text) = dialogue_query.get_single_mut() {
+        if let Ok(mut dialogue_text) = dialogue_query.single_mut() {
             dialogue_text.0 = entry.text.clone();
         }
 
         // 清除现有按钮
         for entity in existing_buttons.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
 
         // 创建新按钮
         if let Some(choices) = &entry.choices {
-            if let Ok(container_entity) = button_container_query.get_single() {
+            if let Ok(container_entity) = button_container_query.single() {
                 commands.entity(container_entity).with_children(|parent| {
                     for choice in choices {
                         parent
@@ -272,7 +272,7 @@ fn update_dialogue_display(
             }
         } else {
             // 没有选择时，添加继续按钮
-            if let Ok(container_entity) = button_container_query.get_single() {
+            if let Ok(container_entity) = button_container_query.single() {
                 commands.entity(container_entity).with_children(|parent| {
                     parent
                         .spawn((
@@ -289,7 +289,8 @@ fn update_dialogue_display(
                             BackgroundColor(Color::srgb(0.4, 0.4, 0.5)),
                             BorderColor(Color::srgb(0.6, 0.6, 0.7)),
                             ChoiceButton {
-                                goto_index: (current_dialogue.index + 1) % dialogue_data.entries.len(),
+                                goto_index: (current_dialogue.index + 1)
+                                    % dialogue_data.entries.len(),
                             },
                         ))
                         .with_children(|button| {
@@ -309,7 +310,12 @@ fn update_dialogue_display(
 // 处理按钮点击
 fn handle_choice_buttons(
     mut interaction_query: Query<
-        (&Interaction, &ChoiceButton, &mut BackgroundColor, &mut BorderColor),
+        (
+            &Interaction,
+            &ChoiceButton,
+            &mut BackgroundColor,
+            &mut BorderColor,
+        ),
         (Changed<Interaction>, With<Button>),
     >,
     mut current_dialogue: ResMut<CurrentDialogue>,
