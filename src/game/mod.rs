@@ -4,15 +4,6 @@ use std::{collections::HashMap, env, fmt::Debug, fs, time::Duration};
 use bevy::{audio::PlaybackSettings, prelude::*, ui::FocusPolicy};
 use bevy_flash::{FlashPlugin, assets::Swf, player::Flash};
 // 第三方 crate 导入
-use bevy::{
-    audio::{AudioPlugin, PlaybackSettings, Volume},
-    color::palettes::basic::*,
-    ecs::relationship::RelatedSpawnerCommands,
-    prelude::*,
-    ui::FocusPolicy,
-    winit::WinitSettings,
-};
-// use bevy_flash::{FlashPlugin, assets::FlashAnimationSwfData, bundle::FlashAnimation};
 use serde::Deserialize;
 
 // 当前 crate 模块导入
@@ -743,7 +734,7 @@ fn setup_ui(
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
         // Set the justification of the Text
-        TextLayout::new_with_justify(Justify::Center),
+        // TextLayout::new_with_justify(JustifyText::Center),
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
@@ -1579,72 +1570,53 @@ fn update_swf(
     println!("=== update_swf 调试信息 ===");
     println!("查询到的SWF实体数量: {}", query.iter().count());
 
-// fn update_swf(
-//     game_state: Res<GameState>,
-//     mut query: Query<(&Name, &mut Visibility), With<FlashAnimation>>,
-//     flashes: Res<Assets<FlashAnimationSwfData>>, // 添加资源检查
-//     flash_query: Query<&FlashAnimation>,         // 添加Flash组件查询
-// ) {
-//     //    println!("=== update_swf 调试信息 ===");
-//     // println!("查询到的SWF实体数量: {}", query.iter().count());
+    for (name, visibility, _) in query.iter() {
+        // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
+    }
 
-//     for (name, visibility) in query.iter() {
-//         // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
-//     }
+    for (_, mut visibility, _) in query.iter_mut() {
+        *visibility = Visibility::Hidden;
+    }
 
-//     for (_, mut visibility) in query.iter_mut() {
-//         *visibility = Visibility::Hidden;
-//     }
+    // 根据当前对话中的swf字段显示对应动画
+    if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
+        if let Some(swf_name) = &dialogue.swf {
+            let target_name = format!("swf_{}", swf_name);
+            println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
 
-//     // 根据当前对话中的swf字段显示对应动画
-//     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-//         if let Some(swf_name) = &dialogue.swf {
-//             let target_name = format!("swf_{}", swf_name);
-//             // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
+            let mut found = false;
 
-//             let mut found = false;
+            // 遍历所有Flash实体寻找匹配的名称
+            for (name, mut visibility, flash) in query.iter_mut() {
+                if name.as_str() == target_name {
+                    // 检查资源加载状态
+                    if swf_res.get(flash.id()).is_some() {
+                        *visibility = Visibility::Visible;
+                        println!("✓ 成功显示SWF: {}", target_name);
+                        found = true;
+                        break;
+                    } else {
+                        println!("⚠ SWF资源尚未加载完成: {}", target_name);
+                    }
+                }
+            }
 
-//             // 遍历所有Flash实体寻找匹配的名称
-//             for (name, mut visibility) in query.iter_mut() {
-//                 if name.as_str() == target_name {
-//                     // 检查对应的SWF资源是否已加载
-//                     let mut resource_loaded = false;
+            if !found {
+                println!("✗ 未找到SWF实体: {}", target_name);
+                println!("可用的Flash实体:");
+                for (name, _, _) in query.iter() {
+                    println!("  - {}", name.as_str());
+                }
+            }
+        } else {
+            // println!("当前对话没有SWF字段");
+        }
 
-//                     // 检查资源加载状态
-//                     for flash_animation in flash_query.iter() {
-//                         if let Some(flash_data) = flashes.get(&flash_animation.swf) {
-//                             resource_loaded = true;
-//                             break;
-//                         }
-//                     }
-
-//                     if resource_loaded {
-//                         *visibility = Visibility::Visible;
-//                         // println!("✓ 成功显示SWF: {}", target_name);
-//                         found = true;
-//                         break;
-//                     } else {
-//                         println!("⚠ SWF资源尚未加载完成: {}", target_name);
-//                     }
-//                 }
-//             }
-
-//             if !found {
-//                 println!("✗ 未找到SWF实体: {}", target_name);
-//                 println!("可用的Flash实体:");
-//                 for (name, _) in query.iter() {
-//                     println!("  - {}", name.as_str());
-//                 }
-//             }
-//         } else {
-//             // println!("当前对话没有SWF字段");
-//         }
-
-//         if game_state.is_changed() {
-//             // println!("==================");
-//         }
-//     }
-// }
+        if game_state.is_changed() {
+            // println!("==================");
+        }
+    }
+}
 
 // 结束swf数据
 // 更新背景
