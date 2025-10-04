@@ -231,7 +231,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ..default()
                     },
                     BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
-                    BorderColor(Color::srgb(0.5, 0.5, 0.5)),
+                    BorderColor::all(Color::srgb(0.5, 0.5, 0.5)),
                     Visibility::Hidden,
                     AboutContent,
                     RightAnchoredContent,

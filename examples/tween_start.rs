@@ -109,7 +109,6 @@ fn setup_typewriter(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ..default()
                 },
                 TextColor(Color::WHITE),
-                TextLayout::new_with_justify(JustifyText::Center),
                 TypewriterText::default(),
                 FadeEffect::default(),
             ));
