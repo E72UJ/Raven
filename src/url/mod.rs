@@ -1,4 +1,3 @@
-// src/url/mod.rs
 use bevy::prelude::*;
 
 #[derive(Component)]

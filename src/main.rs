@@ -7,14 +7,13 @@ mod toolbar;
 mod transition; // 添加模块
 mod url;
 
-use crate::audio::AudioPlugin;
 use crate::game::GamePlugin;
+use crate::{audio::AudioPlugin, url::UrlPlugin};
 use bevy::prelude::*;
 use config::{MainConfig, load_main_config};
 use menu::MenuPlugin;
 // use crate::audio::{play_audio, play_audio_with_volume, play_audio_loop};
 use crate::transition::{TransitionPlugin, fade_in, fade_out}; //
-use Raven::url::UrlPlugin;
 use style::StylePlugin;
 use toolbar::ToolbarPlugin;
 // 定义游戏场景状态
