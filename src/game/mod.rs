@@ -2,7 +2,12 @@ use std::{collections::HashMap, env, fmt::Debug, fs, time::Duration};
 
 // 游戏引擎主程序
 use bevy::{audio::PlaybackSettings, prelude::*, ui::FocusPolicy};
-use bevy_flash::{FlashPlugin, assets::Swf, player::Flash};
+use bevy_flash::{
+    FlashCompleteEvent, FlashFrameEvent, FlashPlugin,
+    assets::Swf,
+    player::{Flash, FlashPlayer, McRoot},
+};
+
 // 第三方 crate 导入
 use serde::Deserialize;
 
@@ -444,6 +449,8 @@ fn setup_camera(mut commands: Commands, config: Res<MainConfig>) {
     //     // 移除自定义的Camera配置
     // ));
 
+    
+
     let dialogues: Vec<Dialogue> = load_dialogues(&config);
     // 创建映射代码
     // 创建标签映射
@@ -507,6 +514,7 @@ fn setup_ui(
     config: Res<MainConfig>,
     stylesheet: Res<UiStyleSheet>,
 ) {
+
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
@@ -595,7 +603,15 @@ fn setup_ui(
         Portrait,
     ));
     // 交互按钮2
+// flash 硬编码1
+    // commands.spawn((
+    //     Name::new("冲霄"),
+    //     Flash(asset_server.load("swf/spirit2159src.swf")),
+    //     FlashPlayer::from_animation_name("WAI"),
+    //     Transform::from_scale(Vec3::splat(2.0)),
+    // ));
 
+    // flash 硬编码2
     commands.spawn((
         Name::new("spritebox"),
         // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
@@ -1552,7 +1568,8 @@ fn load_swf_assets(
         commands.spawn((
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
-            Transform::from_translation(Vec3::new(-199.0, 0.0, 0.0)).with_scale(Vec3::splat(1.0)),
+            FlashPlayer::from_looping(true),
+            Transform::from_translation(Vec3::new(200.0, 0.0, 0.0)).with_scale(Vec3::splat(2.0)),
             Visibility::Hidden,
         ));
 
@@ -1567,8 +1584,8 @@ fn update_swf(
     mut query: Query<(&Name, &mut Visibility, &Flash)>,
     swf_res: Res<Assets<Swf>>, // 添加资源检查
 ) {
-    println!("=== update_swf 调试信息 ===");
-    println!("查询到的SWF实体数量: {}", query.iter().count());
+    // println!("=== update_swf 调试信息 ===");
+    // println!("查询到的SWF实体数量: {}", query.iter().count());
 
     for (name, visibility, _) in query.iter() {
         // println!("发现实体: {}, 当前可见性: {:?}", name.as_str(), *visibility);
@@ -1582,7 +1599,7 @@ fn update_swf(
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
         if let Some(swf_name) = &dialogue.swf {
             let target_name = format!("swf_{}", swf_name);
-            println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
+            // println!("尝试显示SWF动画: {} (查找实体: {})", swf_name, target_name);
 
             let mut found = false;
 
@@ -1592,18 +1609,18 @@ fn update_swf(
                     // 检查资源加载状态
                     if swf_res.get(flash.id()).is_some() {
                         *visibility = Visibility::Visible;
-                        println!("✓ 成功显示SWF: {}", target_name);
+                        // println!("✓ 成功显示SWF: {}", target_name);
                         found = true;
                         break;
                     } else {
-                        println!("⚠ SWF资源尚未加载完成: {}", target_name);
+                        // println!("⚠ SWF资源尚未加载完成: {}", target_name);
                     }
                 }
             }
 
             if !found {
-                println!("✗ 未找到SWF实体: {}", target_name);
-                println!("可用的Flash实体:");
+                // println!("✗ 未找到SWF实体: {}", target_name);
+                // println!("可用的Flash实体:");
                 for (name, _, _) in query.iter() {
                     println!("  - {}", name.as_str());
                 }
