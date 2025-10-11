@@ -295,28 +295,39 @@ impl Plugin for GamePlugin {
         }
         app
             // 只在启动时加载资源，不创建UI
-            .add_systems(
-                Startup,
-                (
-                    load_main_config_system,
-                    setup_camera,
-                    load_portraits,
-                    load_audio_resources,
-                    load_backgrounds,
-                    // load_swf_assets,
-                    // setup_ui,  // 移除这行！
-                )
-                    .chain(),
-            )
+        .add_systems(
+            Startup,
+            load_main_config_system,
+        )
+        .add_systems(
+            Startup,
+            setup_camera.after(load_main_config_system),
+        )
+        .add_systems(
+            Startup,
+            load_portraits.after(setup_camera),
+        )
+        .add_systems(
+            Startup,
+            load_audio_resources.after(load_portraits),
+        )
+        .add_systems(
+            Startup,
+            load_backgrounds.after(load_audio_resources),
+        )
             // 进入游戏场景时才创建UI和游戏状态
-            .add_systems(
-                OnEnter(GameScene::Game),
-                (
-                    setup_game_state,
-                    setup_ui, // 移到这里
-                    load_swf_assets,
-                ).chain(),
-            )
+        .add_systems(
+            OnEnter(GameScene::Game),
+            setup_game_state,
+        )
+        .add_systems(
+            OnEnter(GameScene::Game),
+            setup_ui.after(setup_game_state),
+        )
+        .add_systems(
+            OnEnter(GameScene::Game),
+            load_swf_assets.after(setup_ui),
+        )
             .add_plugins(RenpyDissolvePlugin)
             // .add_plugins(StylePlugin)
             .insert_resource(CurrentAudio::default())
