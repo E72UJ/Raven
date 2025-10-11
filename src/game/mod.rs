@@ -32,6 +32,9 @@ pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
 pub mod events;
 use crate::toolbar::ToggleAutoPlayEventMessage;
 use crate::toolbar::ToggleMenuEventMessage;
+
+
+use crate::audio::play_audio;
 // 包调用结束
 
 // 引用
@@ -312,8 +315,7 @@ impl Plugin for GamePlugin {
                     setup_game_state,
                     setup_ui, // 移到这里
                     load_swf_assets,
-                )
-                    .chain(),
+                ).chain(),
             )
             .add_plugins(RenpyDissolvePlugin)
             // .add_plugins(StylePlugin)
@@ -750,7 +752,7 @@ fn setup_ui(
         // TextColor(Color::srgba(0.6, 0.1, 0.1, 0.8)),
         TextShadow::default(),
         // Set the justification of the Text
-        // TextLayout::new_with_justify(JustifyText::Center),
+        TextLayout::new_with_justify(Justify::Center),
         Node {
             position_type: PositionType::Absolute,
             bottom: Val::Px(230.0),
@@ -1481,6 +1483,8 @@ fn load_audio_resources(
     asset_server: Res<AssetServer>,
     config: Res<MainConfig>,
 ) {
+
+    println!("=== 加载音效资源 ===");
     let click_sound_handle: Handle<AudioSource> =
         asset_server.load(&config.assets.audio.click_sound);
     let backclick_sound_handle: Handle<AudioSource> =
@@ -1569,7 +1573,7 @@ fn load_swf_assets(
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
             FlashPlayer::from_looping(true),
-            Transform::from_translation(Vec3::new(200.0, 0.0, 0.0)).with_scale(Vec3::splat(2.0)),
+            Transform::from_translation(Vec3::new(-200.0, 200.0, 0.0)).with_scale(Vec3::splat(2.0)),
             Visibility::Hidden,
         ));
 
@@ -2181,10 +2185,11 @@ fn update_audio(
     mut current_audio: ResMut<CurrentAudio>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    config: Res<MainConfig>, // 添加配置资源
 ) {
     if let Some(dialogue) = game_state.dialogues.get(game_state.current_line) {
-        if let Some(bgm) = &dialogue.bgm {
-            let target_bgm = bgm.clone();
+        if let Some(bgm_key) = &dialogue.bgm {
+            let target_bgm = bgm_key.clone();
             let current_playing = current_audio.current_bgm.as_ref();
             let bgm_changed = current_playing != Some(&target_bgm);
 
@@ -2196,13 +2201,23 @@ fn update_audio(
                     commands.entity(entity).despawn();
                 }
 
-                // 播放新BGM并获取实体
-                let audio_path = format!("audio/{}", bgm);
-                // let new_entity = play_audio(&mut commands, &asset_server, audio_path);
+                // 从配置文件获取正确的音频路径
+                if let Some(audio_path) = config.assets.audio.bgm.get(bgm_key) {
+                    println!("加载BGM文件: {}", audio_path);
+                    
+                    // 加载并播放音频
+                    let audio_handle: Handle<AudioSource> = asset_server.load(audio_path);
+                    let new_entity = commands.spawn((
+                        AudioPlayer::new(audio_handle),
+                        PlaybackSettings::LOOP, // 循环播放BGM
+                    )).id();
 
-                // 更新状态
-                current_audio.current_bgm = Some(target_bgm);
-                // current_audio.current_entity = Some(new_entity);
+                    // 更新状态
+                    current_audio.current_bgm = Some(target_bgm);
+                    current_audio.current_entity = Some(new_entity);
+                } else {
+                    eprintln!("错误: 在配置文件中找不到BGM '{}'", bgm_key);
+                }
             }
         } else {
             // 没有BGM时，停止当前播放
@@ -2214,6 +2229,7 @@ fn update_audio(
         }
     }
 }
+
 
 // 交互区域系统
 // fn on_hover_enter(trigger: Trigger<Pointer<Over>>, mut sprites: Query<&mut Sprite>) {
