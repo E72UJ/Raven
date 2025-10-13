@@ -43,7 +43,9 @@ impl Plugin for MenuPlugin {
             
             .add_systems(OnEnter(GameScene::LoadButton), setup_load_scene)     // 调用载入场景设置函数
             .add_systems(OnExit(GameScene::LoadButton), cleanup_load_scene)    // 调用载入场景清理函数
-            .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
+            // .add_systems(OnEnter(GameScene::Menu), (load_styles, setup_menu_scene).chain())
+            .add_systems(OnEnter(GameScene::Menu), load_styles)
+            .add_systems(OnEnter(GameScene::Menu), setup_menu_scene.after(load_styles))
             .add_systems(OnExit(GameScene::Menu), (on_exit_game_state,stop_all_audio_system))
             .add_systems(OnEnter(GameScene::Settings), setup_settings_overlay)
             .add_systems(OnExit(GameScene::Settings), cleanup_settings_overlay)
@@ -54,7 +56,7 @@ impl Plugin for MenuPlugin {
 
         // 主游戏状态
             .add_systems(OnEnter(GameScene::Game), cleanup_for_game)
-            .add_systems(OnExit(GameScene::Game), ( cleanup_cameras).chain())
+            .add_systems(OnExit(GameScene::Game), cleanup_cameras)
 
             .add_systems(OnEnter(GameScene::GameSettings), setup_game_settings_overlay)
             .add_systems(OnExit(GameScene::GameSettings), cleanup_game_settings_overlay);
