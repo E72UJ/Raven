@@ -28,10 +28,10 @@ assets:
   # 音频文件
   audio:
     bgm:
-      main_theme: "assets/audio/bgm/main_theme.mp3"
-      battle: "assets/audio/bgm/battle.mp3"
+      main_theme: "audio/one.ogg"
+      battle: "battle.mp3"
     sfx:
-      doorbell: "assets/audio/sfx/doorbell.mp3"
+      doorbell: "doorbell.mp3"
       explosion: "assets/audio/sfx/explosion.mp3"
     click_sound: "typing2.ogg"
     backclick_sound: "button.ogg"

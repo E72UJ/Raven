@@ -3,6 +3,7 @@
   portrait: "none"
   background: "bg5"
   interactive: "console"
+  audio: "main_theme"
 
 - character: "艾拉"
   text: "舰长，我们收到了来自地球的最后一次信号...那是六个月前的事了。"

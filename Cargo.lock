@@ -701,7 +701,7 @@ dependencies = [
 [[package]]
 name = "bevy_flash"
 version = "0.1.0-alpha"
-source = "git+https://github.com/aojiaoxiaolinlin/bevy_flash#1924a869fd9e827b1d88ea802628898fcc855b80"
+source = "git+https://gitee.com/Furau/bevy_flash#b2babbf5749a5ab731fe2cb68f8beaa4d3d9998d"
 dependencies = [
  "bevy",
  "bitflags 2.9.0",
