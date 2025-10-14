@@ -263,6 +263,8 @@ struct GameState {
 #[derive(Component)]
 struct Portrait;
 
+
+
 // 立绘资源句柄
 // #[derive(Debug, Resource)]
 
@@ -278,6 +280,9 @@ struct PortraitAssets {
 // 音频控制
 #[derive(Component)]
 struct MyMusic;
+
+#[derive(Component)]
+struct SettingsButton;
 
 // 主函数
 #[derive(Resource, Default)]
@@ -544,7 +549,7 @@ fn setup_ui(
             },
             BackgroundColor(Color::NONE), // 完全透明
             // BackgroundColor(Color::WHITE),
-            GlobalZIndex(9999),
+            GlobalZIndex(200),
             Interaction::default(),
             // Button,
             FocusPolicy::Pass, // 关键：让焦点穿透
@@ -754,7 +759,7 @@ fn setup_ui(
         Text::new("戴安娜"),
         Visibility::Visible,
         TextFont {
-            font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
+            font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
             font_size: 28.0,
             line_height: bevy::text::LineHeight::Px(50.),
             ..default()
@@ -777,7 +782,7 @@ fn setup_ui(
         // BackgroundColor(Color::NONE),
         // 对话框背景颜色
         // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
-        GlobalZIndex(2),
+        // GlobalZIndex(1),
         ImageNode::new(asset_server.load("gui/textbox2.png")),
         // AnimatedText,
     ));
@@ -808,15 +813,18 @@ fn setup_ui(
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 position_type: PositionType::Absolute,
-                top: Val::Px(-80.0),
-                left: Val::Px(0.0),
+                top: Val::Auto,    // 自动计算
+                left: Val::Auto,   // 自动计算
+                right: Val::Auto,  // 自动计算
+                bottom: Val::Auto, // 自动计算
 
                 ..default()
             },
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)), // 半透明背景
-            ZIndex(1000),                                      // 设置高层级
+            ZIndex(10000000),      
+            Name::new("settings_menu"), // 添加名称                                // 设置高层级
             Visibility::Hidden,
-            Interaction::default(), // 添加交互组件来阻止点击穿透
+            // Interaction::default(), // 添加交互组件来阻止点击穿透
             SettingsMenu,
         ))
         .with_children(|parent| {
@@ -824,11 +832,11 @@ fn setup_ui(
             parent
                 .spawn((
                     Node {
-                        position_type: PositionType::Absolute,
-                        top: Val::Px(50.0),
+                        // position_type: PositionType::Absolute,
+                        top: Val::Px(0.0),
                         left: Val::Px(0.0),
-                        width: Val::Percent(80.0),
-                        height: Val::Percent(80.0),
+                        width: Val::Percent(88.0),
+                        height: Val::Percent(88.0),
                         flex_direction: FlexDirection::Row,
                         ..default()
                     },
@@ -1584,7 +1592,7 @@ fn load_swf_assets(
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
             FlashPlayer::from_looping(true),
-            Transform::from_translation(Vec3::new(-200.0, 200.0, 0.0)).with_scale(Vec3::splat(2.0)),
+            Transform::from_translation(Vec3::new(-200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
             Visibility::Hidden,
         ));
 
@@ -2265,10 +2273,11 @@ fn update_audio(
 fn handle_toggle_menu_event(
     mut toggle_events: EventReader<ToggleMenuEventMessage>,
     mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
+    mut named_query: Query<(&Name, &mut Visibility, &mut FocusPolicy), Without<SettingsMenu>>,
 ) {
     for _event in toggle_events.read() {
-        if let Ok(mut visibility) = menu_query.single_mut() {
-            *visibility = match *visibility {
+        if let Ok(mut menu_visibility) = menu_query.single_mut() {
+            let new_visibility = match *menu_visibility {
                 Visibility::Hidden => {
                     println!("显示设置菜单");
                     Visibility::Visible
@@ -2279,9 +2288,33 @@ fn handle_toggle_menu_event(
                 }
                 Visibility::Inherited => Visibility::Visible,
             };
+            
+            *menu_visibility = new_visibility;
+            
+            // 根据菜单状态控制点击区域
+            for (name, mut visibility, mut focus_policy) in named_query.iter_mut() {
+                if name.as_str() == "click_area" {
+                    match new_visibility {
+                        Visibility::Visible => {
+                            // 菜单显示时，禁用点击区域
+                            *visibility = Visibility::Hidden;
+                            *focus_policy = FocusPolicy::Block;
+                        }
+                        Visibility::Hidden => {
+                            // 菜单隐藏时，恢复点击区域
+                            *visibility = Visibility::Visible;
+                            *focus_policy = FocusPolicy::Pass;
+                        }
+                        _ => {}
+                    }
+                    break;
+                }
+            }
         }
     }
 }
+
+
 
 // 处理关闭按钮点击
 fn handle_close_settings_button(
@@ -2328,5 +2361,73 @@ fn handle_auto_play_event(
                 "关闭"
             }
         );
+    }
+}
+
+// 设置控制系统
+fn handle_settings_close_and_show_click_area(
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<CloseSettingsButton>)>,
+    mut menu_query: Query<&mut Visibility, With<SettingsMenu>>,
+    mut name_query: Query<(&Name, &mut Visibility)>,
+) {
+    for interaction in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            if let Ok(mut menu_visibility) = menu_query.single_mut() {
+                *menu_visibility = Visibility::Hidden;
+            }
+
+            // 查找并显示名为 "click_area" 的实体
+            for (name, mut visibility) in name_query.iter_mut() {
+                if name.as_str() == "click_area" {
+                    *visibility = Visibility::Visible;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+
+// 打开设置菜单时 - 禁用点击区域
+fn open_settings_menu_and_disable_click_area(
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<SettingsButton>)>,
+    mut named_entities_query: Query<(&Name, &mut Visibility, &mut FocusPolicy)>,
+) {
+    for interaction in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            info!("打开设置启动");
+            for (name, mut visibility, mut focus_policy) in named_entities_query.iter_mut() {
+                match name.as_str() {
+                    
+                    "settings_menu" => *visibility = Visibility::Visible, // 显示设置菜单
+                    "click_area" => {
+                        *visibility = Visibility::Hidden;              // 隐藏点击区域
+                        *focus_policy = FocusPolicy::Block;             // 阻止交互
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+}
+
+// 关闭设置菜单时 - 恢复点击区域
+fn close_settings_menu_and_restore_click_area(
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<CloseSettingsButton>)>,
+    mut named_entities_query: Query<(&Name, &mut Visibility, &mut FocusPolicy)>,
+) {
+    for interaction in &mut interaction_query {
+        if *interaction == Interaction::Pressed {
+            for (name, mut visibility, mut focus_policy) in named_entities_query.iter_mut() {
+                match name.as_str() {
+                    "settings_menu" => *visibility = Visibility::Hidden,  // 隐藏设置菜单
+                    "click_area" => {
+                        *visibility = Visibility::Visible;                // 恢复点击区域
+                        *focus_policy = FocusPolicy::Pass;                 // 恢复穿透
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 }
