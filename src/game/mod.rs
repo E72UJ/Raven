@@ -665,16 +665,6 @@ fn setup_ui(
     let menu_bg = stylesheet.get_background_color("menu", "menu_box");
     commands
         .spawn((
-            // Accepts a `String` or any type that converts into a `String`, such as `&str`
-            // Name::new("textbox"),
-            // Text::new("文本框!"),
-            // TextFont {
-            //     font: asset_server.load("fonts/GenSenMaruGothicTW-Bold.ttf"),
-            //     font_size:28.0,
-            //     ..default()
-            // },
-            // TextShadow::default(),
-            // TextLayout::new_with_justify(JustifyText::Left),
             Name::new("text"),
             Visibility::Hidden,
             Node {
@@ -684,7 +674,7 @@ fn setup_ui(
                 bottom: dialog_pos.bottom,
                 left: dialog_pos.left,
                 right: dialog_pos.right,
-                // width: Val::Px(1080.0),
+                width: Val::Px(1080.0),
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
@@ -716,6 +706,7 @@ fn setup_ui(
                 TextColor(stylesheet.get_text_color("styles", "textbox")),
                 Node {
                     position_type: PositionType::Relative,
+
                     margin: UiRect::all(Val::Px(1.0)),
                     ..default()
                 },
