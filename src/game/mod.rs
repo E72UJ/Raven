@@ -1,101 +1,86 @@
+// ============================================================================
+// 依赖导入
+// ============================================================================
+
 use std::{collections::HashMap, env, fmt::Debug, fs, time::Duration};
 
-// 游戏引擎主程序
+// Bevy 引擎
 use bevy::{audio::PlaybackSettings, prelude::*, ui::FocusPolicy};
+
+// Flash 插件
 use bevy_flash::{
     FlashCompleteEvent, FlashFrameEvent, FlashPlugin,
     assets::Swf,
     player::{Flash, FlashPlayer, McRoot},
 };
 
-// 第三方 crate 导入
+// 第三方库
 use serde::Deserialize;
 
-// 当前 crate 模块导入
+// 项目内部模块
 use crate::{
     GameScene,
     config::{MainConfig, load_main_config},
     style::UiStyleSheet,
-    toolbar::RollbackEventMessage,
+    toolbar::{RollbackEventMessage, ToggleAutoPlayEventMessage, ToggleMenuEventMessage},
     transition::fade_in,
+    audio::play_audio,
 };
 
-// 外部 crate 导入（使用项目名）
+// Raven 库
 use Raven::{
     dissolve::{RenpyDissolve, RenpyDissolvePlugin},
     typewriter::TypewriterText,
 };
 
+// ============================================================================
 // 常量定义
-pub const FPS_OVERLAY_Z_INDEX: i32 = i32::MAX - 32;
-// 事件系统
-pub mod events;
-use crate::toolbar::ToggleAutoPlayEventMessage;
-use crate::toolbar::ToggleMenuEventMessage;
+// ============================================================================
 
 
-use crate::audio::play_audio;
-// 包调用结束
-
-// 引用
-
-// 按钮组颜色表格
-// const NORMAL_BUTTON: Color = Color::srgba(0.1, 0.1, 0.1, 0.8);
-// const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
-// const PRESSED_BUTTON: Color = Color::srgb(0.35, 0.75, 0.35);
-
-#[derive(Component)]
-struct Option1Button;
-
+// 按钮颜色
 const NORMAL_BUTTON: Color = Color::srgba(0.0, 0.0, 0.0, 0.0);
 const HOVERED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
 const PRESSED_BUTTON: Color = Color::srgba(1.0, 1.0, 1.0, 0.0);
-// 游戏插件
 
-// 阻塞系统
-#[derive(Debug, Resource)]
-struct BlockState {
-    blocked: bool,
-    blocked_line: Option<usize>,
-    unblock_condition: Option<UnblockCondition>,
-}
+// ============================================================================
+// 事件定义
+// ============================================================================
 
-#[derive(Debug)]
-enum UnblockCondition {
-    Click,             // 点击后解除阻塞
-    KeyPress(KeyCode), // 按下特定键后解除
-    Timer(Duration),   // 定时器到期后解除
-}
+#[derive(Event)]
+pub struct ToggleGameMenuEvent;
 
-// 阻塞系统结束
-// 立绘组件
+#[derive(Event)]
+pub struct CloseGameMenuEvent;
+
+#[derive(Event)]
+pub struct ToggleSettingsMenuEvent;
+
+// ============================================================================
+// 组件定义
+// ============================================================================
+
+// UI 组件
 #[derive(Component)]
-struct FadeAnimation {
-    timer: Timer,
-    start_alpha: f32,
-    end_alpha: f32,
-}
+struct Option1Button;
 
 #[derive(Component)]
-struct AnimationTarget;
-// 立绘组件结束
-// 打字机组件
-#[derive(Component)]
-struct CurrentText;
+struct ClickArea;
 
 #[derive(Component)]
-struct Typewriter {
-    full_text: String,    // 完整文本
-    current_index: usize, // 当前显示到第几个字符
-    timer: Timer,         // 控制打字速度的计时器
-    is_finished: bool,    // 是否完成打字
-}
-// #[derive(Component)]
-// struct TypewriterText {
-//     full_text: String,
-//     current_length: usize,
-//     timer: Timer,
-// }
+struct ButtonContainer;
+
+#[derive(Component)]
+struct DynamicButton;
+
+#[derive(Component)]
+struct CloseMenuButton;
+
+#[derive(Component)]
+struct CloseSettingsButton;
+
+#[derive(Component)]
+struct SettingsButton;
 
 #[derive(Component)]
 struct MenuOverlay;
@@ -103,38 +88,55 @@ struct MenuOverlay;
 #[derive(Component)]
 struct MenuBox;
 
-// 添加菜单控制事件
-#[derive(Event)]
-pub struct ToggleGameMenuEvent;
-
-#[derive(Event)]
-pub struct CloseGameMenuEvent;
-
-pub enum SettingsMenuState {
-    Hidden,
-    Visible,
-}
-
-impl Default for SettingsMenuState {
-    fn default() -> Self {
-        Self::Hidden
-    }
-}
-
 #[derive(Component)]
 pub struct SettingsMenuContainer;
 
 #[derive(Component)]
-pub struct CloseMenuButton;
-
-#[derive(Event)]
-pub struct ToggleSettingsMenuEvent;
-
-#[derive(Component)]
 pub struct SettingsMenu;
 
+// 游戏内容组件
 #[derive(Component)]
-pub struct CloseSettingsButton;
+struct Background;
+
+#[derive(Component)]
+struct Portrait;
+
+#[derive(Component)]
+struct CurrentText;
+
+#[derive(Component)]
+struct AnimationTarget;
+
+#[derive(Component)]
+struct MyMusic;
+
+// 交互组件
+#[derive(Component)]
+struct ClickHandler(String);
+
+#[derive(Component)]
+struct ButtonImages {
+    normal: Handle<Image>,
+    hovered: Handle<Image>,
+    pressed: Handle<Image>,
+}
+
+// 动画组件
+#[derive(Component)]
+struct FadeAnimation {
+    timer: Timer,
+    start_alpha: f32,
+    end_alpha: f32,
+}
+
+// 打字机组件
+#[derive(Component)]
+struct Typewriter {
+    full_text: String,
+    current_index: usize,
+    timer: Timer,
+    is_finished: bool,
+}
 
 impl Typewriter {
     fn new(text: String, chars_per_second: f32) -> Self {
@@ -151,27 +153,55 @@ impl Typewriter {
         if self.current_index >= self.full_text.len() {
             return self.full_text.clone();
         }
-
-        // 正确处理UTF-8字符
         self.full_text.chars().take(self.current_index).collect()
     }
 }
-// 结构体
-// / 位置常量
-const left_box: f32 = 80.0;
 
-// 点击组件
+// 菜单项组件
 #[derive(Component)]
-struct ClickArea;
-// 背景组件标识
-#[derive(Component)]
-struct Background;
+struct SettingsMenuItem(SelectedMenuItem);
 
-#[derive(Component)]
-struct ButtonContainer;
-// 添加这些组件定义
-#[derive(Component)]
-struct DynamicButton;
+// ============================================================================
+// 枚举定义
+// ============================================================================
+
+#[derive(Clone, Copy, PartialEq)]
+enum SelectedMenuItem {
+    History = 0,
+    Save = 1,
+    Load = 2,
+    Settings = 3,
+    Title = 4,
+    About = 5,
+}
+
+impl Default for SelectedMenuItem {
+    fn default() -> Self {
+        SelectedMenuItem::History
+    }
+}
+
+pub enum SettingsMenuState {
+    Hidden,
+    Visible,
+}
+
+impl Default for SettingsMenuState {
+    fn default() -> Self {
+        Self::Hidden
+    }
+}
+
+#[derive(Debug)]
+enum UnblockCondition {
+    Click,
+    KeyPress(KeyCode),
+    Timer(Duration),
+}
+
+// ============================================================================
+// 数据结构定义
+// ============================================================================
 
 #[derive(Debug, Deserialize)]
 struct Choice {
@@ -179,26 +209,34 @@ struct Choice {
     goto: String,
 }
 
-#[derive(Component)]
-struct ClickHandler(String);
-
-#[derive(Component)]
-struct ButtonImages {
-    normal: Handle<Image>,
-    hovered: Handle<Image>,
-    pressed: Handle<Image>,
+#[derive(Debug, Deserialize)]
+struct Dialogue {
+    character: String,
+    text: String,
+    portrait: String,
+    
+    #[serde(default)]
+    bgm: Option<String>,
+    
+    #[serde(default)]
+    background: Option<String>,
+    
+    #[serde(default)]
+    swf: Option<String>,
+    
+    #[serde(default)]
+    label: Option<String>,
+    
+    #[serde(default)]
+    jump: Option<String>,
+    
+    #[serde(default)]
+    choices: Option<Vec<Choice>>,
+    
+    #[serde(default)]
+    pause: Option<bool>,
 }
-// 按钮组颜色表格结束
-// 主配置结构体
-// #[derive(Debug, Deserialize, Resource)]
-// struct MainConfig {
-//     title: String,
-//     assets: AssetPaths,
-//     settings: GameSettings,
-//     #[serde(default)]
-//     global_variables: HashMap<String, String>,
-// }
-// 资源路径结构体
+
 #[derive(Debug, Deserialize)]
 struct AssetPaths {
     characters: HashMap<String, String>,
@@ -207,14 +245,14 @@ struct AssetPaths {
     videos: HashMap<String, String>,
     swf: HashMap<String, String>,
 }
-// 音频路径结构体
+
 #[derive(Debug, Deserialize)]
 struct AudioPaths {
     bgm: HashMap<String, String>,
     sfx: HashMap<String, String>,
-    click_sound: String, // 新增音效路径
+    click_sound: String,
 }
-// 游戏设置结构体
+
 #[derive(Debug, Deserialize)]
 struct GameSettings {
     initial_scene: String,
@@ -222,75 +260,50 @@ struct GameSettings {
     auto_save: bool,
     resolution: Vec<u32>,
 }
-// 标签映射资源
-// #[derive(Debug, Resource)]
-// struct LabelMap(HashMap<String, usize>);
-#[derive(Debug, Resource)]
-struct LabelMap(HashMap<String, usize>); // 标签 -> 行索引的映射
 
-// 对话数据结构（支持YAML反序列化）
-#[derive(Debug, Deserialize)]
-struct Dialogue {
-    character: String,
-    text: String,
-    portrait: String,
-    #[serde(default)]
-    bgm: Option<String>,
-    background: Option<String>, // 新添加的背景字段
-    swf: Option<String>,        // 新增swf字段
-    #[serde(default)] // 如果没有label字段，则为None
-    label: Option<String>,
-    #[serde(default)] // 如果没有jump字段，则为None
-    jump: Option<String>,
-    choices: Option<Vec<Choice>>, // 动态的分支选项
-    #[serde(default)] // 如果没有pause字段，则为None
-    pause: Option<bool>, //
+// ============================================================================
+// 资源定义
+// ============================================================================
+
+#[derive(Debug, Resource)]
+struct BlockState {
+    blocked: bool,
+    blocked_line: Option<usize>,
+    unblock_condition: Option<UnblockCondition>,
 }
-// 游戏状态资源
+
 #[derive(Debug, Resource)]
 struct GameState {
     current_line: usize,
     dialogues: Vec<Dialogue>,
-    can_go_back: bool,          // 添加标志位判断是否可以返回
-    jump_label: Option<String>, // 新增的跳转标签字段
-    in_branch_selection: bool,  // 新增：是否在分支选择状态
-    is_blocked: bool,           // 是否被阻塞
-    is_auto_playing: bool,      // 新增字段
-    auto_play_timer: f32,       // 自动播放计时器
-    auto_play_interval: f32,    // 自动播放间隔时间（秒
+    can_go_back: bool,
+    jump_label: Option<String>,
+    in_branch_selection: bool,
+    is_blocked: bool,
+    is_auto_playing: bool,
+    auto_play_timer: f32,
+    auto_play_interval: f32,
 }
-// 立绘组件
-#[derive(Component)]
-struct Portrait;
 
+#[derive(Debug, Resource)]
+struct LabelMap(HashMap<String, usize>);
 
-
-// 立绘资源句柄
-// #[derive(Debug, Resource)]
-
-// 定义音频句柄资源
-#[derive(Resource)]
-struct ClickSound(Handle<AudioSource>);
-#[derive(Resource)]
-struct BackClickSound(Handle<AudioSource>);
-#[derive(Debug, Resource)] // 添加此行
+#[derive(Debug, Resource)]
 struct PortraitAssets {
     handles: HashMap<String, Handle<Image>>,
 }
-// 音频控制
-#[derive(Component)]
-struct MyMusic;
 
-#[derive(Component)]
-struct SettingsButton;
+#[derive(Resource)]
+struct ClickSound(Handle<AudioSource>);
 
-// 主函数
+#[derive(Resource)]
+struct BackClickSound(Handle<AudioSource>);
+
 #[derive(Resource, Default)]
 pub struct CurrentAudio {
     pub current_bgm: Option<String>,
-    pub current_entity: Option<Entity>, // 添加这一行跟踪音频实体
+    pub current_entity: Option<Entity>,
 }
-// 结构体结束
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -645,44 +658,7 @@ fn setup_ui(
         RenpyDissolve::fade_in(0.0), // 使用渐入效果
     ));
 
-    // commands.spawn((
-    //     Name::new("one"),
-    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-    //     Transform::from_xyz(0.0, -24.0, 0.0),
-    //     // Sprite::sized(Vec2::new(75., 75.)),
-    //     Sprite {
-    //         color: Color::srgba(1.0, 1.0, 1.0, 0.0),
-    //         image: asset_server.load("fps/6.png"),
-    //         // custom_size: Some(Vec2 { x: 1400.0, y: 770.0 }),
-    //         ..default()
-    //     },
-    //     Visibility::Visible,
-    //     RenpyDissolve::fade_in(2.5), // 使用渐入效果
-    // ));
-    //     commands.spawn((
-    //     Name::new("spritebox2"),
-    //     Transform::from_xyz(0.0, -24.0, 0.0),
-    //     Sprite {
-    //         color: Color::srgba(1.0, 0.0, 0.0, 0.0), // 红色，初始完全透明
-    //         custom_size: Some(Vec2 { x: 400.0, y: 600.0 }),
-    //         ..default()
-    //     },
-    //     // 不需要 image 字段，就是纯色
-    //     Visibility::Visible,
-    //     RenpyDissolve::fade_in(2.0),
-    // ));
-    // commands.spawn((
-    //     Name::new("background"),
-    //     // Sprite::from_color(Color::srgba(0.4, 0.4, 0.1, 1.0), Vec2::new(400.0, 600.0)),
-    //     Transform::from_xyz(1.0, 2.0, 0.0),
-    //     // Sprite::sized(Vec2::new(75., 75.)),
-    //     Sprite {
-    //         image: asset_server.load("background/one.png"),
-    //         // custom_size: Some(Vec2 { x: 1200.0, y: 660.0 }),
-    //         ..default()
-    //     },
-    //     // Visibility::Hidden,
-    // ));
+   
     let dialog_padding = stylesheet.get_padding("styles", "dialog_box");
     let dialog_pos = stylesheet.get_position("styles", "dialog_box");
     let main_config = load_main_config();
