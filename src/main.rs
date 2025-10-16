@@ -57,7 +57,7 @@ fn main() {
                 name: Some("raven.app".into()),
                 resizable: true,
                 enabled_buttons: bevy::window::EnabledButtons {
-                    maximize: false,
+                    maximize: true,
                     ..Default::default()
                 },
                 resolution: (width as u32, height as u32).into(),

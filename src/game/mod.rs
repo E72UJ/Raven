@@ -674,7 +674,7 @@ fn setup_ui(
                 bottom: dialog_pos.bottom,
                 left: dialog_pos.left,
                 right: dialog_pos.right,
-                width: Val::Px(1080.0),
+                // width: Val::Px(1200.0),
                 height: Val::Px(170.0),
                 // padding: UiRect::all(Val::Px(30.0)),
                 padding: UiRect {
