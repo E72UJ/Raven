@@ -4,9 +4,9 @@ styles:
     background_color: [0.7, 0.1, 0.1, 0.8]
     padding: [30.0, 30.0, 30.0, 30.0]
     position: [null, 50.0, 50.0, 50.0] # [顺时针 上右下左 ]
-
+    
   textbox:
-    text_color: [0.0, 0.0, 0.0, 1.0]
+    text_color: [1.0, 1.0, 1.0, 1.0]
     font_size: 20.0
     margin: 10.0
   
@@ -35,14 +35,23 @@ menu:
     padding: [140.0, 30.0, 60.0, 30.0]
     position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
     font_size: 20.0
-  menu_game_menu:
-    size: [220.0, 50.0]  # [width, height]
   logo:
     font_size: 30.0
-    text_color: [0.0, 0.0, 0.0, 1.0]
-    
+    text_color: [1.0, 1.0, 1.0, 1.0]  # 蓝紫色
   start_button:
     background_color: [0.6, 0.6, 0.6, 0.6]
     padding: [140.0, 30.0, 60.0, 30.0]
     position: [200.0, 88.0, 122.0, 0.0] # [bottom, left, right, top]
-    font_size: 30.0
+
+media_queries:
+  # 竖屏 (宽度小于768px且高度大于宽度)
+  mobile_portrait:
+    condition: "width < 768 and height > width"
+    styles:
+      dialog_box:
+        padding: [20.0, 20.0, 20.0, 20.0]
+        position: [null, 20.0, 20.0, 20.0]
+      namebox:
+        font_size: 14.0
+        position: [0.0, 0.0, 0.0, 20.0]
+        size: [150.0, 35.0]
