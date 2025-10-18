@@ -1594,7 +1594,7 @@ fn on_exit_game_state(
     mut audio_manager: ResMut<AudioManager>,
 ) {
     // 退出游戏状态时停止所有音频
-    println!("{}","推出所有饮品");
+    println!("{}","退出所有音频资源");
     stop_all_audio(&mut commands, &mut audio_manager);
 }
 
