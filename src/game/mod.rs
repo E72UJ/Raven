@@ -5,7 +5,7 @@
 use std::{collections::HashMap, env, fmt::Debug, fs, time::Duration};
 
 // Bevy 引擎
-use bevy::{audio::PlaybackSettings, prelude::*, ui::FocusPolicy};
+use bevy::{audio::PlaybackSettings, prelude::*, ui::{FocusPolicy, debug::print_ui_layout_tree}};
 
 // Flash 插件
 use bevy_flash::{
@@ -26,13 +26,14 @@ use crate::{
     transition::fade_in,
     audio::play_audio,
 };
-
+use Raven::style::ElementId;
 // Raven 库
 use Raven::{
     dissolve::{RenpyDissolve, RenpyDissolvePlugin},
     typewriter::TypewriterText,
 };
 
+use Raven::style::StyleUpdateTrigger;
 // ============================================================================
 // 常量定义
 // ============================================================================
@@ -686,6 +687,7 @@ fn setup_ui(
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
+            ElementId("textbox".to_string()), // 设置元素ID
             // 对话框背景颜色
             ImageNode::new(asset_server.load("gui/textbox3.png")),
             // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
@@ -723,7 +725,7 @@ fn setup_ui(
     commands.spawn((
         // Accepts a `String` or any type that converts into a `String`, such as `&str`
         Name::new("namebox"),
-        Text::new("戴安娜"),
+        Text::new("名称框"),
         Visibility::Visible,
         TextFont {
             font: asset_server.load("fonts/SarasaFixedHC-Light.ttf"),
@@ -746,6 +748,7 @@ fn setup_ui(
             // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
+        ElementId("one".to_string()), // 设置元素ID
         // BackgroundColor(Color::NONE),
         // 对话框背景颜色
         // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
@@ -2396,5 +2399,21 @@ fn close_settings_menu_and_restore_click_area(
                 }
             }
         }
+    }
+}
+
+
+fn test(){
+    println!("test");
+}
+
+fn some_game_logic(
+    mut trigger: ResMut<StyleUpdateTrigger>,
+    keyboard: Res<ButtonInput<KeyCode>>,
+) {
+    // 例如：按下空格键时强制更新样式
+    if keyboard.just_pressed(KeyCode::F10) {
+        trigger.force_update = true;
+        println!("手动触发样式更新！");
     }
 }

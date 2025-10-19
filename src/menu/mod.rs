@@ -5,7 +5,7 @@ use crate::audio::{AudioManager,stop_all_audio,stop_all_audio_system};
 use crate::style::{UiStyleSheet, load_styles}; 
 use crate::config::MainConfig;
 use crate::url::{UrlButton,open_url};
-
+use crate::style::ElementId;
 
 #[derive(Component)]
 pub struct BackButton;
@@ -35,6 +35,11 @@ impl Plugin for MenuPlugin {
             .add_systems(Update, button_system.run_if(in_state(GameScene::LoadButton)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Settings)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Menu)))
+
+            // 媒体查询
+
+            .add_systems(Update, apply_media_query_styles.run_if(in_state(GameScene::Menu)))
+            
             .add_systems(Update, button_system.run_if(in_state(GameScene::About)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::Help)))
             .add_systems(Update, button_system.run_if(in_state(GameScene::GameSettings)))
@@ -281,6 +286,7 @@ fn setup_menu_scene(
             // 左侧菜单区域
             (
                 Node {
+                    position_type: PositionType::Absolute,
                     width: Val::Percent(50.0),
                     height: Val::Percent(100.0),
                     align_items: AlignItems::Start,
@@ -295,6 +301,7 @@ fn setup_menu_scene(
                     row_gap: Val::Px(20.0),
                     ..default()
                 },
+                ElementId("leftbox".to_string()), // 设置元素ID
                 children![
                     // Logo文本
                     (
@@ -551,6 +558,7 @@ fn setup_about_scene(
             // border: UiRect::all(Val::Px(2.0)),
             ..default()
         },
+        ElementId("about_box".to_string()), // 设置元素ID
         BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.8)),
         BorderColor::all(Color::srgb(0.5, 0.5, 0.5)),
         Visibility::Visible,
@@ -649,11 +657,13 @@ fn setup_about_scene(
                 margin: UiRect::top(Val::Px(20.0)),
                 ..default()
             },
+            ElementId("back_button".to_string()), // 设置元素ID
             // BackgroundColor(Color::srgb(0.3, 0.3, 0.5)),
             // BorderColor::all(Color::srgb(0.5, 0.5, 0.7)),
             BackButton,
         )).with_children(|button_parent| {
             button_parent.spawn((
+                
                 Text::new("返回"),
                 TextFont {
                     font: asset_server.load("fonts/SarasaFixedHC-Regular.ttf"),
@@ -661,6 +671,7 @@ fn setup_about_scene(
                     ..default()
                 },
                 TextColor(Color::WHITE),
+                
             ));
         });
 
@@ -1986,3 +1997,9 @@ fn cleanup_game_settings_overlay(
     println!("游戏设置界面结束");
 }
 
+
+
+// 设置媒体查询
+fn apply_media_query_styles() {
+    // println!("开始媒体查询！");
+}
