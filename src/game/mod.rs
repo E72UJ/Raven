@@ -360,7 +360,7 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
-                    // update_styles_from_media_queries,
+                    update_styles_from_media_queries,
                     handle_input,
                     // debug_flash_position,
                     handle_toggle_menu_event,     // 处理显示/隐藏事件
