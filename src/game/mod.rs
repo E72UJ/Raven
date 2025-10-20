@@ -756,7 +756,7 @@ fn setup_ui(
             // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
-        MediaElementId("about_box".to_string()),
+        ElementId("about_box".to_string()),
         // BackgroundColor(Color::NONE),
         // 对话框背景颜色
         // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
@@ -2438,10 +2438,10 @@ fn update_styles_from_media_queries(
     for (mut node, element_id) in ui_query.iter_mut() {
         println!("处理元素: {}", element_id.0);
         
-        if element_id.0 == "namesss" {
+        if element_id.0 == "about_box" {
             println!("找到 leftbox，应用样式");
             node.position_type = PositionType::Absolute;
-            node.bottom = Val::Px(300.0);
+            node.bottom = Val::Px(250.0);
             node.left = Val::Px(50.0);
             node.right = Val::Px(50.0);
             node.height = Val::Px(50.0);
