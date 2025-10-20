@@ -1,3 +1,4 @@
+pub mod media_query;
 // ============================================================================
 // 依赖导入
 // ============================================================================
@@ -34,6 +35,8 @@ use Raven::{
 };
 
 use Raven::style::StyleUpdateTrigger;
+use crate::game::media_query::MediaQueryPlugin;
+use crate::game::media_query::MediaElementId;
 // ============================================================================
 // 常量定义
 // ============================================================================
@@ -314,6 +317,8 @@ impl Plugin for GamePlugin {
         }
         app
             // 只在启动时加载资源，不创建UI
+        .insert_resource(StyleUpdateTrigger::default())
+        .add_plugins(MediaQueryPlugin) // 添加媒体查询插件
         .add_systems(
             Startup,
             load_main_config_system,
@@ -355,6 +360,7 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
+                    // update_styles_from_media_queries,
                     handle_input,
                     // debug_flash_position,
                     handle_toggle_menu_event,     // 处理显示/隐藏事件
@@ -545,8 +551,10 @@ fn setup_ui(
     asset_server: Res<AssetServer>,
     config: Res<MainConfig>,
     stylesheet: Res<UiStyleSheet>,
+    mut trigger: ResMut<StyleUpdateTrigger>,
 ) {
 
+    
     let mut click_area_entity = commands
         .spawn((
             Name::new("click_area"),
@@ -687,7 +695,7 @@ fn setup_ui(
                 // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8).into();),
                 ..default()
             },
-            ElementId("textbox".to_string()), // 设置元素ID
+            ElementId("test".to_string()), // 设置元素ID
             // 对话框背景颜色
             ImageNode::new(asset_server.load("gui/textbox3.png")),
             // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
@@ -740,22 +748,24 @@ fn setup_ui(
         TextLayout::new_with_justify(Justify::Center),
         Node {
             position_type: PositionType::Absolute,
-            bottom: Val::Px(230.0),
-            left: Val::Px(50.0),
-            right: Val::Px(50.0),
-            height: Val::Px(50.0),
-            width: Val::Px(220.0),
+            // bottom: Val::Px(230.0),
+            // left: Val::Px(50.0),
+            // right: Val::Px(50.0),
+            // height: Val::Px(50.0),
+            // width: Val::Px(220.0),
             // padding: UiRect::top(Val::Px(30.0)),
             ..default()
         },
-        ElementId("one".to_string()), // 设置元素ID
+        MediaElementId("about_box".to_string()),
         // BackgroundColor(Color::NONE),
         // 对话框背景颜色
         // BackgroundColor(Color::srgba(0.1, 0.1, 0.1, 0.8)),
         // GlobalZIndex(1),
         ImageNode::new(asset_server.load("gui/textbox2.png")),
         // AnimatedText,
+        
     ));
+
     // 点击区域
     // 立绘容器
     commands.spawn((
@@ -2407,13 +2417,38 @@ fn test(){
     println!("test");
 }
 
-fn some_game_logic(
-    mut trigger: ResMut<StyleUpdateTrigger>,
-    keyboard: Res<ButtonInput<KeyCode>>,
-) {
-    // 例如：按下空格键时强制更新样式
-    if keyboard.just_pressed(KeyCode::F10) {
-        trigger.force_update = true;
-        println!("手动触发样式更新！");
+
+
+
+fn debug_elements(query: Query<(Entity, &ElementId)>) {
+    for (entity, element_id) in &query {
+        println!("找到元素: {:?} - {}", entity, element_id.0);
     }
 }
+
+
+
+fn update_styles_from_media_queries(
+    mut ui_query: Query<(&mut Node, &ElementId)>,
+    // ... 其他参数
+) {
+    println!("样式系统运行中...");
+    println!("找到 {} 个带 ElementId 的实体", ui_query.iter().len());
+    
+    for (mut node, element_id) in ui_query.iter_mut() {
+        println!("处理元素: {}", element_id.0);
+        
+        if element_id.0 == "namesss" {
+            println!("找到 leftbox，应用样式");
+            node.position_type = PositionType::Absolute;
+            node.bottom = Val::Px(300.0);
+            node.left = Val::Px(50.0);
+            node.right = Val::Px(50.0);
+            node.height = Val::Px(50.0);
+            node.width = Val::Px(220.0);
+            println!("leftbox 样式已应用");
+        }
+    }
+}
+
+

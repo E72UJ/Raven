@@ -67,7 +67,6 @@ fn main() {
         .add_plugins(AudioPlugin)
         .add_plugins(UrlPlugin) // 新增的url插件
         .add_plugins(ToolbarPlugin)
-        
         // 为每个场景状态变化添加样式更新触发器
         .add_systems(OnEnter(GameScene::Menu), ( on_state_changed))
         .add_systems(OnEnter(GameScene::Game), (menu_exit_system, on_state_changed))
