@@ -1572,7 +1572,7 @@ fn load_swf_assets(
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
             FlashPlayer::from_looping(true),
-            Transform::from_translation(Vec3::new(-200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
+            Transform::from_translation(Vec3::new(200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
             Visibility::Hidden,
         ));
 

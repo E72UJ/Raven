@@ -14,19 +14,12 @@ Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引�
 
 访问 [引擎文档](https://doc.raven.rs/ "中文文档")
 （托管服务器性能较差，最新更新可以查看文档源码）
-## tips
-本程序使用本地依赖编译，如需要获取依赖本身，请访问:
-
-https://github.com/E72UJ/Raven/blob/main/docs/src/getting-started/compile-dependencies.md
 ## Demo
 ![这是图片](https://pic1.imgdb.cn/item/6827b98858cb8da5c8f78dbc.png "Magic Gardens")
 
 ## Release
 下面是我准备的一份编译后 Demo，方便国内用户直接查看运行效果。
-
-[Windows](https://www.hostize.com/zh/v/_Ynpj6G6oI)
-
-[Mac](https://www.hostize.com/zh/v/3FBteCgwTS)
+下载档案请访问引擎官网 raven.rs
 ## 所使用的立绘资产
 
 https://liah0227.itch.io/wisteria

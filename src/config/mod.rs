@@ -37,6 +37,8 @@ pub struct SettingsConfig {
     pub font: String,
     pub rewind: bool,
     pub logo_text: String,
+    pub resizable: bool,     // 是否允许改变窗口大小
+    pub maximizable: bool,   // 是否允许最大化按钮
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -104,12 +106,7 @@ impl VariableValue {
     }
 }
 
-
-
-
-
 impl Default for MainConfig {
-
     fn default() -> Self {
         // 创建一个包含默认变量的 HashMap
         let mut default_variables = HashMap::new();
@@ -139,8 +136,9 @@ impl Default for MainConfig {
                 resolution: [1200, 660],
                 logo_text: "Raven logo".to_string(),
                 font: "fonts/GenSenMaruGothicTW-Bold.ttf".to_string(),
-                // ## 是否允许回档
-                rewind: false    
+                rewind: false,
+                resizable: true,      // 默认允许调整大小
+                maximizable: true,    // 默认允许最大化
             },
             global_variables: GlobalVariables {
                 player_name: "主角".to_string(),
@@ -166,6 +164,16 @@ impl MainConfig {
     
     pub fn get_background_path(&self, background: &str) -> Option<&String> {
         self.assets.backgrounds.get(background)
+    }
+    
+    // 获取窗口是否可调整大小
+    pub fn is_resizable(&self) -> bool {
+        self.settings.resizable
+    }
+    
+    // 获取窗口是否可最大化
+    pub fn is_maximizable(&self) -> bool {
+        self.settings.maximizable
     }
 }
 
@@ -196,5 +204,3 @@ pub fn load_main_config() -> MainConfig {
         }
     }
 }
-
-// 变量系统
