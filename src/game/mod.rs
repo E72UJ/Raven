@@ -377,9 +377,9 @@ impl Plugin for GamePlugin {
                     update_swf.run_if(in_state(GameScene::Game)),
                     keyboard_system,
                     handle_choice_buttons,
-                    // create_dynamic_buttons
-                    //     .run_if(in_state(GameScene::Game))  // 先检查是否在游戏状态
-                    //     .run_if(should_create_buttons),     // 再检查是否需要创建按钮
+                    create_dynamic_buttons
+                        .run_if(in_state(GameScene::Game))  // 先检查是否在游戏状态
+                        .run_if(should_create_buttons),     // 再检查是否需要创建按钮
                     button_interaction_system,
                     button_image_system,
                     update_typewriter, // fade_animation_system
@@ -405,7 +405,6 @@ fn setup_game_state(
     config: Res<MainConfig>,
     asset_server: Res<AssetServer>,
 ) {
-    // info!("进入游戏场景");
     commands.spawn(Camera2d);
 
     let dialogues: Vec<Dialogue> = load_dialogues(&config);
@@ -1571,8 +1570,8 @@ fn load_swf_assets(
         commands.spawn((
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
-            FlashPlayer::from_looping(true),
-            Transform::from_translation(Vec3::new(200.0, 100.0, 0.0)).with_scale(Vec3::splat(1.0)),
+            FlashPlayer::from_looping(false),
+            Transform::from_translation(Vec3::new(10.0, 00.0, 0.0)).with_scale(Vec3::splat(1.25)),
             Visibility::Hidden,
         ));
 
@@ -1863,24 +1862,24 @@ fn create_dynamic_buttons(
         }
     }
 }
-// fn should_create_buttons(
-//     game_state: Res<GameState>,
-//     existing_buttons: Query<(), With<DynamicButton>>,
-// ) -> bool {
-//     let current_line = game_state.current_line;
+fn should_create_buttons(
+    game_state: Res<GameState>,
+    existing_buttons: Query<(), With<DynamicButton>>,
+) -> bool {
+    let current_line = game_state.current_line;
 
-//     // 检查当前行是否有选择分支
-//     let has_choices = game_state.dialogues.get(current_line)
-//         .and_then(|d| d.choices.as_ref())
-//         .map(|choices| !choices.is_empty())
-//         .unwrap_or(false);
+    // 检查当前行是否有选择分支
+    let has_choices = game_state.dialogues.get(current_line)
+        .and_then(|d| d.choices.as_ref())
+        .map(|choices| !choices.is_empty())
+        .unwrap_or(false);
 
-//     // 检查是否已经有按钮存在
-//     let buttons_exist = !existing_buttons.is_empty();
+    // 检查是否已经有按钮存在
+    let buttons_exist = !existing_buttons.is_empty();
 
-//     // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
-//     (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
-// }
+    // 只在需要创建按钮但还没有按钮，或者需要清除按钮但还有按钮时运行
+    (has_choices && !buttons_exist) || (!has_choices && buttons_exist)
+}
 
 fn handle_choice_buttons(
     mut interaction_query: Query<
