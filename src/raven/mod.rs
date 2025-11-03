@@ -181,7 +181,6 @@ pub mod game {
         Error(String),
     }
 
-    // 使用 OnceLock 和 Mutex 来安全地管理全局状态
     static GAME_STATE: OnceLock<Mutex<GameState>> = OnceLock::new();
 
     #[derive(Debug)]
@@ -194,7 +193,7 @@ pub mod game {
     impl GameState {
         fn new() -> Self {
             Self {
-                script: None,  // 6. 修改初始化
+                script: None,  
                 current_scene: None,
                 result: GameResult::Playing,
             }
@@ -206,21 +205,20 @@ pub mod game {
         GAME_STATE.get_or_init(|| Mutex::new(GameState::new()))
     }
 
-    pub fn run_raven_game_with_story(script: Option<Script>) {  // 7. 修改函数参数名
+    pub fn run_raven_game_with_story(script: Option<Script>) { 
         let game_state = init_game_state();
         
         {
             let mut state = game_state.lock().unwrap();
             state.current_scene = script.as_ref().and_then(|s| s.start_scene.clone());
-            state.script = script;  // 8. 修改字段赋值
+            state.script = script;  
             state.result = GameResult::Playing;
         }
         
         println!("Raven 游戏引擎已启动！");
         
-        // 获取脚本的只读引用来执行游戏逻辑
         let state = game_state.lock().unwrap();
-        if let Some(script) = &state.script {  // 9. 修改变量名
+        if let Some(script) = &state.script {  
             println!("脚本已加载，包含 {} 个角色，{} 个场景，{} 个背景", 
                 script.characters.len(), 
                 script.scenes.len(), 
