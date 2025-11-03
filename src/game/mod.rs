@@ -1570,8 +1570,8 @@ fn load_swf_assets(
         commands.spawn((
             Name::new(format!("swf_{}", swf_name)),
             Flash(swf_handle),
-            FlashPlayer::from_looping(false),
-            Transform::from_translation(Vec3::new(10.0, 00.0, 0.0)).with_scale(Vec3::splat(1.25)),
+            FlashPlayer::from_looping(true),
+            Transform::from_translation(Vec3::new(10.0, 00.0, 0.0)).with_scale(Vec3::splat(1.35)),
             Visibility::Hidden,
         ));
 
@@ -2429,7 +2429,6 @@ fn debug_elements(query: Query<(Entity, &ElementId)>) {
 
 fn update_styles_from_media_queries(
     mut ui_query: Query<(&mut Node, &ElementId)>,
-    // ... 其他参数
 ) {
     println!("样式系统运行中...");
     println!("找到 {} 个带 ElementId 的实体", ui_query.iter().len());

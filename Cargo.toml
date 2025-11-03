@@ -6,7 +6,7 @@ authors = ["Furau"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-bevy_flash = { git = "https://gitee.com/Furau/bevy_flash"}
+bevy_flash = { git = "https://gitee.com/Furau/bevy_flash", branch = "dev" }
 bevy = { version = "0.17.1", features = ["bevy_dev_tools"] }
 rand = "0.8"
 
