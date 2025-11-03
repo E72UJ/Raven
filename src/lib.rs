@@ -25,5 +25,5 @@ pub enum GameScene {
 
 pub use GameScene as AppState;
 
-
+// 一个DSL，用于定义游戏场景
 pub mod raven;

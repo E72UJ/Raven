@@ -1,19 +1,19 @@
 // src/raven/mod.rs
-pub mod story {
+pub mod script {  
     use std::collections::HashMap;
     use crate::raven::character::Character;
     use crate::raven::scene::Scene;
     use crate::raven::background::Background;
 
     #[derive(Debug, Clone)]
-    pub struct Story {
+    pub struct Script {  // 2. 修改结构体名
         pub characters: HashMap<String, Character>,
         pub scenes: HashMap<String, Scene>,
         pub backgrounds: HashMap<String, Background>,
         pub start_scene: Option<String>,
     }
 
-    impl Story {
+    impl Script {  // 3. 修改impl块名
         pub fn new() -> Self {
             Self {
                 characters: HashMap::new(),
@@ -170,7 +170,7 @@ pub mod background {
 
 // 游戏状态模块 - 重构为使用安全的全局状态管理
 pub mod game {
-    use crate::raven::story::Story;
+    use crate::raven::script::Script;  // 4. 修改导入路径
     use std::sync::{Mutex, OnceLock};
 
     #[derive(Debug, Clone, PartialEq)]
@@ -186,7 +186,7 @@ pub mod game {
 
     #[derive(Debug)]
     struct GameState {
-        story: Option<Story>,
+        script: Option<Script>,  // 5. 修改字段名
         current_scene: Option<String>,
         result: GameResult,
     }
@@ -194,7 +194,7 @@ pub mod game {
     impl GameState {
         fn new() -> Self {
             Self {
-                story: None,
+                script: None,  // 6. 修改初始化
                 current_scene: None,
                 result: GameResult::Playing,
             }
@@ -206,33 +206,33 @@ pub mod game {
         GAME_STATE.get_or_init(|| Mutex::new(GameState::new()))
     }
 
-    pub fn run_raven_game_with_story(story: Option<Story>) {
+    pub fn run_raven_game_with_story(script: Option<Script>) {  // 7. 修改函数参数名
         let game_state = init_game_state();
         
         {
             let mut state = game_state.lock().unwrap();
-            state.current_scene = story.as_ref().and_then(|s| s.start_scene.clone());
-            state.story = story;
+            state.current_scene = script.as_ref().and_then(|s| s.start_scene.clone());
+            state.script = script;  // 8. 修改字段赋值
             state.result = GameResult::Playing;
         }
         
         println!("Raven 游戏引擎已启动！");
         
-        // 获取故事的只读引用来执行游戏逻辑
+        // 获取脚本的只读引用来执行游戏逻辑
         let state = game_state.lock().unwrap();
-        if let Some(story) = &state.story {
-            println!("故事已加载，包含 {} 个角色，{} 个场景，{} 个背景", 
-                story.characters.len(), 
-                story.scenes.len(), 
-                story.backgrounds.len()
+        if let Some(script) = &state.script {  // 9. 修改变量名
+            println!("脚本已加载，包含 {} 个角色，{} 个场景，{} 个背景", 
+                script.characters.len(), 
+                script.scenes.len(), 
+                script.backgrounds.len()
             );
             
             // 简单执行第一个场景来验证功能
-            if let Some(start_scene_id) = &story.start_scene {
-                if let Some(scene) = story.get_scene(start_scene_id) {
+            if let Some(start_scene_id) = &script.start_scene {  // 10. 修改变量名
+                if let Some(scene) = script.get_scene(start_scene_id) {  // 11. 修改变量名
                     println!("开始执行场景: {}", start_scene_id);
                     for command in &scene.commands {
-                        execute_command(command, story);
+                        execute_command(command, script);  // 12. 修改变量名
                     }
                 }
             }
@@ -240,7 +240,7 @@ pub mod game {
         // 这里 state 会自动释放锁
     }
 
-    fn execute_command(command: &crate::raven::scene::SceneCommand, story: &Story) {
+    fn execute_command(command: &crate::raven::scene::SceneCommand, script: &Script) {  // 13. 修改参数名
         use crate::raven::scene::SceneCommand;
         
         match command {
@@ -248,12 +248,12 @@ pub mod game {
                 println!("🎵 播放音乐: {}", file);
             },
             SceneCommand::ShowBackground { background } => {
-                if let Some(bg) = story.get_background(background) {
+                if let Some(bg) = script.get_background(background) {  // 14. 修改变量名
                     println!("🖼️ 显示背景: {} ({})", background, bg.image);
                 }
             },
             SceneCommand::ShowCharacter { character, emotion } => {
-                if let Some(char) = story.get_character(character) {
+                if let Some(char) = script.get_character(character) {  // 15. 修改变量名
                     let emotion_text = emotion.as_ref().map(|e| format!(" [{}]", e)).unwrap_or_default();
                     println!("👤 显示角色: {}{} ({})", char.name, emotion_text, char.sprite);
                 }
@@ -262,7 +262,7 @@ pub mod game {
                 println!("👻 隐藏角色: {}", character);
             },
             SceneCommand::Dialogue { speaker, text } => {
-                if let Some(char) = story.get_character(speaker) {
+                if let Some(char) = script.get_character(speaker) {  // 16. 修改变量名
                     println!("💬 {}: \"{}\"", char.name, text);
                 } else {
                     println!("💬 {}: \"{}\"", speaker, text);
@@ -311,10 +311,10 @@ pub mod game {
         state.result = GameResult::Ending(ending);
     }
 
-    pub fn get_current_story() -> Option<Story> {
+    pub fn get_current_story() -> Option<Script> {  // 17. 修改函数返回类型
         let game_state = init_game_state();
         let state = game_state.lock().unwrap();
-        state.story.clone()
+        state.script.clone()  // 18. 修改字段名
     }
 }
 
@@ -324,35 +324,35 @@ pub mod game {
 
 // 主要的story宏
 #[macro_export]
-macro_rules! story {
+macro_rules! Rvn {
     ($($item:tt)*) => {{
-        let mut story = $crate::raven::story::Story::new();
-        $crate::parse_story_items!(story, $($item)*);
-        story
+        let mut script = $crate::raven::script::Script::new();  // 19. 修改宏内的变量名和类型
+        $crate::parse_story_items!(script, $($item)*);  // 20. 修改变量名
+        script  // 21. 修改返回值
     }};
 }
 
 // 解析故事项目的辅助宏
 #[macro_export]
 macro_rules! parse_story_items {
-    ($story:ident,) => {};
+    ($script:ident,) => {};  // 22. 修改参数名
     
-    ($story:ident, character $char_id:ident { $($char_content:tt)* } $($rest:tt)*) => {
+    ($script:ident, character $char_id:ident { $($char_content:tt)* } $($rest:tt)*) => {
         let character = $crate::parse_character!($($char_content)*);
-        $story.add_character(stringify!($char_id).to_string(), character);
-        $crate::parse_story_items!($story, $($rest)*);
+        $script.add_character(stringify!($char_id).to_string(), character);  // 23. 修改变量名
+        $crate::parse_story_items!($script, $($rest)*);  // 24. 修改变量名
     };
     
-    ($story:ident, background $bg_id:ident { $($bg_content:tt)* } $($rest:tt)*) => {
+    ($script:ident, background $bg_id:ident { $($bg_content:tt)* } $($rest:tt)*) => {
         let background = $crate::parse_background!($($bg_content)*);
-        $story.add_background(stringify!($bg_id).to_string(), background);
-        $crate::parse_story_items!($story, $($rest)*);
+        $script.add_background(stringify!($bg_id).to_string(), background);  // 25. 修改变量名
+        $crate::parse_story_items!($script, $($rest)*);  // 26. 修改变量名
     };
     
-    ($story:ident, scene $scene_id:ident { $($scene_content:tt)* } $($rest:tt)*) => {
+    ($script:ident, scene $scene_id:ident { $($scene_content:tt)* } $($rest:tt)*) => {
         let scene = $crate::parse_scene!($($scene_content)*);
-        $story.add_scene(stringify!($scene_id).to_string(), scene);
-        $crate::parse_story_items!($story, $($rest)*);
+        $script.add_scene(stringify!($scene_id).to_string(), scene);  // 27. 修改变量名
+        $crate::parse_story_items!($script, $($rest)*);  // 28. 修改变量名
     };
 }
 
@@ -543,14 +543,14 @@ macro_rules! parse_choices {
 // ============================================================================
 pub mod prelude {
     // 重新导出所有结构体和枚举
-    pub use crate::raven::story::*;
+    pub use crate::raven::script::*;  // 29. 修改导出路径
     pub use crate::raven::character::*;
     pub use crate::raven::scene::*;
     pub use crate::raven::background::*;
     pub use crate::raven::game::*;
     
     // 重新导出宏
-    pub use crate::story;
+    pub use crate::Rvn;
     pub use crate::parse_story_items;
     pub use crate::parse_character;
     pub use crate::parse_character_fields;
@@ -566,7 +566,7 @@ pub mod prelude {
 // ============================================================================
 // 根级别导出
 // ============================================================================
-pub use story::Story;
+pub use script::Script;  // 30. 修改导出路径和类型
 pub use character::Character;
 pub use scene::{Scene, SceneCommand, Choice};
 pub use background::Background;
