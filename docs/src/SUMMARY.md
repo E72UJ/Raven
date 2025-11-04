@@ -15,6 +15,7 @@
 - [资产文件结构](./getting-started/assets.md)
 # DSL设计
   - [DSL 设计](./dsl-design/dsl-design.md)
+  - [执行策略](./dsl-design/execution.md)
 ## 附录
 - [常用命令](./cmd/cmd.md)
 - [常用资源代码](./cmd/code.md)
