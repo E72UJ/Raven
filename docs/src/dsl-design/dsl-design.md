@@ -1,4 +1,7 @@
 # DSL 设计
+
+最后更新 2025/11/04 作者 furau
+
 ## 分层系统
 ### 默认层级结构
 ```rust
@@ -25,3 +28,14 @@ show bg room        # 显示房间背景
 show bg school      # 背景自动从房间切换到学校
 ```
 
+### 对象遮蔽
+```rust
+character Alice {
+    name = "爱丽丝";
+    sprite = "characters/protagonist/default.png";
+}
+character Alice {
+    name = "摩西";
+    sprite = "characters/protagonist/sad.png";
+}
+```

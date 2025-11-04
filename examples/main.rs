@@ -5,19 +5,17 @@ fn main() {
             name = "爱丽丝";
             sprite = "characters/protagonist/default.png";
         }
-
         character Alice {
-            name = "Hytomz";
-            sprite = "characters/protagonist/default.png";
+            name = "摩西";
+            sprite = "characters/protagonist/sad.png";
         }
-        
         background Room {
-            image = "background/one.png";
+            image = "background/bg2.png";
         }
 
         scene start {
             show background Room
-            // show character Alice
+            show character Alice
             Alice says "欢迎使用Raven引擎"
             Alice says "它的作者是Furau，今天是2025年11/04"
             Alice says "感谢你的使用"
