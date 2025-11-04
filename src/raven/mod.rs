@@ -6,7 +6,7 @@ pub mod script {
     use crate::raven::background::Background;
 
     #[derive(Debug, Clone)]
-    pub struct Script {  // 2. 修改结构体名
+    pub struct Script {  
         pub characters: HashMap<String, Character>,
         pub scenes: HashMap<String, Scene>,
         pub backgrounds: HashMap<String, Background>,
@@ -436,7 +436,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 显示背景
     ($scene:ident, show background $bg:ident $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::ShowBackground {
             background: stringify!($bg).to_string(),

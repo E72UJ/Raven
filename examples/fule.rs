@@ -12,7 +12,17 @@ fn main() {
         background Hello{
             image = "backgrounds/hello.png";
         }
+
+        scene 场景1 {
+            show character Alice
+            show background Hello
+        }
+        scene 场景2 {
+            show character Alice
+            show background School
+        }
     };
+
     println!("{:?}", test.characters.get("Alice").unwrap().name);
 }
 
