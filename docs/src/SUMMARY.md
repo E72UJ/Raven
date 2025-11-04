@@ -13,6 +13,8 @@
   - [工作流程](./getting-started/workflow.md)
 - [目录结构](./getting-started/directory-structure.md)
 - [资产文件结构](./getting-started/assets.md)
+# DSL设计
+  - [DSL 设计](./dsl-design/dsl-design.md)
 ## 附录
 - [常用命令](./cmd/cmd.md)
 - [常用资源代码](./cmd/code.md)
