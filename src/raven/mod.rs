@@ -1,4 +1,6 @@
 // src/raven/mod.rs
+pub mod bevy_integration;
+
 pub mod script {  
     use std::collections::HashMap;
     use crate::raven::character::Character;
@@ -13,7 +15,7 @@ pub mod script {
         pub start_scene: Option<String>,
     }
 
-    impl Script {  // 3. 修改impl块名
+    impl Script {  
         pub fn new() -> Self {
             Self {
                 characters: HashMap::new(),
@@ -52,7 +54,6 @@ pub mod script {
     }
 }
 
-// 角色模块
 pub mod character {
     #[derive(Debug, Clone)]
     pub struct Character {
@@ -77,7 +78,6 @@ pub mod character {
     }
 }
 
-// 场景模块
 pub mod scene {
     #[derive(Debug, Clone)]
     pub struct Scene {
@@ -118,6 +118,7 @@ pub mod scene {
         EndWith {
             ending: String,
         },
+        ExitGame, // 新添加这一行
     }
 
     #[derive(Debug, Clone)]
@@ -145,7 +146,6 @@ pub mod scene {
     }
 }
 
-// 背景模块
 pub mod background {
     #[derive(Debug, Clone)]
     pub struct Background {
@@ -168,9 +168,8 @@ pub mod background {
     }
 }
 
-// 游戏状态模块 - 重构为使用安全的全局状态管理
 pub mod game {
-    use crate::raven::script::Script;  // 4. 修改导入路径
+    use crate::raven::script::Script;
     use std::sync::{Mutex, OnceLock};
 
     #[derive(Debug, Clone, PartialEq)]
@@ -185,7 +184,7 @@ pub mod game {
 
     #[derive(Debug)]
     struct GameState {
-        script: Option<Script>,  // 5. 修改字段名
+        script: Option<Script>,
         current_scene: Option<String>,
         result: GameResult,
     }
@@ -193,14 +192,13 @@ pub mod game {
     impl GameState {
         fn new() -> Self {
             Self {
-                script: None,  
+                script: None,
                 current_scene: None,
                 result: GameResult::Playing,
             }
         }
     }
 
-    // 初始化游戏状态
     fn init_game_state() -> &'static Mutex<GameState> {
         GAME_STATE.get_or_init(|| Mutex::new(GameState::new()))
     }
@@ -225,20 +223,18 @@ pub mod game {
                 script.backgrounds.len()
             );
             
-            // 简单执行第一个场景来验证功能
-            if let Some(start_scene_id) = &script.start_scene {  // 10. 修改变量名
-                if let Some(scene) = script.get_scene(start_scene_id) {  // 11. 修改变量名
+            if let Some(start_scene_id) = &script.start_scene {
+                if let Some(scene) = script.get_scene(start_scene_id) {
                     println!("开始执行场景: {}", start_scene_id);
                     for command in &scene.commands {
-                        execute_command(command, script);  // 12. 修改变量名
+                        execute_command(command, script);
                     }
                 }
             }
         }
-        // 这里 state 会自动释放锁
     }
 
-    fn execute_command(command: &crate::raven::scene::SceneCommand, script: &Script) {  // 13. 修改参数名
+    fn execute_command(command: &crate::raven::scene::SceneCommand, script: &Script) {
         use crate::raven::scene::SceneCommand;
         
         match command {
@@ -246,12 +242,12 @@ pub mod game {
                 println!("🎵 播放音乐: {}", file);
             },
             SceneCommand::ShowBackground { background } => {
-                if let Some(bg) = script.get_background(background) {  // 14. 修改变量名
+                if let Some(bg) = script.get_background(background) {
                     println!("🖼️ 显示背景: {} ({})", background, bg.image);
                 }
             },
             SceneCommand::ShowCharacter { character, emotion } => {
-                if let Some(char) = script.get_character(character) {  // 15. 修改变量名
+                if let Some(char) = script.get_character(character) {
                     let emotion_text = emotion.as_ref().map(|e| format!(" [{}]", e)).unwrap_or_default();
                     println!("👤 显示角色: {}{} ({})", char.name, emotion_text, char.sprite);
                 }
@@ -260,7 +256,7 @@ pub mod game {
                 println!("👻 隐藏角色: {}", character);
             },
             SceneCommand::Dialogue { speaker, text } => {
-                if let Some(char) = script.get_character(speaker) {  // 16. 修改变量名
+                if let Some(char) = script.get_character(speaker) {
                     println!("💬 {}: \"{}\"", char.name, text);
                 } else {
                     println!("💬 {}: \"{}\"", speaker, text);
@@ -285,6 +281,10 @@ pub mod game {
                 println!("🏁 游戏结束: {}", ending);
                 set_game_ending(ending.clone());
             },
+            SceneCommand::ExitGame => {
+                println!("🚪 退出游戏");
+                end_raven_game();
+            },
         }
     }
 
@@ -297,8 +297,13 @@ pub mod game {
     pub fn end_raven_game() {
         let game_state = init_game_state();
         let mut state = game_state.lock().unwrap();
+        println!("当前游戏状态: {:?}", state.result);
+        
         if state.result == GameResult::Playing {
             state.result = GameResult::Quit;
+            println!("游戏状态已设置为 Quit");
+        } else {
+            println!("游戏已经结束，当前状态: {:?}", state.result);
         }
         println!("Raven 游戏引擎已关闭");
     }
@@ -309,52 +314,45 @@ pub mod game {
         state.result = GameResult::Ending(ending);
     }
 
-    pub fn get_current_story() -> Option<Script> {  // 17. 修改函数返回类型
+    pub fn get_current_story() -> Option<Script> {
         let game_state = init_game_state();
         let state = game_state.lock().unwrap();
-        state.script.clone()  // 18. 修改字段名
+        state.script.clone()
     }
 }
 
-// ============================================================================
-// 宏定义区域
-// ============================================================================
-
-// 主要的story宏
 #[macro_export]
 macro_rules! Rvn {
     ($($item:tt)*) => {{
-        let mut script = $crate::raven::script::Script::new();  // 19. 修改宏内的变量名和类型
-        $crate::parse_story_items!(script, $($item)*);  // 20. 修改变量名
-        script  // 21. 修改返回值
+        let mut script = $crate::raven::script::Script::new();
+        $crate::parse_story_items!(script, $($item)*);
+        script
     }};
 }
 
-// 解析故事项目的辅助宏
 #[macro_export]
 macro_rules! parse_story_items {
-    ($script:ident,) => {};  // 22. 修改参数名
+    ($script:ident,) => {};
     
     ($script:ident, character $char_id:ident { $($char_content:tt)* } $($rest:tt)*) => {
         let character = $crate::parse_character!($($char_content)*);
-        $script.add_character(stringify!($char_id).to_string(), character);  // 23. 修改变量名
-        $crate::parse_story_items!($script, $($rest)*);  // 24. 修改变量名
+        $script.add_character(stringify!($char_id).to_string(), character);
+        $crate::parse_story_items!($script, $($rest)*);
     };
     
     ($script:ident, background $bg_id:ident { $($bg_content:tt)* } $($rest:tt)*) => {
         let background = $crate::parse_background!($($bg_content)*);
-        $script.add_background(stringify!($bg_id).to_string(), background);  // 25. 修改变量名
-        $crate::parse_story_items!($script, $($rest)*);  // 26. 修改变量名
+        $script.add_background(stringify!($bg_id).to_string(), background);
+        $crate::parse_story_items!($script, $($rest)*);
     };
     
     ($script:ident, scene $scene_id:ident { $($scene_content:tt)* } $($rest:tt)*) => {
         let scene = $crate::parse_scene!($($scene_content)*);
-        $script.add_scene(stringify!($scene_id).to_string(), scene);  // 27. 修改变量名
-        $crate::parse_story_items!($script, $($rest)*);  // 28. 修改变量名
+        $script.add_scene(stringify!($scene_id).to_string(), scene);
+        $crate::parse_story_items!($script, $($rest)*);
     };
 }
 
-// 解析角色的宏
 #[macro_export]
 macro_rules! parse_character {
     ($($content:tt)*) => {{
@@ -371,7 +369,6 @@ macro_rules! parse_character {
     }};
 }
 
-// 解析角色字段的宏
 #[macro_export]
 macro_rules! parse_character_fields {
     ($name:ident, $sprite:ident, $color:ident,) => {};
@@ -392,7 +389,6 @@ macro_rules! parse_character_fields {
     };
 }
 
-// 解析背景的宏
 #[macro_export]
 macro_rules! parse_background {
     (image = $image:expr; $($rest:tt)*) => {{
@@ -402,7 +398,6 @@ macro_rules! parse_background {
     }};
 }
 
-// 解析背景字段的宏
 #[macro_export]
 macro_rules! parse_background_fields {
     ($bg:ident,) => {};
@@ -413,7 +408,6 @@ macro_rules! parse_background_fields {
     };
 }
 
-// 解析场景的宏
 #[macro_export]
 macro_rules! parse_scene {
     ($($content:tt)*) => {{
@@ -423,12 +417,10 @@ macro_rules! parse_scene {
     }};
 }
 
-// 场景命令解析宏
 #[macro_export]
 macro_rules! parse_scene_commands {
     ($scene:ident,) => {};
     
-    // 播放音乐 - 使用字符串字面量
     ($scene:ident, play music $file:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::PlayMusic {
             file: $file.to_string(),
@@ -443,7 +435,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 显示角色（无表情）
     ($scene:ident, show character $char:ident $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::ShowCharacter {
             character: stringify!($char).to_string(),
@@ -452,7 +443,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 显示角色（带表情）- 使用字符串字面量
     ($scene:ident, show character $char:ident as $emotion:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::ShowCharacter {
             character: stringify!($char).to_string(),
@@ -461,7 +451,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 角色对话 - 使用字符串字面量
     ($scene:ident, $char:ident says $text:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::Dialogue {
             speaker: stringify!($char).to_string(),
@@ -470,7 +459,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 玩家内心想法 - 使用字符串字面量
     ($scene:ident, player thinks $text:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::PlayerThinks {
             text: $text.to_string(),
@@ -478,7 +466,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 玩家说话 - 使用字符串字面量
     ($scene:ident, player says $text:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::PlayerSays {
             text: $text.to_string(),
@@ -486,7 +473,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 显示选择
     ($scene:ident, show choices { $($choice_content:tt)* } $($rest:tt)*) => {
         let mut choices = Vec::new();
         $crate::parse_choices!(choices, $($choice_content)*);
@@ -494,7 +480,6 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 跳转到场景
     ($scene:ident, jump to $target:ident $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::Jump {
             scene: stringify!($target).to_string(),
@@ -502,21 +487,22 @@ macro_rules! parse_scene_commands {
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
     
-    // 结束游戏 - 使用字符串字面量
     ($scene:ident, end with $ending:literal $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::EndWith {
             ending: $ending.to_string(),
         });
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
+   ($scene:ident, exit game $($rest:tt)*) => {
+        $scene.add_command($crate::raven::scene::SceneCommand::ExitGame);
+        $crate::parse_scene_commands!($scene, $($rest)*);
+    };
 }
 
-// 选择解析宏
 #[macro_export]
 macro_rules! parse_choices {
     ($choices:ident,) => {};
     
-    // 使用字符串字面量避免 expr 后跟 -> 的问题
     ($choices:ident, $text:literal -> $scene:ident, $($rest:tt)*) => {
         $choices.push($crate::raven::scene::Choice::new(
             $text.to_string(),
@@ -525,7 +511,6 @@ macro_rules! parse_choices {
         $crate::parse_choices!($choices, $($rest)*);
     };
     
-    // 处理最后一个选择（没有逗号）
     ($choices:ident, $text:literal -> $scene:ident $($rest:tt)*) => {
         $choices.push($crate::raven::scene::Choice::new(
             $text.to_string(),
@@ -535,18 +520,14 @@ macro_rules! parse_choices {
     };
 }
 
-// ============================================================================
-// 预导入模块，包含所有常用的导出
-// ============================================================================
 pub mod prelude {
-    // 重新导出所有结构体和枚举
-    pub use crate::raven::script::*;  // 29. 修改导出路径
+    pub use crate::raven::script::*;
     pub use crate::raven::character::*;
     pub use crate::raven::scene::*;
     pub use crate::raven::background::*;
     pub use crate::raven::game::*;
-    
-    // 重新导出宏
+    pub use crate::raven::bevy_integration::run_raven_game;  
+
     pub use crate::Rvn;
     pub use crate::parse_story_items;
     pub use crate::parse_character;
@@ -556,15 +537,11 @@ pub mod prelude {
     pub use crate::parse_scene;
     pub use crate::parse_scene_commands;
     pub use crate::parse_choices;
-
-    // bevy 集成
 }
 
-// ============================================================================
-// 根级别导出
-// ============================================================================
-pub use script::Script;  // 30. 修改导出路径和类型
+pub use script::Script;
 pub use character::Character;
 pub use scene::{Scene, SceneCommand, Choice};
 pub use background::Background;
-pub use game::{GameResult, run_raven_game_with_story, get_game_result, end_raven_game, set_game_ending};
+pub use game::{GameResult, run_raven_game_with_story, get_game_result, set_game_ending};
+pub use bevy_integration::{run_raven_game, end_raven_game};
