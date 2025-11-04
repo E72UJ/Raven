@@ -42,7 +42,7 @@ assets:
   
   # Flash动画(SWF)
   swf:
-    Ray: "swf/城镇地图.swf"
+    Ray: "swf/66.swf"
     Ray2: "swf/16.swf"
   # swf:
   #   mini_game:

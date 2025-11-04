@@ -206,7 +206,7 @@ fn execute_simple_command(
                     commands.spawn((
                         Sprite::from_image(asset_server.load(&char.sprite)),
                         Transform::from_translation(Vec3::new(0.0, -100.0, 0.0))
-                            .with_scale(Vec3::splat(0.8)),
+                            .with_scale(Vec3::splat(0.75)),
                         CharacterSprite {
                             character_id: character.clone(),
                         },
@@ -316,6 +316,7 @@ pub fn run_raven_game(story_option: Option<Script>) {
     if let Some(story) = story_option {
         App::new()
             .add_plugins(
+                
                 DefaultPlugins.set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "Raven Visual Novel Engine".to_string(),
@@ -323,7 +324,8 @@ pub fn run_raven_game(story_option: Option<Script>) {
                         ..default()
                     }),
                     ..default()
-                }),
+                })
+                
             )
             .add_plugins(RavenPlugin)
             .insert_resource(RavenStory {
