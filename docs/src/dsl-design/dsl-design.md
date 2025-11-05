@@ -38,4 +38,7 @@ character Alice {
     name = "摩西";
     sprite = "characters/protagonist/sad.png";
 }
+
+
+
 ```
