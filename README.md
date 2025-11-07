@@ -15,7 +15,9 @@ Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引�
 访问 [引擎文档](https://doc.raven.rs/ "中文文档")
 （托管服务器性能较差，最新更新可以查看文档源码）
 ## Demo
-![23228](https://www.freeimg.cn/uploads/107/690d6fad784f1.png)
+<div style="text-align:center">
+<img src="/demo/20251107.png" width="350" alt="logo">
+</div>
 
 ## Release
 下面是我准备的一份编译后 Demo，方便国内用户直接查看运行效果。
