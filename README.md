@@ -21,10 +21,9 @@ Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引�
 
 ## Release
 下面是我准备的一份编译后 Demo，方便国内用户直接查看运行效果。
-<a href="http://115.190.203.200/s/GXHr">
-  <input type="button" value="115网盘下载" style="font-size: 1em; padding: 10px 20px; color: white; background-color: #FF6A00; border: none; border-radius: 5px; cursor: pointer;">
-</a>
-下载档案请访问引擎官网 raven.rs
+
+访问 [release 镜像](http://115.190.203.200/s/GXHr "中文文档")
+
 
 ## 所使用的立绘资产
 
