@@ -1,6 +1,7 @@
 // src/raven/mod.rs
 pub mod bevy_integration;
-
+pub mod config;
+pub mod menu;
 pub mod script {  
     use std::collections::HashMap;
     use crate::raven::character::Character;
@@ -92,6 +93,7 @@ pub mod scene {
         ShowBackground {
             background: String,
         },
+        HideBackground,
         ShowCharacter {
             character: String,
             emotion: Option<String>,
@@ -249,41 +251,44 @@ pub mod game {
             SceneCommand::ShowCharacter { character, emotion } => {
                 if let Some(char) = script.get_character(character) {
                     let emotion_text = emotion.as_ref().map(|e| format!(" [{}]", e)).unwrap_or_default();
-                    println!("👤 显示角色: {}{} ({})", char.name, emotion_text, char.sprite);
+                    println!(" 显示角色: {}{} ({})", char.name, emotion_text, char.sprite);
                 }
             },
             SceneCommand::HideCharacter { character } => {
-                println!("👻 隐藏角色: {}", character);
+                println!(" 隐藏角色: {}", character);
             },
             SceneCommand::Dialogue { speaker, text } => {
                 if let Some(char) = script.get_character(speaker) {
-                    println!("💬 {}: \"{}\"", char.name, text);
+                    println!("{}: \"{}\"", char.name, text);
                 } else {
-                    println!("💬 {}: \"{}\"", speaker, text);
+                    println!(" {}: \"{}\"", speaker, text);
                 }
             },
             SceneCommand::PlayerThinks { text } => {
-                println!("💭 (内心想法): {}", text);
+                println!("(内心想法): {}", text);
             },
             SceneCommand::PlayerSays { text } => {
-                println!("🗣️ 玩家: \"{}\"", text);
+                println!(" 玩家: \"{}\"", text);
             },
             SceneCommand::ShowChoices { choices } => {
-                println!("🔘 选择:");
+                println!("选择:");
                 for (i, choice) in choices.iter().enumerate() {
                     println!("  {}. {} -> {}", i + 1, choice.text, choice.scene);
                 }
             },
             SceneCommand::Jump { scene } => {
-                println!("↗️ 跳转到场景: {}", scene);
+                println!(" 跳转到场景: {}", scene);
             },
             SceneCommand::EndWith { ending } => {
-                println!("🏁 游戏结束: {}", ending);
+                println!(" 游戏结束: {}", ending);
                 set_game_ending(ending.clone());
             },
             SceneCommand::ExitGame => {
-                println!("🚪 退出游戏");
+                println!(" 退出游戏");
                 end_raven_game();
+            },
+            SceneCommand::HideBackground => {
+                println!(" 隐藏背景");
             },
         }
     }
@@ -495,6 +500,10 @@ macro_rules! parse_scene_commands {
     };
    ($scene:ident, exit game $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::ExitGame);
+        $crate::parse_scene_commands!($scene, $($rest)*);
+    };
+    ($scene:ident, hide background $($rest:tt)*) => {
+        $scene.add_command($crate::raven::scene::SceneCommand::HideBackground);
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
 }

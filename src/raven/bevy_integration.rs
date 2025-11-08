@@ -192,6 +192,13 @@ fn execute_simple_command(
             }
             false
         },
+        SceneCommand::HideBackground => {
+            for entity in background_query.iter() {
+                commands.entity(entity).despawn();
+            }
+            println!("隐藏背景");
+            false
+        },
         SceneCommand::ShowCharacter { character, emotion } => {
             let mut character_exists = false;
             for (_, char_comp) in character_query.iter() {
