@@ -18,7 +18,7 @@ cargo build --release
 
 ### 执行案例程序
 ```
-cargo run --example goto
+cargo run --example test
 ```
 ### 常用cargo 指令
 ```

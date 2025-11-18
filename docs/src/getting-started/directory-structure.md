@@ -36,5 +36,5 @@
 
 ## 许可证文件
 
-**`LICENSE`** 和 **`LICENSE-APACHE.txt`** - 项目许可证文件，采用了 Apache 许可证
+**`LICENSE`** 和 **`LICENSE-APACHE.txt`** - 项目许可证文件，采用了 Apache 和 MIT 许可证
 
