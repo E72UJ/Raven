@@ -7,7 +7,7 @@ styles:
     
   textbox:
     text_color: [1.0, 1.0, 1.0, 1.0]
-    font_size: 20.0
+    font_size: 30.0
     margin: 10.0
   
   button:

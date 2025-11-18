@@ -1,7 +1,10 @@
 use bevy::prelude::*;
+use bevy::ui::ContentSize;
 use bevy::window::WindowResolution;
 use crate::raven::script::Script;
+use crate::raven::config; 
 use bevy::app::AppExit; 
+use std::collections::HashMap;
 use crate::raven::scene::SceneCommand;
 
 #[derive(Resource)]
@@ -10,6 +13,7 @@ pub struct RavenStory {
     pub current_scene: Option<String>,
     pub scene_index: usize,
     pub waiting_for_input: bool,
+    pub waiting_for_asset_load: bool,
 }
 
 #[derive(Component)]
@@ -35,17 +39,39 @@ pub enum GameState {
     Loading,
     Playing,
 }
+#[derive(Component)]
+pub struct LoadingAsset {
+    pub asset_handle: Handle<Image>,
+    pub asset_path: String,
+}
 
+#[derive(Resource)]
+pub struct AssetCache {
+    pub cached_backgrounds: HashMap<String, Handle<Image>>,
+    pub cached_characters: HashMap<String, Handle<Image>>,
+}
+
+impl Default for AssetCache {
+    fn default() -> Self {
+        Self {
+            cached_backgrounds: HashMap::new(),
+            cached_characters: HashMap::new(),
+        }
+    }
+}
 pub struct RavenPlugin;
 
 impl Plugin for RavenPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_state::<GameState>()
+            .init_resource::<AssetCache>()
             .add_systems(Startup, setup_raven_game)
             .add_systems(
                 Update,
                 (
+                    preload_all_assets,
+                    check_asset_loading.after(preload_all_assets),
                     handle_input,
                     handle_scene_progress.after(handle_input),
                     update_dialogue_display.after(handle_scene_progress),
@@ -125,12 +151,22 @@ fn handle_input(keys: Res<ButtonInput<KeyCode>>, mouse: Res<ButtonInput<MouseBut
     if raven_story.waiting_for_input {
         if keys.just_pressed(KeyCode::Space) || mouse.just_pressed(MouseButton::Left) {
             raven_story.waiting_for_input = false;
-            println!("用户点击，继续场景");
         }
     }
 }
 
-fn handle_scene_progress(mut raven_story: ResMut<RavenStory>, mut commands: Commands, asset_server: Res<AssetServer>, background_query: Query<Entity, With<BackgroundSprite>>, character_query: Query<(Entity, &CharacterSprite)>, mut exit: EventWriter<AppExit>, ) {
+fn handle_scene_progress(
+    mut raven_story: ResMut<RavenStory>, 
+    mut commands: Commands, 
+    asset_server: Res<AssetServer>, 
+    background_query: Query<Entity, With<BackgroundSprite>>, 
+    character_query: Query<(Entity, &CharacterSprite)>,
+    dialogue_ui_query: Query<Entity, With<DialogueUI>>, // 添加这一行
+    mut exit: EventWriter<AppExit>, 
+    mut asset_cache: Res<AssetCache>
+) {   if raven_story.waiting_for_input || raven_story.waiting_for_asset_load { 
+        return;
+    }
     if raven_story.waiting_for_input {
         return;
     }
@@ -147,7 +183,7 @@ fn handle_scene_progress(mut raven_story: ResMut<RavenStory>, mut commands: Comm
 
     while raven_story.scene_index < scene_commands.len() && !raven_story.waiting_for_input {
         let command = scene_commands[raven_story.scene_index].clone();
-        let should_pause = execute_simple_command(&command, &mut commands, &asset_server, &mut raven_story, &background_query, &character_query,&mut exit);
+        let should_pause = execute_simple_command(&command, &mut commands, &asset_server, &mut raven_story, &background_query, &character_query, &dialogue_ui_query, &mut exit, &asset_cache);
 
         raven_story.scene_index += 1;
 
@@ -169,7 +205,9 @@ fn execute_simple_command(
     raven_story: &mut ResMut<RavenStory>, 
     background_query: &Query<Entity, With<BackgroundSprite>>, 
     character_query: &Query<(Entity, &CharacterSprite)>,
+    dialogue_ui_query: &Query<Entity, With<DialogueUI>>,
     exit: &mut EventWriter<AppExit>,
+    asset_cache: &Res<AssetCache>,
 ) -> bool {
     match command {
         SceneCommand::PlayMusic { file } => {
@@ -182,24 +220,25 @@ fn execute_simple_command(
             }
 
             if let Some(bg) = raven_story.story.get_background(background) {
+                let handle = if let Some(cached_handle) = asset_cache.cached_backgrounds.get(&bg.image) {
+                    cached_handle.clone()
+                } else {
+                    asset_server.load(&bg.image)
+                };
                 commands.spawn((
-                    Sprite::from_image(asset_server.load(&bg.image)),
-                    Transform::from_translation(Vec3::new(0.0, 0.0, -10.0))
-                        .with_scale(Vec3::splat(1.5)),
-                    BackgroundSprite,
+                    Sprite {
+                        custom_size: Some(Vec2::new(1920.0, 1080.0)), 
+                        ..Sprite::from_image(handle)
+                    },
+                    Transform::from_translation(Vec3::new(0.0, 0.0, -10.0)), 
+                    BackgroundSprite, 
                 ));
                 println!("显示背景: {}", background);
             }
             false
         },
-        SceneCommand::HideBackground => {
-            for entity in background_query.iter() {
-                commands.entity(entity).despawn();
-            }
-            println!("隐藏背景");
-            false
-        },
         SceneCommand::ShowCharacter { character, emotion } => {
+
             let mut character_exists = false;
             for (_, char_comp) in character_query.iter() {
                 if char_comp.character_id == *character {
@@ -266,6 +305,20 @@ fn execute_simple_command(
             exit.write(AppExit::default()); 
             false
         },
+    SceneCommand::HideBackground => {
+        for entity in background_query.iter() {
+            commands.entity(entity).despawn();
+        }
+        println!("隐藏背景");
+        false
+    },
+    SceneCommand::HideDialogueBox => {
+    for entity in dialogue_ui_query.iter() {
+        commands.entity(entity).insert(Visibility::Hidden);
+    }
+    println!("隐藏对话框");
+    false
+    },
     }
 }
 
@@ -323,13 +376,8 @@ pub fn run_raven_game(story_option: Option<Script>) {
     if let Some(story) = story_option {
         App::new()
             .add_plugins(
-                
                 DefaultPlugins.set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: "Raven Visual Novel Engine".to_string(),
-                        resolution: WindowResolution::new(1280, 720),
-                        ..default()
-                    }),
+                    primary_window: Some(config::window::build()),
                     ..default()
                 })
                 
@@ -340,11 +388,14 @@ pub fn run_raven_game(story_option: Option<Script>) {
                 story,
                 scene_index: 0,
                 waiting_for_input: false,
+                waiting_for_asset_load: true,
+                
             })
             .insert_state(GameState::Playing)
             .run();
     } else {
         println!("没有提供故事内容！");
+
     }
 }
 
@@ -354,4 +405,57 @@ pub fn get_game_result() -> String {
 
 pub fn end_raven_game() {
     println!("清理游戏资源...");
+}
+
+// 预先加载系统
+fn preload_all_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    raven_story: Res<RavenStory>,
+    mut asset_cache: ResMut<AssetCache>,
+) {
+    // 预加载所有背景
+    for (_, background) in &raven_story.story.backgrounds {
+        if !asset_cache.cached_backgrounds.contains_key(&background.image) {
+            let handle = asset_server.load(&background.image);
+            asset_cache.cached_backgrounds.insert(background.image.clone(), handle.clone());
+            commands.spawn(LoadingAsset {
+                asset_handle: handle,
+                asset_path: background.image.clone(),
+            });
+        }
+    }
+    
+    // 预加载所有角色
+    for (_, character) in &raven_story.story.characters {
+        if !asset_cache.cached_characters.contains_key(&character.sprite) {
+            let handle = asset_server.load(&character.sprite);
+            asset_cache.cached_characters.insert(character.sprite.clone(), handle.clone());
+            commands.spawn(LoadingAsset {
+                asset_handle: handle,
+                asset_path: character.sprite.clone(),
+            });
+        }
+    }
+}
+
+fn check_asset_loading(
+    mut commands: Commands,
+    mut raven_story: ResMut<RavenStory>,
+    loading_assets: Query<(Entity, &LoadingAsset)>,
+    images: Res<Assets<Image>>,
+) {
+    let mut all_loaded = true;
+    
+    for (entity, loading_asset) in loading_assets.iter() {
+        if images.get(&loading_asset.asset_handle).is_none() {
+            all_loaded = false;
+        } else {
+            commands.entity(entity).despawn();
+        }
+    }
+    
+    if all_loaded && raven_story.waiting_for_asset_load {
+        raven_story.waiting_for_asset_load = false;
+    }
 }

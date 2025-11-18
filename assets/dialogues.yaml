@@ -5,11 +5,21 @@
   interactive: "console"
   audio: "main_theme"
 
+
 - character: "艾拉"
   text: "舰长，我们收到了来自地球的最后一次信号...那是六个月前的事了。"
   portrait: "bg7"
   background: "bg5"
   interactive: "none"
+  choices:
+    - text: "待办：谎言"
+      goto: 7
+    - text: "待办：流逝"
+      goto: 40
+    - text: "待办：虚妄"
+      goto: 68
+    - text: "待办：终结"
+      goto: 113
 
 - character: "舰长"
   text: "六个月...看来我们真的已经超出了通讯范围。准备进入下一个跳跃点吧。"

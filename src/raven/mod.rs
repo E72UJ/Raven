@@ -120,7 +120,8 @@ pub mod scene {
         EndWith {
             ending: String,
         },
-        ExitGame, // 新添加这一行
+        ExitGame, 
+        HideDialogueBox,
     }
 
     #[derive(Debug, Clone)]
@@ -289,6 +290,9 @@ pub mod game {
             },
             SceneCommand::HideBackground => {
                 println!(" 隐藏背景");
+            },
+            SceneCommand::HideDialogueBox => {
+                println!(" 隐藏对话框");
             },
         }
     }
@@ -504,6 +508,10 @@ macro_rules! parse_scene_commands {
     };
     ($scene:ident, hide background $($rest:tt)*) => {
         $scene.add_command($crate::raven::scene::SceneCommand::HideBackground);
+        $crate::parse_scene_commands!($scene, $($rest)*);
+    };
+    ($scene:ident, hide dialogue box $($rest:tt)*) => {
+        $scene.add_command($crate::raven::scene::SceneCommand::HideDialogueBox);
         $crate::parse_scene_commands!($scene, $($rest)*);
     };
 }
