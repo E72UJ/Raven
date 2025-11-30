@@ -22,8 +22,18 @@ cargo run --example test
 ```
 ### 常用cargo 指令
 ```
-| `cargo clean` | 清理项目的构建成果 |
-| `cargo update` | 更新项目的依赖项 |
-| `cargo add` | 添加新的依赖项 |
-| `cargo remove` | 移除项目的依赖项 |
+# 完整的代码检查流程
+cargo fmt && cargo clippy && cargo test
+
+# 快速检查代码质量
+cargo check --all-targets && cargo clippy -- -D warnings
+
+# 发布前检查
+cargo fmt --check && cargo clippy && cargo test && cargo package --dry-run
+
+# 清理并重新构建
+cargo clean && cargo build --release
+
+# 查看依赖更新
+cargo update --dry-run && cargo tree
 ```
