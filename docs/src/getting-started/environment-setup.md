@@ -5,3 +5,11 @@
 FpsDisplay
 ```
 ### 对话框实体
+```rust
+DialogueUI
+```
+
+### 对话框文本实体
+```rust
+Dialoguetext
+```
