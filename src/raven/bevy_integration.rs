@@ -8,6 +8,54 @@ use bevy::app::AppExit;
 use std::collections::HashMap;
 use crate::raven::scene::SceneCommand;
 
+
+//  打字机组件
+#[derive(Component)]
+pub struct TypewriterEffect {
+    pub full_text: String,
+    pub current_char_index: usize,
+    pub timer: Timer,
+    pub is_finished: bool,
+    pub chars_per_second: f32,
+}
+impl TypewriterEffect {
+    pub fn new(text: String, chars_per_second: f32) -> Self {
+        let duration = if chars_per_second > 0.0 { 
+            1.0 / chars_per_second 
+        } else { 
+            0.05 // 默认每秒20个字符
+        };
+        
+        Self {
+            full_text: text,
+            current_char_index: 0,
+            timer: Timer::from_seconds(duration, TimerMode::Repeating),
+            is_finished: false,
+            chars_per_second,
+        }
+    }
+
+    pub fn start_new_text(&mut self, text: String) {
+        self.full_text = text;
+        self.current_char_index = 0;
+        self.is_finished = false;
+        self.timer.reset();
+    }
+
+    pub fn skip_to_end(&mut self) {
+        self.current_char_index = self.full_text.chars().count();
+        self.is_finished = true;
+    }
+
+    pub fn get_current_text(&self) -> String {
+        self.full_text.chars().take(self.current_char_index).collect()
+    }
+}
+
+
+// 打字机资源
+
+// 打字机组件开始
 #[derive(Resource)]
 pub struct CanvasConfig {
     pub width: f32,
@@ -86,6 +134,7 @@ pub struct RavenStory {
     pub scene_index: usize,
     pub waiting_for_input: bool,
     pub waiting_for_asset_load: bool,
+    pub waiting_for_typewriter: bool, 
 }
 
 #[derive(Component)]
@@ -253,6 +302,7 @@ fn setup_raven_game(mut commands: Commands, asset_server: Res<AssetServer>) {
                         ScalableUI::new()
                             .with_font_size(22.0)
                             .with_margin(UiRect::top(Val::Px(15.0))),
+                        TypewriterEffect::new(String::new(), 30.0), 
                     ));
                 });
         });
@@ -598,6 +648,7 @@ pub fn run_raven_game(story_option: Option<Script>) {
                 scene_index: 0,
                 waiting_for_input: false,
                 waiting_for_asset_load: true,
+                waiting_for_typewriter: true,
             })
             .insert_state(GameState::Playing)
             .run();
