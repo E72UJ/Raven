@@ -37,3 +37,6 @@ cargo clean && cargo build --release
 # 查看依赖更新
 cargo update --dry-run && cargo tree
 ```
+## 查看目录
+
+```find . -name "*.rs" -o -name "Cargo.toml" -o -name "src" -type d | head -20```
