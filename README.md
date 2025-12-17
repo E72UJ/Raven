@@ -1,11 +1,11 @@
 # Raven Engine
 <div style="text-align:center">
-<img src="/demo/logo.png" width="350" alt="logo">
+<!-- <img src="/demo/logo.png" width="350" alt="logo"> -->
 </div>
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/E72UJ/Raven)
 
-<img src="/demo/banner.png" width="350" alt="logo">
+<img src="/demo/banner.png" width="100%" alt="logo">
 ## Raven Engine：轻量 Rust 视觉小说引擎
 
 Raven 是一款基于 Rust 开发的现代化视觉小说/文字冒险游戏引擎，专注于为开发者提供简洁高效的叙事工具链。凭借 Rust 的内存安全性与高性能特性，Raven 能够流畅运行于多平台，同时通过声明式脚本语法和模块化设计，大幅降低视觉小说的开发门槛。
